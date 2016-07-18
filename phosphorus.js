@@ -413,18 +413,158 @@ var P = (function() {
     return request;
   };
 
+//Mittagskogel: I don't fully understand what is happening here,
+//so I have simply added the code by "htmlgames" (PF)
+// PF - New audio stuff ***
+
   IO.decodeAudio = function(ab, cb) {
     if (audioContext) {
-      audioContext.decodeAudioData(ab, function(buffer) {
-        cb(buffer);
-      }, function(err) {
-        console.warn('Failed to load audio' + err);
-        cb(null);
-      });
+    // PF check buffer type is PCM or ADPCM 1st? (ie headers)
+	var abc = false;
+	var uInt8Array = new Uint8Array(ab);
+	if (readBytes(20, 2, uInt8Array) == 17) { // 11 hex (needs to be 1)
+		console.warn('Processing audio conversion');
+      		// PF it's most likely ADPCM - lets hack the header and correct the buffer
+		abc = readADPCM(uInt8Array);
+	}
+        if (abc) { // new
+	  audioContext.decodeAudioData(abc, function(buffer) {
+          cb(buffer);
+          }, function(err) {
+          console.warn('Failed to convert audio');
+          cb(null);
+          });
+	} else { // old
+	  audioContext.decodeAudioData(ab, function(buffer) {
+          cb(buffer);
+          }, function(err) {
+          console.warn('Failed to load audio');
+          cb(null);
+          });
+	}
     } else {
       setTimeout(cb);
     }
   };
+
+// helper function
+function readBytes(start, length, uInt8Array) {
+	var returnval = 0;
+	for (var j = 0; j < length; j++) {
+		returnval += uInt8Array[start + j] << (8 * j);
+	}
+	return returnval;
+}
+
+function readADPCM(uInt8Array) {
+
+	var blockAlign = readBytes(32, 2, uInt8Array);
+	var samplesPerBlock = (blockAlign - 4);
+	var sampleRate = readBytes(24, 4, uInt8Array);
+
+	var offset = (readBytes(20, 2, uInt8Array) != 1) ? 38 + readBytes(36, 2, uInt8Array) : 36;
+	offset += 8 + readBytes(offset + 4, 4, uInt8Array);
+
+	var soundBytes = readBytes(offset + 4, 4, uInt8Array);
+	var nBlocks = soundBytes / blockAlign;
+	offset += 8;
+
+	var resultStepChange = [-1, -1, -1, -1, 2, 4, 6, 8, -1, -1, -1, -1, 2, 4, 6, 8];
+	var stepSizes = [7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 19, 21, 23, 25, 28, 31, 34, 37, 41, 45, 50, 55, 60, 66, 73, 80, 88, 97, 107, 118, 130, 143, 157, 173, 190, 209, 230, 253, 279, 307, 337, 371, 408, 449, 494, 544, 598, 658, 724, 796, 876, 963, 1060, 1166, 1282, 1411, 1552, 1707, 1878, 2066, 2272, 2499, 2749, 3024, 3327, 3660, 4026, 4428, 4871, 5358, 5894, 6484, 7132, 7845, 8630, 9493, 10442, 11487, 12635, 13899, 15289, 16818, 18500, 20350, 22385, 24623, 27086, 29794, 32767];
+
+	var stepID = 8;
+	var step = 16;
+	var volume = 0;
+	var sdi = 0;
+	var in_s;
+	var s = 0;
+	var byte;
+	var nib;
+	var diff;
+
+	var length = (samplesPerBlock * 4 + 2) * nBlocks;
+	var soundBuf = new ArrayBuffer(length + 32);
+	var soundData = new Uint8Array(soundBuf, 32, length);
+
+	for (var b = 0; b < nBlocks; b++)
+	{
+		in_s = s;
+
+		volume = readBytes(s + offset, 2, uInt8Array)
+		if (volume > 32767) volume = (volume - 65536);
+		stepID = Math.max(0, Math.min(readBytes(s + offset + 2, 1, uInt8Array), 88));
+		s += 4;
+
+		var sample = Math.round(volume);
+		if (sample < 0) sample += 65536; // 2's complement signed
+
+		soundData[sdi++] = sample % 256;
+		soundData[sdi++] = Math.floor(sample / 256);
+
+		for (var as = 0; as < samplesPerBlock; as++)
+		{
+			byte = uInt8Array[s + offset].toString(2);
+			while (byte.length < 8) {
+				byte = "0" + byte;
+			}
+
+			for (var nibble = 0; nibble < 2; nibble++)
+			{
+				nib = parseInt(byte.substr(nibble*4, 4), 2);
+				nib &= 15;
+				step = stepSizes[stepID];
+				diff = step >> 3;
+				if (nib & 1) diff += step >> 2;
+				if (nib & 2) diff += step >> 1;
+				if (nib & 4) diff += step;
+				if (nib & 8) diff = 0 - diff;
+				volume = Math.max(Math.min(32767, volume + diff), -32768)
+				var sample = Math.round(volume);
+				if (sample < 0) sample += 65536; // 2's complement signed
+				soundData[sdi++] = sample % 256;
+				soundData[sdi++] = Math.floor(sample / 256);
+				stepID = Math.max(0, Math.min(stepID + resultStepChange[nib], 88));
+			}
+			s += 1;
+		}
+		s = in_s + blockAlign;
+	}
+
+	return encodeAudio16bit(soundData, sampleRate, soundBuf);
+}
+
+function encodeAudio16bit(soundData, sampleRate, soundBuf) {
+
+	// 16-bit mono WAVE header template
+	var header = "RIFF<##>WAVEfmt \x10\x00\x00\x00\x01\x00\x01\x00<##><##>\x02\x00\x10\x00data<##>";
+
+	// Helper to insert a 32-bit little endian int.
+	function insertLong(value) {
+		var bytes = "";
+		for (var i = 0; i < 4; ++i) {
+			bytes += String.fromCharCode(value % 256);
+			value = Math.floor(value / 256);
+		}
+		header = header.replace('<##>', bytes);
+	}
+
+	var n = soundData.length / 2; // as buffer
+	insertLong(36 + n * 2); // ChunkSize
+	insertLong(sampleRate); // SampleRate
+	insertLong(sampleRate * 2); // ByteRate
+	insertLong(n * 2); // Subchunk2Size
+
+	// Output sound data
+	var bytes = new Uint8Array(soundBuf, 0, 40); // 32
+	for (var i = 0; i < header.length; i++)
+	{
+  		bytes[i] = header.charCodeAt(i);
+	}
+	console.log(new Uint8Array(soundBuf));
+	return soundBuf.slice(0);      
+}
+
+// PF end of New audio stuff ***
 
   IO.loadBase = function(data) {
     data.scripts = data.scripts || [];
@@ -1138,7 +1278,6 @@ var P = (function() {
     this.backdropContext.restore();
   };
 
-  //TODO: Other filters missing here?
   Stage.prototype.updateFilters = function() {
     this.backdropCanvas.style.opacity = Math.max(0, Math.min(1, 1 - this.filters.ghost / 100));
   };
@@ -1457,14 +1596,14 @@ var P = (function() {
     var y = this.scratchY;
     context.fillStyle = this.penCSS || 'hsl(' + this.penHue + ',' + this.penSaturation + '%,' + (this.penLightness > 100 ? 200 - this.penLightness : this.penLightness) + '%)';
 
-	//if(this.penSize <= 2){
+	if(this.penSize <= 2){
 	  context.fillRect(240 + x - this.penSize/2, 180 - y - this.penSize/2, this.penSize, this.penSize);
-	//}
-	/*else{
+	}
+	else{
 	  context.beginPath();
       context.arc(240 + x, 180 - y, this.penSize / 2, 0, 2 * Math.PI, false);
       context.fill();
-	}*/
+	}
   };
 
   Sprite.prototype.draw = function(context, noEffects) {
@@ -1490,58 +1629,19 @@ var P = (function() {
 
       if (!noEffects) context.globalAlpha = Math.max(0, Math.min(1, 1 - this.filters.ghost / 100));    
       
-      //brightness
-      /*if(!noEffects){
-        
-        //canvas for brightness overlay
-        //TODO: Find out why brightness doesn't always match scratch.
-        var brightnessCanvas = document.createElement('canvas');
-        brightnessCanvas.width = 1;
-        brightnessCanvas.height = 1;
-        var brightnessContext = brightnessCanvas.getContext('2d');
-        document.body.appendChild(brightnessCanvas);
-        
-        var costumeCanvas = document.createElement('canvas');
-        costumeCanvas.width = costume.image.width;
-        costumeCanvas.height = costume.image.height;
-        var costumeContext = costumeCanvas.getContext('2d');
-        document.body.appendChild(costumeCanvas); 
-        
-        //create new object instead of reading? 
-        var imgData = brightnessContext.getImageData(0, 0, 1, 1);
-        
-        var brightnessVal = this.filters.brightness * 255 / 100;
-        
-        if(brightnessVal < 0) brightnessVal = -255 - brightnessVal;
-        
-        imgData.data[0] =
-        imgData.data[1] =
-        imgData.data[2] = Math.abs(brightnessVal);
-        imgData.data[3] = 255;     
-        
-        brightnessContext.putImageData(imgData, 0, 0);
-        
-        if(brightnessVal < 0){
-           costumeContext.drawImage(brightnessCanvas, 0, 0, costumeCanvas.width, costumeCanvas.height);
-           costumeContext.globalCompositeOperation = 'destination-in';
-           costumeContext.drawImage(costume.image, 0, 0);
-           costumeContext.globalCompositeOperation = 'multiply';
-           costumeContext.drawImage(costume.image, 0, 0);
-        }
-        else{
-           costumeContext.drawImage(costume.image, 0, 0);      
-           costumeContext.globalCompositeOperation = 'lighter';  
-           costumeContext.drawImage(brightnessCanvas, 0, 0, costumeCanvas.width, costumeCanvas.height);
-           costumeContext.globalCompositeOperation = 'destination-in';
-           costumeContext.drawImage(costume.image, 0, 0);
-        }
-        context.drawImage(costumeCanvas, 0, 0);
+      //TODO: General Optimization
+      if(!noEffects){
+
+        var effectsCanvas = document.createElement('canvas');
+        effectsCanvas.width = costume.image.width;
+        effectsCanvas.height = costume.image.height;
+        var effectsContext = effectsCanvas.getContext('2d');
+        document.body.appendChild(effectsCanvas);      
+ 
+        effectsContext.drawImage(costume.image, 0, 0, effectsCanvas.width, effectsCanvas.height);       
       
-        brightnessCanvas.parentNode.removeChild(brightnessCanvas);
-        costumeCanvas.parentNode.removeChild(costumeCanvas);           
-      }*/
-      //color
-      /*if(!noEffects){
+        /*
+        //color
         //I don't know how to do this (yet).
         
         //canvas for color overlay
@@ -1579,34 +1679,123 @@ var P = (function() {
       
         colorCanvas.parentNode.removeChild(colorCanvas);
         costumeCanvas.parentNode.removeChild(costumeCanvas);           
-      }*/
+        */
       
-      if(!noEffects){
-        var pixelVal = 1-(this.filters.pixelate+1)/100;
-
+      
+        if(this.filters.pixelate !== 0){
         
         var pixelCanvas = document.createElement('canvas');
-        pixelCanvas.width = pixelVal*costume.image.width;
-        pixelCanvas.height = pixelVal*costume.image.height;
+        pixelCanvas.width = 10*effectsCanvas.width/(this.filters.pixelate + effectsCanvas.width/10);
+        pixelCanvas.height = 10*effectsCanvas.height/(this.filters.pixelate + effectsCanvas.height/10);
         var pixelContext = pixelCanvas.getContext('2d');
         document.body.appendChild(pixelCanvas);   
         
         var costumeCanvas = document.createElement('canvas');
-        costumeCanvas.width = costume.image.width;
-        costumeCanvas.height = costume.image.height;
+        costumeCanvas.width = effectsCanvas.width;
+        costumeCanvas.height = effectsCanvas.height;
         var costumeContext = costumeCanvas.getContext('2d');
         document.body.appendChild(costumeCanvas);    
 
-        pixelContext.drawImage(costume.image, 0, 0, pixelCanvas.width, pixelCanvas.height);
-        
-        console.log(pixelCanvas.width);
+        pixelContext.drawImage(effectsCanvas, 0, 0, pixelCanvas.width, pixelCanvas.height);
         
         costumeContext.imageSmoothingEnabled = false;
         costumeContext.drawImage(pixelCanvas, 0, 0, costumeCanvas.width, costumeCanvas.height);
         
-        context.drawImage(costumeCanvas, 0, 0);
-      }
+        effectsContext.clearRect(0, 0, effectsCanvas.width, effectsCanvas.height);       
+        effectsContext.drawImage(costumeCanvas, 0, 0);
+        
+        pixelCanvas.parentNode.removeChild(pixelCanvas);
+        costumeCanvas.parentNode.removeChild(costumeCanvas);
+        }
+        
+        ///////
+        
+        if(this.filters.mosaic !== 0){
+        var costumeCanvas = document.createElement('canvas');
+        costumeCanvas.width = effectsCanvas.width;
+        costumeCanvas.height = effectsCanvas.height;
+        var costumeContext = costumeCanvas.getContext('2d');
+        document.body.appendChild(costumeCanvas);     
+        
+        var mosaicVal = Math.floor((Math.abs(this.filters.mosaic)+5)/10)+1;
+        
+        var lineCanvas = document.createElement('canvas');
+        lineCanvas.width = effectsCanvas.width/mosaicVal;
+        lineCanvas.height = effectsCanvas.height;
+        var lineContext = lineCanvas.getContext('2d');
+        document.body.appendChild(lineCanvas);        
+                
+        for(var i = 0; i < mosaicVal; i++){
+           lineContext.drawImage(effectsCanvas, 0, i*costumeCanvas.height/mosaicVal, costumeCanvas.width/mosaicVal, costumeCanvas.height/mosaicVal);
+        }           
+                
+        for(var i = 0; i < mosaicVal; i++){
+           costumeContext.drawImage(lineCanvas, i*costumeCanvas.width/mosaicVal, 0, costumeCanvas.width/mosaicVal, costumeCanvas.height);
+        }
+        
+        effectsContext.clearRect(0, 0, effectsCanvas.width, effectsCanvas.height);
+        effectsContext.drawImage(costumeCanvas, 0, 0);
+        
+        costumeCanvas.parentNode.removeChild(costumeCanvas);
+        lineCanvas.parentNode.removeChild(lineCanvas);
+        }
+        
+        ///////
+        
+        if(this.filters.brightness !== 0){
+        //canvas for brightness overlay
+        //TODO: Find out why brightness doesn't always match scratch.
+        var brightnessCanvas = document.createElement('canvas');
+        brightnessCanvas.width = 1;
+        brightnessCanvas.height = 1;
+        var brightnessContext = brightnessCanvas.getContext('2d');
+        document.body.appendChild(brightnessCanvas);
+        
+        var costumeCanvas = document.createElement('canvas');
+        costumeCanvas.width = effectsCanvas.width;
+        costumeCanvas.height = effectsCanvas.height;
+        var costumeContext = costumeCanvas.getContext('2d');
+        document.body.appendChild(costumeCanvas); 
+        
+        var imgData = brightnessContext.getImageData(0, 0, 1, 1);
+        
+        var brightnessVal = this.filters.brightness * 255 / 101;
+        
+        if(brightnessVal < 0) brightnessVal = -255 - brightnessVal;
+        
+        imgData.data[0] =
+        imgData.data[1] =
+        imgData.data[2] = Math.abs(brightnessVal);
+        imgData.data[3] = 255;     
+        
+        brightnessContext.putImageData(imgData, 0, 0);
+        
+        if(brightnessVal < 0){
+           costumeContext.drawImage(brightnessCanvas, 0, 0, costumeCanvas.width, costumeCanvas.height);
+           costumeContext.globalCompositeOperation = 'destination-in';
+           costumeContext.drawImage(effectsCanvas, 0, 0);
+           costumeContext.globalCompositeOperation = 'multiply';
+           costumeContext.drawImage(effectsCanvas, 0, 0);
+        }
+        else{
+           costumeContext.drawImage(effectsCanvas, 0, 0);      
+           costumeContext.globalCompositeOperation = 'lighter';  
+           costumeContext.drawImage(brightnessCanvas, 0, 0, costumeCanvas.width, costumeCanvas.height);
+           costumeContext.globalCompositeOperation = 'destination-in';
+           costumeContext.drawImage(effectsCanvas, 0, 0);
+        }
+        effectsContext.drawImage(costumeCanvas, 0, 0);
       
+        brightnessCanvas.parentNode.removeChild(brightnessCanvas);
+        costumeCanvas.parentNode.removeChild(costumeCanvas);            
+        }
+        
+        context.drawImage(effectsCanvas, 0, 0);
+        
+        effectsCanvas.parentNode.removeChild(effectsCanvas);
+      }
+      else context.drawImage(costume.image, 0, 0);
+
       context.restore();
     }
   };
