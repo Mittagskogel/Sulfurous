@@ -49,8 +49,15 @@
     <a href=# target=_blank id=package-link>Package</a>
     <input type=checkbox id=package-turbo>
     <label for=package-turbo>Turbo mode</label>
-    <input type=checkbox id=package-full-screen checked>
+    <input type=radio id=package-full-screen name=custom-resolution>
     <label for=package-full-screen>Full screen</label>
+    <input type=radio id=package-standard-resolution checked name=custom-resolution>
+    <label for=package-standard-resolution>480x360</label>
+    <input type=radio id=package-double-resolution name=custom-resolution>
+    <label for=package-double-resolution>960x720</label>
+    <input type=radio id=package-custom-resolution name=custom-resolution>
+    <label for=package-custom-resolution>Custom width:</label>
+    <input type=number id=package-custom-resolution-value min=0 max=16000>
   </p>
 </section>
 <section class=package>
@@ -117,6 +124,10 @@
   var packageLink = document.querySelector('#package-link');
   var packageTurbo = document.querySelector('#package-turbo');
   var packageFullScreen = document.querySelector('#package-full-screen');
+  var packageStandardResolution = document.querySelector('#package-standard-resolution');
+  var packageDoubleResolution = document.querySelector('#package-double-resolution');
+  var packageCustomResolution = document.querySelector('#package-custom-resolution');
+  var packageCustomResolutionValue = document.querySelector('#package-custom-resolution-value');
 
   var embedCode = document.querySelector('#embed-code');
   var embedAutoStart = document.querySelector('#embed-auto-start');
@@ -199,14 +210,24 @@
   }
 
   function updatePackageLink() {
-    packageLink.href = P.player.projectId ? '/app.html?id=' + P.player.projectId + '&turbo=' + packageTurbo.checked + '&full-screen=' + packageFullScreen.checked : 'about:blank';
+    if(packageFullScreen.checked) packageCustomResolutionValue.value = null;
+    if(packageStandardResolution.checked) packageCustomResolutionValue.value = 480;
+    if(packageDoubleResolution.checked) packageCustomResolutionValue.value = 960;
+    //remember to change the URL back to /app.html when putting this back online...
+    packageLink.href = P.player.projectId ? 'file:///D:/Mittagskogel/Sulfurous/app.html?id=' + P.player.projectId + '&turbo=' + packageTurbo.checked + '&full-screen=' + packageFullScreen.checked + '&resolution-x=' + packageCustomResolutionValue.value: 'about:blank';
+    packageCustomResolutionValue.disabled = !packageCustomResolution.checked;    
   }
-
+  
   packageTurbo.addEventListener('change', updatePackageLink);
   packageFullScreen.addEventListener('change', updatePackageLink);
+  packageStandardResolution.addEventListener('change', updatePackageLink);
+  packageDoubleResolution.addEventListener('change', updatePackageLink);
+  packageCustomResolution.addEventListener('change', updatePackageLink);
+  packageCustomResolutionValue.addEventListener('change', updatePackageLink);
 
   function updateEmbedCode(e) {
-    embedCode.value = P.player.projectId ? '<script src=https://' + location.host + '/embed.js?id=' + P.player.projectId + (embedHideControls.checked ? '&ui=false' : '&auto-start=' + embedAutoStart.checked + '&light-content=' + embedLightContent.checked) + '></' + 'script>' : '';
+    //remember to change the URL back to 'https://' + location.host when putting this back online...
+    embedCode.value = P.player.projectId ? '<script src=file:///D:/Mittagskogel/Sulfurous' + '/embed.js?id=' + P.player.projectId + (embedHideControls.checked ? '&ui=false' : '&auto-start=' + embedAutoStart.checked + '&light-content=' + embedLightContent.checked) + '></' + 'script>' : '';
     embedAutoStart.disabled =
     embedLightContent.disabled = embedHideControls.checked;
     if (embedHideControls.checked) embedAutoStart.checked = true;

@@ -1,6 +1,8 @@
 P.player = (function() {
   'use strict';
-
+  
+  var resolution = 480;
+  
   var stage;
   var frameId = null;
   //var isFullScreen = true;
@@ -22,6 +24,11 @@ P.player = (function() {
   var errorBugLink = document.querySelector('#error-bug-link');
 
   var flagTouchTimeout;
+
+  function getResolution(){
+    return resolution;
+  }  
+  
   function flagTouchStart() {
     flagTouchTimeout = setTimeout(function() {
       turboClick();
@@ -130,7 +137,7 @@ P.player = (function() {
       document.body.style.marginTop = (window.innerHeight - h - padding) / 2 + 'px';
       stage.setZoom(w / 480);
     } else {
-      stage.setZoom(1);
+      stage.setZoom(2);
     }
   }
 
@@ -224,8 +231,9 @@ P.player = (function() {
       var zoom = stage ? stage.zoom : 1;
       window.stage = stage = s;
       stage.start();
-      stage.setZoom(zoom);
-
+      //stage.setZoom(zoom);
+      stage.setZoom(2);
+      
       stage.root.addEventListener('keydown', exitFullScreen);
       stage.handleError = showError;
 

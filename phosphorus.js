@@ -623,10 +623,9 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
       var font = element.getAttribute('font-family') || '';
       //Using only Helvetica for now because I can't figure out why the others aren't rendering on canvas.
       //Some text will be misaligned.
-      font = 'Helvetica';//IO.FONTS[font] || font;
+      font = IO.FONTS[font] || font;
       if (font) {
-        //element.setAttribute('font-family', font);
-        element.style['font-family'] = font;
+        element.setAttribute('font-family', font);
         if (font === 'Helvetica') element.style.fontWeight = 'bold';
       }
       var size = +element.getAttribute('font-size');
@@ -645,8 +644,9 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         for (var i = 1, l = lines.length; i < l; i++) {
           var tspan = document.createElementNS(null, 'tspan');
           tspan.textContent = lines[i];
-          tspan.setAttribute('x', 1);//x);
-          tspan.setAttribute('y', 26+i*lineHeight*size);//y + size * i * lineHeight);
+          tspan.setAttribute('x', 5);//x);
+          tspan.setAttribute('y', size*(i+1)*lineHeight);//y + size * i * lineHeight);
+          tspan.setAttribute('id', 'ID' + Math.random());
           element.appendChild(tspan);
         }
       }
@@ -701,35 +701,29 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
           //viewBox.width = 0;
           //viewBox.height = 0;
           var bb = svg.getBBox();
-          viewBox.width = svg.width.baseVal.value = Math.ceil(bb.x + bb.width + 10);
-          viewBox.height = svg.height.baseVal.value = Math.ceil(bb.y + bb.height + 10);		  
+          viewBox.width  = svg.width.baseVal.value = Math.ceil(bb.x + bb.width + 10);
+          viewBox.height = svg.height.baseVal.value = Math.ceil(bb.y + bb.height + 10);		
         }
+        
         //IO.fixSVG(svg, svg);
         //while (div.firstChild) div.removeChild(div.lastChild);
         //div.appendChild(svg);
         //svg.style.visibility = 'visible';
         //svg.style.cssText = '';
-		
-        //var canvas = document.createElement('canvas');
+        svg.style['image-rendering'] = '-moz-crisp-edges';
+        svg.style['image-rendering'] = 'pixelated';
+        
+        //svg.style.overflow = 'visible';
+        //svg.style.width = '100%';
+        
         var request = new Request;
         var image = new Image;
-        //callback(image);
-        //svg.style.cssText = '';
-        // console.log(md5, 'data:image/svg+xml;base64,' + btoa(div.innerHTML.trim()));
-        //canvg(canvas, div.innerHTML.trim(), {
-        //  ignoreMouse: true,
-        //  ignoreAnimation: true,
-        //  ignoreClear: true,
-        //  renderCallback: function() {
-        //    image.src = canvas.toDataURL();
-        //  }
-        //});
-        //image.crossOrigin = 'anonymous';
-        //image.src = 'data:image/svg+xml;base64,' + btoa(div.innerHTML.trim());
-        var newSource = new XMLSerializer().serializeToString(svg)
+
+        var newSource = (new XMLSerializer()).serializeToString(svg)
         svg.id = 'svg' + Math.random();
         // console.log(md5, 'data:image/svg+xml;base64,' + btoa(source), 'data:image/svg+xml;base64,' + btoa(newSource));
         image.src = 'data:image/svg+xml;base64,' + btoa(newSource);       
+        //console.log(image);
         image.onload = function() {
           if (callback) callback(image);
           request.load();
@@ -1636,7 +1630,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
       if (!noEffects) context.globalAlpha = Math.max(0, Math.min(1, 1 - this.filters.ghost / 100));    
       
       //TODO: General Optimization
-      if(!noEffects){
+      if(this.filters.pixelate !== 0 || this.filters.mosaic !== 0 || this.filters.mosaic !== 0){
 
         var effectsCanvas = document.createElement('canvas');
         effectsCanvas.width = costume.image.width;
@@ -1797,11 +1791,11 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         costumeCanvas.parentNode.removeChild(costumeCanvas);            
         }
         
-        context.drawImage(effectsCanvas, 0, 0);
+        context.drawImage(effectsCanvas, 0, 0, costume.image.width/4, costume.image.height/4);
         
         effectsCanvas.parentNode.removeChild(effectsCanvas);
       }
-      else context.drawImage(costume.image, 0, 0);
+      else context.drawImage(costume.image, 0, 0, costume.image.width/4, costume.image.height/4);
 
       context.restore();
     }
@@ -1839,7 +1833,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
       } else if (this.rotationStyle === 'leftRight' && this.direction < 0) {
         cx = -cx
       }
-      var d = costume.context.getImageData(cx * costume.bitmapResolution + costume.rotationCenterX, cy * costume.bitmapResolution + costume.rotationCenterY, 1, 1).data;
+      var d = costume.context.getImageData(cx * 4 * costume.bitmapResolution + costume.rotationCenterX * 4, cy * 4 * costume.bitmapResolution + costume.rotationCenterY * 4, 1, 1).data;
       return d[3] !== 0;
     } else if (thing === '_edge_') {
       var bounds = this.rotatedBounds();
@@ -2162,12 +2156,16 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
     if (!this.baseLayer.width || this.textLayer && !this.textLayer.width) {
       return;
     }
-    this.image.width = this.baseLayer.width;
-    this.image.height = this.baseLayer.height;
-
-    this.context.drawImage(this.baseLayer, 0, 0);
+    this.image.width = this.baseLayer.width*4;
+    this.image.height = this.baseLayer.height*4;
+    
+    this.context.mozImageSmoothingEnabled = false;
+    this.context.imageSmoothingEnabled = false;
+    this.context.msImageSmoothingEnabled = false;
+    
+    this.context.drawImage(this.baseLayer, 0, 0, this.image.width, this.image.height);
     if (this.textLayer) {
-      this.context.drawImage(this.textLayer, 0, 0);
+      this.context.drawImage(this.textLayer, 0, 0, this.image.width, this.image.height);
     }
     if (this.base.isStage && this.index == this.base.currentCostumeIndex) {
       setTimeout(function() {
