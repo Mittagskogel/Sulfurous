@@ -685,7 +685,8 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         else svg = IO.fixSVG(svg, svg);
         
         //svg.style.visibility = 'hidden';
-        //svg.style.position = 'absolute';
+        //keep this to avoid overflow in embed.
+        svg.style.position = 'absolute';
         //svg.style.left = '-10000px';
         //svg.style.top = '-10000px';
         svg.style.width = 0;

@@ -2,7 +2,7 @@
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width, initial-scale=1.0">
 <title>sulfurous</title>
-<link rel=icon type="image/png" href="favicon.ico">
+<link rel=icon type="image/png" href="favicon-s.ico">
 <link rel=stylesheet href=player.css>
 <link rel=stylesheet href=index.css>
 
@@ -72,6 +72,13 @@
     <label for=embed-light-content>Light controls</label>
     <input type=checkbox id=embed-hide-controls>
     <label for=embed-hide-controls>Hide UI</label>
+    <input type=radio id=embed-standard-resolution name=e-custom-resolution>
+    <label for=embed-standard-resolution>480x360</label>
+    <input type=radio id=embed-double-resolution name=e-custom-resolution>
+    <label for=embed-double-resolution>960x720</label>
+    <input type=radio id=embed-custom-resolution name=e-custom-resolution>
+    <label for=embed-custom-resolution>Custom width:</label>
+    <input type=number id=embed-custom-resolution-value min=0 max=16000>
   </p>
 </section>
 <section>
@@ -134,6 +141,10 @@
   var embedAutoStart = document.querySelector('#embed-auto-start');
   var embedLightContent = document.querySelector('#embed-light-content');
   var embedHideControls = document.querySelector('#embed-hide-controls');
+  var embedStandardResolution = document.querySelector('#embed-standard-resolution');
+  var embedDoubleResolution = document.querySelector('#embed-double-resolution');
+  var embedCustomResolution = document.querySelector('#embed-custom-resolution');
+  var embedCustomResolutionValue = document.querySelector('#embed-custom-resolution-value');
 
   var timeout;
   urlInput.addEventListener('input', function() {
@@ -215,7 +226,7 @@
     if(packageStandardResolution.checked) packageCustomResolutionValue.value = 480;
     if(packageDoubleResolution.checked) packageCustomResolutionValue.value = 960;
     //remember to change the URL back to /app.html when putting this back online...
-    packageLink.href = P.player.projectId ? '/app.html?id=' + P.player.projectId + '&turbo=' + packageTurbo.checked + '&full-screen=' + packageFullScreen.checked + '&resolution-x=' + packageCustomResolutionValue.value: 'about:blank';
+    packageLink.href = P.player.projectId ? 'file:///D:/Mittagskogel/Sulfurous/app.html?id=' + P.player.projectId + '&turbo=' + packageTurbo.checked + '&full-screen=' + packageFullScreen.checked + '&resolution-x=' + packageCustomResolutionValue.value: 'about:blank';
     packageCustomResolutionValue.disabled = !packageCustomResolution.checked;    
   }
   
@@ -227,8 +238,11 @@
   packageCustomResolutionValue.addEventListener('change', updatePackageLink);
 
   function updateEmbedCode(e) {
+    if(embedStandardResolution.checked) embedCustomResolutionValue.value = 480;
+    if(embedDoubleResolution.checked) embedCustomResolutionValue.value = 960;
     //remember to change the URL back to 'https://' + location.host when putting this back online...
-    embedCode.value = P.player.projectId ? '<script src=https://' + location.host + '/embed.js?id=' + P.player.projectId + (embedHideControls.checked ? '&ui=false' : '&auto-start=' + embedAutoStart.checked + '&light-content=' + embedLightContent.checked) + '></' + 'script>' : '';
+    embedCode.value = P.player.projectId ? '<script src=file:///D:/Mittagskogel/Sulfurous' + '/embed.js?id=' + P.player.projectId + '&resolution-x=' + embedCustomResolutionValue.value + (embedHideControls.checked ? '&ui=false' : '&auto-start=' + embedAutoStart.checked + '&light-content=' + embedLightContent.checked) + '></' + 'script>' : '';
+    embedCustomResolutionValue.disabled = !embedCustomResolution.checked;
     embedAutoStart.disabled =
     embedLightContent.disabled = embedHideControls.checked;
     if (embedHideControls.checked) embedAutoStart.checked = true;
@@ -246,6 +260,10 @@
   embedHideControls.addEventListener('change', updateEmbedCode);
   embedAutoStart.addEventListener('change', updateEmbedCode);
   embedLightContent.addEventListener('change', updateEmbedCode);
+  embedStandardResolution.addEventListener('change', updateEmbedCode);
+  embedDoubleResolution.addEventListener('change', updateEmbedCode);
+  embedCustomResolution.addEventListener('change', updateEmbedCode);
+  embedCustomResolutionValue.addEventListener('change', updateEmbedCode);
 
   load(initialId);
 

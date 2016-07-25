@@ -17,14 +17,14 @@
       resolution = parts[1];
     }
   });
-
+  
   var iframe = document.createElement('iframe');
   iframe.setAttribute('allowfullscreen', true);
   iframe.setAttribute('allowtransparency', true);
   iframe.src = script.src.replace(/^https:/, 'http:').replace(/embed\.js/, 'embed.html');
   //width: 482, height: 393
-  iframe.width = hasUI ? resolution+2 : resolution;
-  iframe.height = hasUI ? resolution*3/4+33 : resolution*3/4;
+  iframe.width = hasUI ? Number(resolution)+2 : resolution;
+  iframe.height = hasUI ? Number(resolution)*3/4+33 : resolution*3/4;
   iframe.style.border = '0';
   iframe.className = 'phosphorus';
 
