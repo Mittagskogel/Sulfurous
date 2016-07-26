@@ -1074,7 +1074,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
     this.penContext = this.penCanvas.getContext('2d');
     this.penContext.lineCap = 'round';
     this.penContext.scale(SCALE, SCALE);
-
+    
     this.canvas = document.createElement('canvas');
     this.root.appendChild(this.canvas);
     this.canvas.width = SCALE * 480;
@@ -1274,7 +1274,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
     this.backdropContext.save();
     var s = this.zoom * SCALE * costume.scale;
     this.backdropContext.scale(s, s);
-    this.backdropContext.drawImage(costume.image, 0, 0);
+    this.backdropContext.drawImage(costume.image, 0, 0, costume.image.width/4, costume.image.height/4);
     this.backdropContext.restore();
   };
 
@@ -1579,12 +1579,13 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         x -= .5;
         y -= .5;
       }
+
       context.strokeStyle = this.penCSS || 'hsl(' + this.penHue + ',' + this.penSaturation + '%,' + (this.penLightness > 100 ? 200 - this.penLightness : this.penLightness) + '%)';
       context.lineWidth = this.penSize;
       context.beginPath();
       context.moveTo(240 + ox, 180 - oy);
       context.lineTo(240 + x, 180 - y);
-      context.stroke();
+      context.stroke();    
     }
     if (this.saying) {
       this.updateBubble();
@@ -1598,12 +1599,12 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
     context.fillStyle = this.penCSS || 'hsl(' + this.penHue + ',' + this.penSaturation + '%,' + (this.penLightness > 100 ? 200 - this.penLightness : this.penLightness) + '%)';
 
 	if(this.penSize <= 2){
-	  context.fillRect(240 + x - this.penSize/2, 180 - y - this.penSize/2, this.penSize, this.penSize);
+	  context.fillRect(240 + x - this.penSize, 180 - y, this.penSize, this.penSize);
 	}
 	else{
-	   context.beginPath();
-      context.arc(240 + x, 180 - y, this.penSize / 2, 0, 2 * Math.PI, false);
-      context.fill();
+	  context.beginPath();
+    context.arc(240 + x, 180 - y, this.penSize / 2, 0, 2 * Math.PI, false);
+    context.fill();
 	}
   };
 
@@ -2456,7 +2457,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
 
 P.compile = (function() {
   'use strict';
-
+  
   var LOG_PRIMITIVES;
   var DEBUG;
   // LOG_PRIMITIVES = true;
@@ -3169,6 +3170,7 @@ P.compile = (function() {
       } else if (block[0] === 'putPenUp') {
 
         source += 'S.isPenDown = false;\n';
+        source += 'S.dotPen();\n';
         source += 'S.penState = null;\n';
 
       } else if (block[0] === 'penColor:') {
@@ -3185,7 +3187,7 @@ P.compile = (function() {
         source += 'S.penSaturation = 100;\n';
 
       } else if (block[0] === 'changePenHueBy:') {
-
+        
         source += noRGB;
         source += 'S.penHue += ' + num(block[1]) + ' * 360 / 200;\n';
         source += 'S.penSaturation = 100;\n';
@@ -3588,7 +3590,7 @@ P.compile = (function() {
     warnings = Object.create(null);
 
     compileScripts(stage);
-
+    
     for (var i = 0; i < stage.children.length; i++) {
       if (!stage.children[i].cmd) {
         compileScripts(stage.children[i]);
@@ -3598,7 +3600,6 @@ P.compile = (function() {
     for (var key in warnings) {
       console.warn(key + (warnings[key] > 1 ? ' (repeated ' + warnings[key] + ' times)' : ''));
     }
-
   };
 
 }());

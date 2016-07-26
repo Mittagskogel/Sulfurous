@@ -52,6 +52,7 @@
     <label for=package-turbo>Turbo mode</label>
     <input type=radio id=package-full-screen name=custom-resolution>
     <label for=package-full-screen>Full screen</label>
+    <br />
     <input type=radio id=package-standard-resolution checked name=custom-resolution>
     <label for=package-standard-resolution>480x360</label>
     <input type=radio id=package-double-resolution name=custom-resolution>
@@ -226,7 +227,7 @@
     if(packageStandardResolution.checked) packageCustomResolutionValue.value = 480;
     if(packageDoubleResolution.checked) packageCustomResolutionValue.value = 960;
     //remember to change the URL back to /app.html when putting this back online...
-    packageLink.href = P.player.projectId ? 'http://newton.nes.aau.at/~sulfurous/app.html?id=' + P.player.projectId + '&turbo=' + packageTurbo.checked + '&full-screen=' + packageFullScreen.checked + '&resolution-x=' + packageCustomResolutionValue.value: 'about:blank';
+    packageLink.href = P.player.projectId ? 'file:///D:/Mittagskogel/Sulfurous/app.html?id=' + P.player.projectId + '&turbo=' + packageTurbo.checked + '&full-screen=' + packageFullScreen.checked + '&resolution-x=' + packageCustomResolutionValue.value: 'about:blank';
     packageCustomResolutionValue.disabled = !packageCustomResolution.checked;    
   }
   
@@ -241,7 +242,7 @@
     if(embedStandardResolution.checked) embedCustomResolutionValue.value = 480;
     if(embedDoubleResolution.checked) embedCustomResolutionValue.value = 960;
     //remember to change the URL back to 'https://' + location.host when putting this back online...
-    embedCode.value = P.player.projectId ? '<script src=http://newton.nes.aau.at/~sulfurous' + '/embed.js?id=' + P.player.projectId + '&resolution-x=' + embedCustomResolutionValue.value + (embedHideControls.checked ? '&ui=false' : '&auto-start=' + embedAutoStart.checked + '&light-content=' + embedLightContent.checked) + '></' + 'script>' : '';
+    embedCode.value = P.player.projectId ? '<script src=file:///D:/Mittagskogel/Sulfurous' + '/embed.js?id=' + P.player.projectId + '&resolution-x=' + embedCustomResolutionValue.value + (embedHideControls.checked ? '&ui=false' : '&auto-start=' + embedAutoStart.checked + '&light-content=' + embedLightContent.checked) + '></' + 'script>' : '';
     embedCustomResolutionValue.disabled = !embedCustomResolution.checked;
     embedAutoStart.disabled =
     embedLightContent.disabled = embedHideControls.checked;
