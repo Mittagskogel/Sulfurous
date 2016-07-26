@@ -924,9 +924,9 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
       }
     }
 	//else{
-		var i = (Math.floor(costume) - 1 || this.currentCostumeIndex) % this.costumes.length;
+		var i = (Math.floor(costume) - 1) % this.costumes.length;
 		if (i < 0) i += this.costumes.length;
-		this.currentCostumeIndex = i;
+		this.currentCostumeIndex = !isNaN(costume) ? i : this.currentCostumeIndex;
 		if (this.isStage) this.updateBackdrop();
 		if (this.saying) this.updateBubble();
 	//}
