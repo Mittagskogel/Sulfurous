@@ -89,7 +89,7 @@
 </div>
 <section>
   <h1>Credits</h1>
-  <p>Sulfurous was created by <a href=https://github.com/mittagskogel>me</a> and is based off Phosphorus, which was created by <a href=https://github.com/nathan>Nathan Dinsmore</a>. Its CPS-style compilation and overall design was inspired by <a href=https://github.com/RHY3756547>Rhys Simpson</a>'s <a href=https://code.google.com/p/sb2-js/>sb2.js</a>. It would have more bugs if not for <a href=https://github.com/trumank>Truman Kilen</a>. It uses the <a href=http://stuk.github.io/jszip/>JSZip</a> library, created by <a href=https://github.com/stuk>Stuart Knightley</a>, <a href=https://github.com/dduponchel>David Duponchel</a>, Franz Buchinger, and <a href=https://github.com/aadsm>António Afonso</a>, to read <code>.sb2</code> files and compressed projects, and the <a href=https://code.google.com/p/canvg/>canvg</a> library, created by <a href=https://code.google.com/u/gabelerner@gmail.com/>Gabe Lerner</a>, to render SVGs in <code>&lt;canvas&gt;</code> elements.
+  <p>Sulfurous was created by <a href=https://github.com/mittagskogel>Mittagskogel</a> and is based off Phosphorus, which was created by <a href=https://github.com/nathan>Nathan Dinsmore</a>. Its CPS-style compilation and overall design was inspired by <a href=https://github.com/RHY3756547>Rhys Simpson</a>'s <a href=https://code.google.com/p/sb2-js/>sb2.js</a>. It would have more bugs if not for <a href=https://github.com/trumank>Truman Kilen</a>. It uses the <a href=http://stuk.github.io/jszip/>JSZip</a> library, created by <a href=https://github.com/stuk>Stuart Knightley</a>, <a href=https://github.com/dduponchel>David Duponchel</a>, Franz Buchinger, and <a href=https://github.com/aadsm>António Afonso</a>, to read <code>.sb2</code> files and compressed projects, and the <a href=https://code.google.com/p/canvg/>canvg</a> library, created by <a href=https://code.google.com/u/gabelerner@gmail.com/>Gabe Lerner</a>, to render SVGs in <code>&lt;canvas&gt;</code> elements.
   <h1>Code</h1>
   <p>The source code for sulfurous is available <a href=https://github.com/mittagskogel/sulfurous>on GitHub</a>. See <a href=https://github.com/nathan/phosphorus>Phosphorus</a> for the original version.</p>
 </section>
@@ -227,7 +227,8 @@
     if(packageStandardResolution.checked) packageCustomResolutionValue.value = 480;
     if(packageDoubleResolution.checked) packageCustomResolutionValue.value = 960;
     //remember to change the URL back to /app.html when putting this back online...
-    packageLink.href = P.player.projectId ? 'file:///D:/Mittagskogel/Sulfurous/app.html?id=' + P.player.projectId + '&turbo=' + packageTurbo.checked + '&full-screen=' + packageFullScreen.checked + '&resolution-x=' + packageCustomResolutionValue.value: 'about:blank';
+    //packageLink.href = P.player.projectId ? 'file:///D:/Mittagskogel/Sulfurous/app.html?id=' + P.player.projectId + '&turbo=' + packageTurbo.checked + '&full-screen=' + packageFullScreen.checked + '&resolution-x=' + packageCustomResolutionValue.value: 'about:blank';
+    packageLink.href = P.player.projectId ? 'http://newton.nes.aau.at/~sulfurous/app.html?id=' + P.player.projectId + '&turbo=' + packageTurbo.checked + '&full-screen=' + packageFullScreen.checked + '&resolution-x=' + packageCustomResolutionValue.value: 'about:blank';
     packageCustomResolutionValue.disabled = !packageCustomResolution.checked;    
   }
   
@@ -242,7 +243,8 @@
     if(embedStandardResolution.checked) embedCustomResolutionValue.value = 480;
     if(embedDoubleResolution.checked) embedCustomResolutionValue.value = 960;
     //remember to change the URL back to 'https://' + location.host when putting this back online...
-    embedCode.value = P.player.projectId ? '<script src=file:///D:/Mittagskogel/Sulfurous' + '/embed.js?id=' + P.player.projectId + '&resolution-x=' + embedCustomResolutionValue.value + (embedHideControls.checked ? '&ui=false' : '&auto-start=' + embedAutoStart.checked + '&light-content=' + embedLightContent.checked) + '></' + 'script>' : '';
+    //embedCode.value = P.player.projectId ? '<script src=file:///D:/Mittagskogel/Sulfurous' + '/embed.js?id=' + P.player.projectId + '&resolution-x=' + embedCustomResolutionValue.value + (embedHideControls.checked ? '&ui=false' : '&auto-start=' + embedAutoStart.checked + '&light-content=' + embedLightContent.checked) + '></' + 'script>' : '';
+    embedCode.value = P.player.projectId ? '<script src=http://newton.nes.aau.at/~sulfurous' + '/embed.js?id=' + P.player.projectId + '&resolution-x=' + embedCustomResolutionValue.value + (embedHideControls.checked ? '&ui=false' : '&auto-start=' + embedAutoStart.checked + '&light-content=' + embedLightContent.checked) + '></' + 'script>' : '';    
     embedCustomResolutionValue.disabled = !embedCustomResolution.checked;
     embedAutoStart.disabled =
     embedLightContent.disabled = embedHideControls.checked;

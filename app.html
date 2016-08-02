@@ -60,6 +60,8 @@
       }
     }
   });
+  
+  P.resolution = resolution;
 
   var splash = document.querySelector('.splash');
   var progressBar = document.querySelector('.progress-bar');
@@ -118,7 +120,7 @@
   P.IO.loadScratchr2ProjectTitle(projectId, function(title) {
     document.title = projectTitle = title;
   });
-
+  
 }());
 
 </script>

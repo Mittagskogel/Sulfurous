@@ -620,9 +620,9 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
       element = newElement;
     }
     if (element.nodeName === 'text') {
+      
       var font = element.getAttribute('font-family') || '';
-      //Using only Helvetica for now because I can't figure out why the others aren't rendering on canvas.
-      //Some text will be misaligned.
+      
       font = IO.FONTS[font] || font;
       if (font) {
         element.setAttribute('font-family', font);
@@ -634,7 +634,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
       }
 
       //TODO: Find out what actual values have to be put here.
-      element.setAttribute('x', 5);
+      element.setAttribute('x', 0);
       element.setAttribute('y', size*IO.LINE_HEIGHTS[font]);
       
       var lines = element.textContent.split('\n');
@@ -644,18 +644,67 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         for (var i = 1, l = lines.length; i < l; i++) {
           var tspan = document.createElementNS(null, 'tspan');
           tspan.textContent = lines[i];
-          tspan.setAttribute('x', 5);//x);
+          tspan.setAttribute('x', 0);
           tspan.setAttribute('y', size*(i+1)*lineHeight);//y + size * i * lineHeight);
           tspan.setAttribute('id', 'ID' + Math.random());
           element.appendChild(tspan);
         }
       }
+      
       // svg.style.cssText = '';
       // console.log(element.textContent, 'data:image/svg+xml;base64,' + btoa(svg.outerHTML));
     } else if ((element.hasAttribute('x') || element.hasAttribute('y')) && element.hasAttribute('transform')) {
       element.setAttribute('x', 0);
       element.setAttribute('y', 0);
     }
+    
+    if (element.nodeName === 'linearGradient'){
+      element.setAttribute('id', element.getAttribute('id') + svg.getAttribute('id'));
+      
+      if(element.getAttribute('gradientUnits')){
+        element.setAttribute('gradientUnits', 'objectBoundingBox');
+        //I really don't know what kind of algorithm scratch is following here, so this is just guesswork.
+        var x1 = Number(element.getAttribute('x1'));
+        var x2 = Number(element.getAttribute('x2'));
+        var y1 = Number(element.getAttribute('y1'));
+        var y2 = Number(element.getAttribute('y2'));
+        
+        if(x1 === x2){
+          x1 = 0;
+          x2 = 0;
+        }
+        else if(x1 < x2){
+          x1 = 0;
+          x2 = 1;
+        }
+        else{
+          x1 = 1;
+          x2 = 0;
+        }
+        if(y1 === y2){
+          y1 = 0;
+          y2 = 0;
+        }
+        else if(y1 < y2){
+          y1 = 0;
+          y2 = 1;
+        }
+        else{
+          y1 = 1;
+          y2 = 0;
+        }
+        
+        element.setAttribute('x1', x1);
+        element.setAttribute('x2', x2);
+        element.setAttribute('y1', y1);
+        element.setAttribute('y2', y2);
+      }
+    }
+    
+    if (element.getAttribute('fill') ? element.getAttribute('fill').indexOf("url") > -1 : false){
+      element.setAttribute('fill', element.getAttribute('fill').replace(/.$/, svg.getAttribute('id')));
+    }
+    
     [].forEach.call(element.childNodes, function(child){
 	  var newChild = IO.fixSVG(svg, child);
       if (newChild !== child) {
@@ -679,21 +728,23 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         //div.innerHTML = source.replace(/(<\/?)svg:/g, '$1');
         //var svg = div.firstElementChild;		
         var svg = new DOMParser().parseFromString(source, 'image/svg+xml').firstElementChild;
+        svg.id = 'svg' + Math.random();
         if(svg.getAttribute('width') === '0' || svg.getAttribute('height') === '0'){
           svg = document.createElementNS('http://www.w3.org/2000/svg', svg.localName);
         }
         else svg = IO.fixSVG(svg, svg);
         
         //svg.style.visibility = 'hidden';
-        //keep this to avoid overflow in embed.
-        svg.style.position = 'absolute';
+        //svg.style.position = 'absolute';
         //svg.style.left = '-10000px';
         //svg.style.top = '-10000px';
-        svg.style.width = 0;
-        svg.style.height = 0;
-
+   
+        //SVG is downright ignoring everything I try to do, so I simply give up. I've tried to fix this and am extremely frustrated because not even the most simple things will work. Either I am completely stupid, or the way svg behaves is linked to a random number generator controlled by Donald Trump. Either way. I GIVE UP. Whatever works, works, and the rest; I don't care.
+        
         document.body.appendChild(svg);
+        
         var viewBox = svg.viewBox.baseVal;
+        
         if (viewBox && (viewBox.x || viewBox.y)) {
           //svg.width.baseVal.value = viewBox.width - viewBox.x;
           //svg.height.baseVal.value = viewBox.height - viewBox.y;
@@ -702,15 +753,18 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
           //viewBox.width = 0;
           //viewBox.height = 0;
           var bb = svg.getBBox();
-          viewBox.width  = svg.width.baseVal.value = Math.ceil(bb.x + bb.width + 10);
-          viewBox.height = svg.height.baseVal.value = Math.ceil(bb.y + bb.height + 10);		
+          viewBox.width  = svg.width.baseVal.value = Math.ceil(bb.x + bb.width + 1);
+          viewBox.height = svg.height.baseVal.value = Math.ceil(bb.y + bb.height + 1);		       
+          viewBox.x = 0;
+          viewBox.y = 0;
         }
-        
+
         //IO.fixSVG(svg, svg);
         //while (div.firstChild) div.removeChild(div.lastChild);
         //div.appendChild(svg);
         //svg.style.visibility = 'visible';
         //svg.style.cssText = '';
+        
         svg.style['image-rendering'] = '-moz-crisp-edges';
         svg.style['image-rendering'] = 'pixelated';
         
@@ -721,10 +775,12 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         var image = new Image;
 
         var newSource = (new XMLSerializer()).serializeToString(svg)
-        svg.id = 'svg' + Math.random();
+        //svg.id = 'svg' + Math.random();
         // console.log(md5, 'data:image/svg+xml;base64,' + btoa(source), 'data:image/svg+xml;base64,' + btoa(newSource));
-        image.src = 'data:image/svg+xml;base64,' + btoa(newSource);       
-        //console.log(image);
+        image.src = 'data:image/svg+xml;base64,' + btoa(newSource); 
+        
+        svg.style.display = 'none';
+        
         image.onload = function() {
           if (callback) callback(image);
           request.load();
@@ -904,7 +960,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
   };
 
   Base.prototype.setCostume = function(costume) {
-    if (typeof costume !== 'number') {
+    if (isNaN(parseInt(costume))){//typeof costume !== 'number') {
       costume = '' + costume;
       for (var i = 0; i < this.costumes.length; i++) {
         if (this.costumes[i].costumeName === costume) {
@@ -922,14 +978,13 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         this.showPreviousCostume();
         return;
       }
-    }
-	//else{
-		var i = (Math.floor(costume) - 1) % this.costumes.length;
-		if (i < 0) i += this.costumes.length;
-		this.currentCostumeIndex = !isNaN(costume) ? i : this.currentCostumeIndex;
+      return;
+    } 
+    var i = (Math.floor(parseInt(costume)) - 1) % this.costumes.length;
+    if (i < 0) i += this.costumes.length;
+		this.currentCostumeIndex = i;
 		if (this.isStage) this.updateBackdrop();
 		if (this.saying) this.updateBubble();
-	//}
   };
 
   Base.prototype.setFilter = function(name, value) {
@@ -1274,7 +1329,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
     this.backdropContext.save();
     var s = this.zoom * SCALE * costume.scale;
     this.backdropContext.scale(s, s);
-    this.backdropContext.drawImage(costume.image, 0, 0, costume.image.width/4, costume.image.height/4);
+    this.backdropContext.drawImage(costume.image, 0, 0, costume.image.width/costume.resScale, costume.image.height/costume.resScale);
     this.backdropContext.restore();
   };
 
@@ -1598,19 +1653,19 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
     var y = this.scratchY;
     context.fillStyle = this.penCSS || 'hsl(' + this.penHue + ',' + this.penSaturation + '%,' + (this.penLightness > 100 ? 200 - this.penLightness : this.penLightness) + '%)';
 
-	if(this.penSize <= 2){
-	  context.fillRect(240 + x - this.penSize, 180 - y, this.penSize, this.penSize);
-	}
-	else{
+	//if(this.penSize <= 2 * 480 / this.stage.penCanvas.width){
+	//  context.fillRect(240 + x - this.penSize, 180 - y, this.penSize, this.penSize);
+	//}
+	//else{
 	  context.beginPath();
     context.arc(240 + x, 180 - y, this.penSize / 2, 0, 2 * Math.PI, false);
     context.fill();
-	}
+	//}
   };
 
   Sprite.prototype.draw = function(context, noEffects) {
     var costume = this.costumes[this.currentCostumeIndex];
-
+    
     if (this.isDragging) {
       this.moveTo(this.dragOffsetX + this.stage.mouseX, this.dragOffsetY + this.stage.mouseY);
     }
@@ -1793,11 +1848,11 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         costumeCanvas.parentNode.removeChild(costumeCanvas);            
         }
         
-        context.drawImage(effectsCanvas, 0, 0, costume.image.width/4, costume.image.height/4);
+        context.drawImage(effectsCanvas, 0, 0, costume.image.width/costume.resScale, costume.image.height/costume.resScale);
         
         effectsCanvas.parentNode.removeChild(effectsCanvas);
       }
-      else context.drawImage(costume.image, 0, 0, costume.image.width/4, costume.image.height/4);
+      else context.drawImage(costume.image, 0, 0, costume.image.width/costume.resScale, costume.image.height/costume.resScale);
 
       context.restore();
     }
@@ -1835,7 +1890,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
       } else if (this.rotationStyle === 'leftRight' && this.direction < 0) {
         cx = -cx
       }
-      var d = costume.context.getImageData(cx * 4 * costume.bitmapResolution + costume.rotationCenterX * 4, cy * 4 * costume.bitmapResolution + costume.rotationCenterY * 4, 1, 1).data;
+      var d = costume.context.getImageData(cx * costume.resScale * costume.bitmapResolution + costume.rotationCenterX * costume.resScale, cy * costume.resScale * costume.bitmapResolution + costume.rotationCenterY * costume.resScale, 1, 1).data;
       return d[3] !== 0;
     } else if (thing === '_edge_') {
       var bounds = this.rotatedBounds();
@@ -2129,6 +2184,9 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
   };
 
   var Costume = function(data, index, base) {
+    
+    //var lol = document.body.style.width;
+    
     this.index = index;
     this.base = base;
     this.baseLayerID = data.baseLayerID;
@@ -2140,7 +2198,8 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
     this.rotationCenterX = data.rotationCenterX;
     this.rotationCenterY = data.rotationCenterY;
     this.textLayer = data.$text;
-
+    this.resScale = Math.pow(2, Math.floor(Math.log((P.resolution || 960)/481)/Math.log(2)))*2;
+    
     this.image = document.createElement('canvas');
     this.context = this.image.getContext('2d');
 
@@ -2158,12 +2217,14 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
     if (!this.baseLayer.width || this.textLayer && !this.textLayer.width) {
       return;
     }
-    this.image.width = this.baseLayer.width*4;
-    this.image.height = this.baseLayer.height*4;
+    
+    this.image.width = this.baseLayer.width*this.resScale;
+    this.image.height = this.baseLayer.height*this.resScale;
     
     this.context.mozImageSmoothingEnabled = false;
     this.context.imageSmoothingEnabled = false;
     this.context.msImageSmoothingEnabled = false;
+    this.context.webkitImageSmoothingEnabled = false;
     
     this.context.drawImage(this.baseLayer, 0, 0, this.image.width, this.image.height);
     if (this.textLayer) {
