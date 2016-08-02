@@ -1,0 +1,40 @@
+Sulfurous Changelog
+
+
+Bugfixes:
+
+*   SVGs (vector sprites) now load. (canvg was dropped)
+*   SVGs render correctly in most cases. (text still doesn't work).
+*   All sound is supported, doesn't always work in Firefox. (Chrome works)
+*   Support for touchscreen and mouse on hybrid devices.
+*   Costume selection emulates Scratch more closely now.
+*   Sprite does not draw while being dragged.
+*   UI is visible in fullscreen in Firefox.
+*   SVGs without content no longer cause problems.
+*   Loaded SVGs are hidden from DOM.
+*   Default pen color is set (blue).
+
+Improvements:
+
+*   Bitmaps render without image smoothing.
+*   Vector sprites are rendered according to screen resolution, so they never pixelate.
+*   Bitmaps embedded in SVG also render without image smoothing.
+
+New Features:
+
+*   Some graphic effects were added: Pixelate, Mosaic, Brightness.
+*   Adjustable screen size: Package and Embed options allow setting a fixed screen size.
+
+Planned/Ideas:
+
+*   Add all visual effects.
+*   Cloud vars, possibly using cookies.
+*   Networking between projects (like mesh).
+*   Insertion of custom code in Scratch project.
+*   Access to rendering options through Scratch project.
+*   Import/export of local files into Scratch project.
+*   Compiled Javascript code viewer.
+*   WebGL rendering.
+*   Different rendering of speech bubbles. (not in DOM).
+*   Fix SVG text and font.
+*   Render lists (show list/hide list).
