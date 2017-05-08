@@ -700,6 +700,10 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         element.setAttribute('y2', y2);
       }
     }
+	
+	if(element.nodeName === 'radialGradient'){
+		element.setAttribute('id', element.getAttribute('id') + svg.getAttribute('id'));
+	}
     
     if (element.getAttribute('fill') ? element.getAttribute('fill').indexOf("url") > -1 : false){
       element.setAttribute('fill', element.getAttribute('fill').replace(/.$/, svg.getAttribute('id')));
@@ -739,8 +743,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         //svg.style.left = '-10000px';
         //svg.style.top = '-10000px';
    
-        //SVG is downright ignoring everything I try to do, so I simply give up. I've tried to fix this and am extremely frustrated because not even the most simple things will work. Either I am completely stupid, or the way svg behaves is linked to a random number generator controlled by Donald Trump. Either way. I GIVE UP. Whatever works, works, and the rest; I don't care.
-        
+
         document.body.appendChild(svg);
         
         var viewBox = svg.viewBox.baseVal;
@@ -779,7 +782,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         // console.log(md5, 'data:image/svg+xml;base64,' + btoa(source), 'data:image/svg+xml;base64,' + btoa(newSource));
         image.src = 'data:image/svg+xml;base64,' + btoa(newSource); 
         
-        svg.style.display = 'none';
+        //svg.style.display = 'none';
         
         image.onload = function() {
           if (callback) callback(image);
@@ -1657,8 +1660,8 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
 	//  context.fillRect(240 + x - this.penSize, 180 - y, this.penSize, this.penSize);
 	//}
 	//else{
-	  context.beginPath();
-    context.arc(240 + x, 180 - y, this.penSize / 2, 0, 2 * Math.PI, false);
+	context.beginPath();
+    context.arc(240 + x, 180 - y, Math.floor(this.penSize / 2), 0, 2 * Math.PI, false);
     context.fill();
 	//}
   };
@@ -2005,13 +2008,13 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
     var s = costume.scale * this.scale;
     var left = -costume.rotationCenterX * s;
     var top = costume.rotationCenterY * s;
-    var right = left + costume.image.width * s;
-    var bottom = top - costume.image.height * s;
+    var right = left + costume.image.width * s / costume.resScale;
+    var bottom = top - costume.image.height * s / costume.resScale;
 
     if (this.rotationStyle !== 'normal') {
       if (this.rotationStyle === 'leftRight' && this.direction < 0) {
         right = -left;
-        left = right - costume.image.width * costume.scale * this.scale;
+        left = right - costume.image.width * costume.scale * this.scale / costume.resScale;
       }
       return {
         left: this.scratchX + left,
@@ -2184,8 +2187,6 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
   };
 
   var Costume = function(data, index, base) {
-    
-    //var lol = document.body.style.width;
     
     this.index = index;
     this.base = base;
@@ -3471,8 +3472,9 @@ P.compile = (function() {
         source += '}\n';
 
       } else if (block[0] === 'wait:elapsed:from:') {
-
-        wait(num(block[1]));
+		if(block[1] != 0){
+			wait(num(block[1]));
+		}
 
       } else if (block[0] === 'warpSpeed') {
 
