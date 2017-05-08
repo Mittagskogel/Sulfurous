@@ -1,1 +1,1 @@
-[http://newton.nes.aau.at/~sulfurous/](http://newton.nes.aau.at/~sulfurous/)
+[http://sulfurous.newton.aau.at/](http://sulfurous.newton.aau.at/)
