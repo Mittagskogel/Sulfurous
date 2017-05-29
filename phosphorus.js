@@ -170,8 +170,8 @@ var P = (function() {
 
   var IO = {};
 
-  IO.PROJECT_URL = 'http://projects.scratch.mit.edu/internalapi/project/';
-  IO.ASSET_URL = 'http://cdn.assets.scratch.mit.edu/internalapi/asset/';
+  IO.PROJECT_URL = 'https://projects.scratch.mit.edu/internalapi/project/';
+  IO.ASSET_URL = 'https://cdn.assets.scratch.mit.edu/internalapi/asset/';
   IO.SOUNDBANK_URL = 'https://cdn.rawgit.com/LLK/scratch-flash/v429/src/soundbank/';
 
   IO.FONTS = {
@@ -292,7 +292,7 @@ var P = (function() {
     var request = new CompositeRequest;
 
     request.defer = true;
-    request.add(P.IO.load('http://crossorigin.me/http://scratch.mit.edu/projects/' + id + '/').onLoad(function(data) {
+    request.add(P.IO.load('https://crossorigin.me/https://scratch.mit.edu/projects/' + id + '/').onLoad(function(data) {
       var m = /<title>\s*(.+?)(\s+on\s+Scratch)?\s*<\/title>/.exec(data);
       if (callback) request.onLoad(callback.bind(self));
       if (m) {
@@ -608,7 +608,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
   IO.fixSVG = function(svg, element) {
     if (element.nodeType !== 1) return element;
     if (element.nodeName.slice(0, 4).toLowerCase() === 'svg:') {
-      var newElement = document.createElementNS('http://www.w3.org/2000/svg', element.localName);
+      var newElement = document.createElementNS('https://www.w3.org/2000/svg', element.localName);
       var attributes = element.attributes;
       var newAttributes = newElement.attributes;
       for (var i = attributes.length; i--;) {
@@ -734,7 +734,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         var svg = new DOMParser().parseFromString(source, 'image/svg+xml').firstElementChild;
         svg.id = 'svg' + Math.random();
         if(svg.getAttribute('width') === '0' || svg.getAttribute('height') === '0'){
-          svg = document.createElementNS('http://www.w3.org/2000/svg', svg.localName);
+          svg = document.createElementNS('https://www.w3.org/2000/svg', svg.localName);
         }
         else svg = IO.fixSVG(svg, svg);
         

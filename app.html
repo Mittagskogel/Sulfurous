@@ -26,10 +26,12 @@
 
 (function () {
   'use strict';
-
+  
+	/*
   if (location.protocol === 'https:') {
-    location.replace(('' + location).replace(/^https:/, 'http:'));
+    location.replace(('' + location).replace(/^https:/, 'https:'));
   }
+	*/
 
   var stage;
 
@@ -85,7 +87,7 @@
 
   function showError(e) {
     error.style.display = 'table';
-    bugLink.href = 'https://github.com/mittagskogel/sulfurous/issues/new?title=' + encodeURIComponent(projectTitle || '') + '&body=' + encodeURIComponent('\n\n\nhttp://scratch.mit.edu/projects/' + projectId + '\nhttp://newton.nes.aau.at/~sulfurous/#' + projectId + (e.stack ? '\n\n```\n' + e.stack + '\n```' : ''));
+    bugLink.href = 'https://github.com/mittagskogel/sulfurous/issues/new?title=' + encodeURIComponent(projectTitle || '') + '&body=' + encodeURIComponent('\n\n\nhttps://scratch.mit.edu/projects/' + projectId + '\nhttps://newton.nes.aau.at/~sulfurous/#' + projectId + (e.stack ? '\n\n```\n' + e.stack + '\n```' : ''));
     console.error(e.stack);
   }
 

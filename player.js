@@ -182,7 +182,7 @@ P.player = (function() {
 
   function load(id, cb, titleCallback) {
     P.player.projectId = id;
-    P.player.projectURL = id ? 'http://scratch.mit.edu/projects/' + id + '/' : '';
+    P.player.projectURL = id ? 'https://scratch.mit.edu/projects/' + id + '/' : '';
 	
     if (stage) {
       stage.stopAll();
@@ -208,7 +208,7 @@ P.player = (function() {
 
   function showError(e) {
     error.style.display = 'block';
-    errorBugLink.href = 'https://github.com/nathan/phosphorus/issues/new?title=' + encodeURIComponent(P.player.projectTitle || P.player.projectURL) + '&body=' + encodeURIComponent('\n\n\n' + P.player.projectURL + '\nhttp://phosphorus.github.io/#' + P.player.projectId + '\n' + navigator.userAgent + (e.stack ? '\n\n```\n' + e.stack + '\n```' : ''));
+    errorBugLink.href = 'https://github.com/nathan/phosphorus/issues/new?title=' + encodeURIComponent(P.player.projectTitle || P.player.projectURL) + '&body=' + encodeURIComponent('\n\n\n' + P.player.projectURL + '\nhttps://phosphorus.github.io/#' + P.player.projectId + '\n' + navigator.userAgent + (e.stack ? '\n\n```\n' + e.stack + '\n```' : ''));
     console.error(e.stack);
   }
 
