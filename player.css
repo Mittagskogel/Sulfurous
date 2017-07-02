@@ -103,8 +103,10 @@
 }
 .fs .controls span,
 .light-content .controls span {
+  background-position-y: -32px;
   opacity: .6;
 }
+/*
 .fs .controls  .flag,
 .light-content .controls .flag{
   background-position: 0 -32px;
@@ -125,7 +127,7 @@
 .light-content .controls .full-screen{
   float: left;
   background-position: -128px -32px;
-}
+}*/
 .light-content .controls .full-screen {
   background-position-y: -64px;
 }

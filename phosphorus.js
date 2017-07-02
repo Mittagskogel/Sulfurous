@@ -518,7 +518,7 @@ function readADPCM(uInt8Array) {
 				if (nib & 2) diff += step >> 1;
 				if (nib & 4) diff += step;
 				if (nib & 8) diff = 0 - diff;
-				volume = Math.max(Math.min(32767, volume + diff), -32768)
+				volume = Math.max(Math.min(32767, volume + diff), -32768);
 				var sample = Math.round(volume);
 				if (sample < 0) sample += 65536; // 2's complement signed
 				soundData[sdi++] = sample % 256;
@@ -574,6 +574,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
     data.lists = data.lists || [];
   };
 
+	//process an array of several inputs (such as costumes, sounds, ...)
   IO.loadArray = function(data, process) {
     if (!data) return [];
     for (var i = 0; i < data.length; i++) {
@@ -591,11 +592,11 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
   IO.loadCostume = function(data) {
     IO.loadMD5(data.baseLayerMD5, data.baseLayerID, function(asset) {
       data.$image = asset;
-    });
+    }, false);
     if (data.textLayerMD5) {
       IO.loadMD5(data.textLayerMD5, data.textLayerID, function(asset) {
         data.$text = asset;
-      });
+      }, false);
     }
   };
 
@@ -719,11 +720,13 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
   };
 
   IO.loadMD5 = function(md5, id, callback, isAudio) {
-    if (IO.zip) {
+		if (IO.zip) {
       var f = isAudio ? IO.zip.file(id + '.wav') : IO.zip.file(id + '.gif') || IO.zip.file(id + '.png') || IO.zip.file(id + '.jpg') || IO.zip.file(id + '.svg');
       md5 = f.name;
     }
+		//get file extension
     var ext = md5.split('.').pop();
+		//special handling for svg
     if (ext === 'svg') {
       var cb = function(source) {
         var div = document.createElement('div');
@@ -731,9 +734,13 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         //var svg = div.getElementsByTagName('svg')[0];
         //div.innerHTML = source.replace(/(<\/?)svg:/g, '$1');
         //var svg = div.firstElementChild;		
+				
+				//parse svg source
         var svg = new DOMParser().parseFromString(source, 'image/svg+xml').firstElementChild;
-        svg.id = 'svg' + Math.random();
+				//use md5 hash as unique name for svg image
+        svg.id = 'svg' + md5.split('.')[0];
         if(svg.getAttribute('width') === '0' || svg.getAttribute('height') === '0'){
+					//create namespace for svg if it is empty
           svg = document.createElementNS('https://www.w3.org/2000/svg', svg.localName);
         }
         else svg = IO.fixSVG(svg, svg);
@@ -743,11 +750,11 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         //svg.style.left = '-10000px';
         //svg.style.top = '-10000px';
    
-
         document.body.appendChild(svg);
         
         var viewBox = svg.viewBox.baseVal;
         
+				//get the viewbox of the svg
         if (viewBox && (viewBox.x || viewBox.y)) {
           //svg.width.baseVal.value = viewBox.width - viewBox.x;
           //svg.height.baseVal.value = viewBox.height - viewBox.y;
@@ -777,12 +784,12 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         var request = new Request;
         var image = new Image;
 
+				//serialize the svg code to a single compact string
         var newSource = (new XMLSerializer()).serializeToString(svg)
-        //svg.id = 'svg' + Math.random();
-        // console.log(md5, 'data:image/svg+xml;base64,' + btoa(source), 'data:image/svg+xml;base64,' + btoa(newSource));
+				//convert the svg to a base-64 string
         image.src = 'data:image/svg+xml;base64,' + btoa(newSource); 
         
-        //svg.style.display = 'none';
+        svg.style.display = 'none';
         
         image.onload = function() {
           if (callback) callback(image);

@@ -2,7 +2,7 @@
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width, initial-scale=1.0">
 <title>sulfurous</title>
-<link rel=icon type="image/png" href="favicon.ico">
+<link rel=icon href="favicon.ico">
 <link rel=stylesheet href=player.css>
 <link rel=stylesheet href=index.css>
 
@@ -215,7 +215,7 @@
   }
 
   function updateBugLink() {
-    bugLink.href = P.player.projectId ? 'https://github.com/mittagskogel/sulfurous/issues/new?title=' + encodeURIComponent(P.player.projectTitle || P.player.projectURL) + '&body=' + encodeURIComponent('\n\n\n' + P.player.projectURL + '\nhttps://newton.nes.aau.at/~sulfurous/#' + P.player.projectId + '\n' + navigator.userAgent) : 'https://github.com/mittagskogel/sulfurous/issues/new?body=' + encodeURIComponent('\n\n\n' + navigator.userAgent);
+    bugLink.href = P.player.projectId ? 'https://github.com/mittagskogel/sulfurous/issues/new?title=' + encodeURIComponent(P.player.projectTitle || P.player.projectURL) + '&body=' + encodeURIComponent('\n\n\n' + P.player.projectURL + '\nhttps://sulfurous.aau.at/#' + P.player.projectId + '\n' + navigator.userAgent) : 'https://github.com/mittagskogel/sulfurous/issues/new?body=' + encodeURIComponent('\n\n\n' + navigator.userAgent);
   }
 
   function updatePackageLink() {
@@ -224,7 +224,7 @@
     if(packageDoubleResolution.checked) packageCustomResolutionValue.value = 960;
     //remember to change the URL back to /app.html when putting this back online...
     //packageLink.href = P.player.projectId ? 'file:///D:/Mittagskogel/Sulfurous/app.html?id=' + P.player.projectId + '&turbo=' + packageTurbo.checked + '&full-screen=' + packageFullScreen.checked + '&resolution-x=' + packageCustomResolutionValue.value: 'about:blank';
-    packageLink.href = P.player.projectId ? 'https://sulfurous.aau.at/~sulfurous/app.html?id=' + P.player.projectId + '&turbo=' + packageTurbo.checked + '&full-screen=' + packageFullScreen.checked + '&resolution-x=' + packageCustomResolutionValue.value: 'about:blank';
+    packageLink.href = P.player.projectId ? 'https://sulfurous.aau.at/app.html?id=' + P.player.projectId + '&turbo=' + packageTurbo.checked + '&full-screen=' + packageFullScreen.checked + '&resolution-x=' + packageCustomResolutionValue.value: 'about:blank';
     packageCustomResolutionValue.disabled = !packageCustomResolution.checked;    
   }
   
@@ -240,7 +240,7 @@
     if(embedDoubleResolution.checked) embedCustomResolutionValue.value = 960;
     //remember to change the URL back to 'https://' + location.host when putting this back online...
     //embedCode.value = P.player.projectId ? '<script src=file:///D:/Mittagskogel/Sulfurous' + '/embed.js?id=' + P.player.projectId + '&resolution-x=' + embedCustomResolutionValue.value + (embedHideControls.checked ? '&ui=false' : '&auto-start=' + embedAutoStart.checked + '&light-content=' + embedLightContent.checked) + '></' + 'script>' : '';
-    embedCode.value = P.player.projectId ? '<script src=https://sulfurous.aau.at/~sulfurous' + '/embed.js?id=' + P.player.projectId + '&resolution-x=' + embedCustomResolutionValue.value + (embedHideControls.checked ? '&ui=false' : '&auto-start=' + embedAutoStart.checked + '&light-content=' + embedLightContent.checked) + '></' + 'script>' : '';    
+    embedCode.value = P.player.projectId ? '<script src=https://sulfurous.aau.at/embed.js?id=' + P.player.projectId + '&resolution-x=' + embedCustomResolutionValue.value + (embedHideControls.checked ? '&ui=false' : '&auto-start=' + embedAutoStart.checked + '&light-content=' + embedLightContent.checked) + '></' + 'script>' : '';    
     embedCustomResolutionValue.disabled = !embedCustomResolution.checked;
     embedAutoStart.disabled =
     embedLightContent.disabled = embedHideControls.checked;
