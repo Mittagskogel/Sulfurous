@@ -2,9 +2,9 @@
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width, initial-scale=1.0">
 <title>sulfurous</title>
-<link rel=icon href="favicon.ico">
-<link rel=stylesheet href=player.css>
-<link rel=stylesheet href=index.css>
+<link rel=icon href="img/favicon.ico">
+<link rel=stylesheet href=css/player.css>
+<link rel=stylesheet href=css/index.css>
 
 <div class=area id=title-area>
 <h1 class=title>sulfurous</h1>
@@ -93,10 +93,10 @@
   <h1>Code</h1>
   <p>The source code for sulfurous is available <a href=https://github.com/mittagskogel/sulfurous>on GitHub</a>. See <a href=https://github.com/nathan/phosphorus>Phosphorus</a> for the original version.</p>
 </section>
-<script src=fonts.js></script>
+<script src=js/fonts.js></script>
 <script src=https://cdnjs.cloudflare.com/ajax/libs/jszip/2.4.0/jszip.js></script>
-<script src=phosphorus.js></script>
-<script src=player.js></script>
+<script src=js/phosphorus.js></script>
+<script src=js/player.js></script>
 <script>
 
 (function() {
@@ -223,8 +223,8 @@
     if(packageStandardResolution.checked) packageCustomResolutionValue.value = 480;
     if(packageDoubleResolution.checked) packageCustomResolutionValue.value = 960;
     //remember to change the URL back to /app.html when putting this back online...
-    //packageLink.href = P.player.projectId ? 'file:///D:/Mittagskogel/Sulfurous/app.html?id=' + P.player.projectId + '&turbo=' + packageTurbo.checked + '&full-screen=' + packageFullScreen.checked + '&resolution-x=' + packageCustomResolutionValue.value: 'about:blank';
-    packageLink.href = P.player.projectId ? 'https://sulfurous.aau.at/app.html?id=' + P.player.projectId + '&turbo=' + packageTurbo.checked + '&full-screen=' + packageFullScreen.checked + '&resolution-x=' + packageCustomResolutionValue.value: 'about:blank';
+    //packageLink.href = P.player.projectId ? 'file:///D:/Mittagskogel/Sulfurous//html/app.html?id=' + P.player.projectId + '&turbo=' + packageTurbo.checked + '&full-screen=' + packageFullScreen.checked + '&resolution-x=' + packageCustomResolutionValue.value: 'about:blank';
+    packageLink.href = P.player.projectId ? 'https://sulfurous.aau.at/html/app.html?id=' + P.player.projectId + '&turbo=' + packageTurbo.checked + '&full-screen=' + packageFullScreen.checked + '&resolution-x=' + packageCustomResolutionValue.value: 'about:blank';
     packageCustomResolutionValue.disabled = !packageCustomResolution.checked;    
   }
   
@@ -239,8 +239,8 @@
     if(embedStandardResolution.checked) embedCustomResolutionValue.value = 480;
     if(embedDoubleResolution.checked) embedCustomResolutionValue.value = 960;
     //remember to change the URL back to 'https://' + location.host when putting this back online...
-    //embedCode.value = P.player.projectId ? '<script src=file:///D:/Mittagskogel/Sulfurous' + '/embed.js?id=' + P.player.projectId + '&resolution-x=' + embedCustomResolutionValue.value + (embedHideControls.checked ? '&ui=false' : '&auto-start=' + embedAutoStart.checked + '&light-content=' + embedLightContent.checked) + '></' + 'script>' : '';
-    embedCode.value = P.player.projectId ? '<script src=https://sulfurous.aau.at/embed.js?id=' + P.player.projectId + '&resolution-x=' + embedCustomResolutionValue.value + (embedHideControls.checked ? '&ui=false' : '&auto-start=' + embedAutoStart.checked + '&light-content=' + embedLightContent.checked) + '></' + 'script>' : '';    
+    //embedCode.value = P.player.projectId ? '<script src=file:///D:/Mittagskogel/Sulfurous' + '/js/embed.js?id=' + P.player.projectId + '&resolution-x=' + embedCustomResolutionValue.value + (embedHideControls.checked ? '&ui=false' : '&auto-start=' + embedAutoStart.checked + '&light-content=' + embedLightContent.checked) + '></' + 'script>' : '';
+    embedCode.value = P.player.projectId ? '<script src=https://sulfurous.aau.at/js/embed.js?id=' + P.player.projectId + '&resolution-x=' + embedCustomResolutionValue.value + (embedHideControls.checked ? '&ui=false' : '&auto-start=' + embedAutoStart.checked + '&light-content=' + embedLightContent.checked) + '></' + 'script>' : '';    
     embedCustomResolutionValue.disabled = !embedCustomResolution.checked;
     embedAutoStart.disabled =
     embedLightContent.disabled = embedHideControls.checked;

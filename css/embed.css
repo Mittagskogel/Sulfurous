@@ -1,0 +1,36 @@
+body {
+  width: 480px;
+  margin: 0 auto;
+}
+
+.progress-bar {
+  padding: 0;
+}
+
+.internal-error {
+  position: absolute;
+  left: 1px;
+  bottom: 1px;
+  right: 1px;
+  background: #fff;
+  box-shadow: 0 -1px rgba(0, 0, 0, .4);
+}
+
+.controls {
+  display: none;
+}
+
+.has-ui .controls {
+  display: block;
+}
+
+.hide-ui .controls {
+  position: absolute;
+  width: 100%;
+}
+.hide-ui .controls span {
+  display: none;
+}
+.hide-ui .player {
+  box-shadow: none;
+}
