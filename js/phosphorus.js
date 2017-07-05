@@ -1,3 +1,22 @@
+
+/*
+ Sulfurous - an html5 player for Scratch projects
+ 
+ Version: 0.81 July 5, 2017
+
+ Sulfurous was created by Mittagskogel and further developed by FRALEX
+ as part of their work at the Alpen-Adria-University Klagenfurt.
+ Sulfurous is based off Phosphorus, which was created by Nathan Dinsmore.
+ Its CPS-style compilation and overall design was inspired by Rhys Simpson's
+ sb2.js. It would have more bugs if not for Truman Kilen. It uses the JSZip
+ library, created by Stuart Knightley, David Duponchel, Franz Buchinger, and
+ António Afonso, to read .sb2 files and compressed projects, and the canvg 
+ library, created by Gabe Lerner, to render SVGs in <canvas> elements.
+ 
+ Sulfurous is released under the MIT license, the full source is available
+ at https://github.com/mittagskogel/sulfurous
+*/
+
 var P = (function() {
   'use strict';
 
@@ -968,10 +987,10 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
     return this.costumes[this.currentCostumeIndex] ? this.costumes[this.currentCostumeIndex].costumeName : '';
   };
 
-  Base.prototype.setCostume = function(costume) {
-    if (isNaN(parseInt(costume))){//typeof costume !== 'number') {
-      costume = '' + costume;
-      for (var i = 0; i < this.costumes.length; i++) {
+  Base.prototype.setCostume = function(costume) {	
+  if(typeof costume == 'string'){
+  
+		for (var i = 0; i < this.costumes.length; i++) {
         if (this.costumes[i].costumeName === costume) {
           this.currentCostumeIndex = i;
           if (this.isStage) this.updateBackdrop();
@@ -987,13 +1006,16 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         this.showPreviousCostume();
         return;
       }
-      return;
-    } 
-    var i = (Math.floor(parseInt(costume)) - 1) % this.costumes.length;
-    if (i < 0) i += this.costumes.length;
+  }
+     if(!isNaN(parseInt(costume))){
+	
+	
+		var i = (Math.floor(parseInt(costume)) - 1) % this.costumes.length;
+		if (i < 0) i += this.costumes.length;
 		this.currentCostumeIndex = i;
 		if (this.isStage) this.updateBackdrop();
 		if (this.saying) this.updateBubble();
+	 }
   };
 
   Base.prototype.setFilter = function(name, value) {
@@ -1441,7 +1463,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
 
   Stage.prototype.draw = function() {
     var context = this.context;
-
+	
     this.canvas.width = 480 * this.zoom * SCALE; // clear
     this.canvas.height = 360 * this.zoom * SCALE;
 
@@ -1501,7 +1523,9 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
   };
 
   var getKeyCode = function(keyName) {
-    return KEY_CODES[keyName.toLowerCase()] || keyName.toUpperCase().charCodeAt(0);
+	if(typeof keyName !== 'string')return keyName = "" + keyName;
+	
+	return KEY_CODES[keyName.toLowerCase()] || keyName.toUpperCase().charCodeAt(0);
   };
 
   var Sprite = function(stage) {
@@ -1696,8 +1720,8 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
       if (!noEffects) context.globalAlpha = Math.max(0, Math.min(1, 1 - this.filters.ghost / 100));    
       
       //TODO: General Optimization
-      if(this.filters.pixelate !== 0 || this.filters.mosaic !== 0 || this.filters.mosaic !== 0){
-
+      if(this.filters.pixelate !== 0 || this.filters.mosaic !== 0  || this.filters.brightness !== 0 ){
+		
         var effectsCanvas = document.createElement('canvas');
         effectsCanvas.width = costume.image.width;
         effectsCanvas.height = costume.image.height;
@@ -1746,34 +1770,6 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         colorCanvas.parentNode.removeChild(colorCanvas);
         costumeCanvas.parentNode.removeChild(costumeCanvas);           
         */
-      
-        
-        if(this.filters.pixelate !== 0){
-        
-        var pixelCanvas = document.createElement('canvas');
-        pixelCanvas.width = 10*effectsCanvas.width/(this.filters.pixelate + effectsCanvas.width/10);
-        pixelCanvas.height = 10*effectsCanvas.height/(this.filters.pixelate + effectsCanvas.height/10);
-        var pixelContext = pixelCanvas.getContext('2d');
-        document.body.appendChild(pixelCanvas);   
-        
-        var costumeCanvas = document.createElement('canvas');
-        costumeCanvas.width = effectsCanvas.width;
-        costumeCanvas.height = effectsCanvas.height;
-        var costumeContext = costumeCanvas.getContext('2d');
-        document.body.appendChild(costumeCanvas);    
-
-        pixelContext.drawImage(effectsCanvas, 0, 0, pixelCanvas.width, pixelCanvas.height);
-        
-        costumeContext.imageSmoothingEnabled = false;
-        costumeContext.mozImageSmoothingEnabled = false;
-        costumeContext.drawImage(pixelCanvas, 0, 0, costumeCanvas.width, costumeCanvas.height);
-        
-        effectsContext.clearRect(0, 0, effectsCanvas.width, effectsCanvas.height);       
-        effectsContext.drawImage(costumeCanvas, 0, 0);
-        
-        pixelCanvas.parentNode.removeChild(pixelCanvas);
-        costumeCanvas.parentNode.removeChild(costumeCanvas);
-        }
         
         ///////
         
@@ -1808,8 +1804,9 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         }
         
         ///////
-        
-        if(this.filters.brightness !== 0){
+       
+       if(this.filters.brightness !== 0){
+		   
         //canvas for brightness overlay
         //TODO: Find out why brightness doesn't always match scratch.
         var brightnessCanvas = document.createElement('canvas');
@@ -2237,6 +2234,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
     
     this.context.drawImage(this.baseLayer, 0, 0, this.image.width, this.image.height);
     if (this.textLayer) {
+		
       this.context.drawImage(this.textLayer, 0, 0, this.image.width, this.image.height);
     }
     if (this.base.isStage && this.index == this.base.currentCostumeIndex) {
