@@ -1363,8 +1363,9 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
     this.backdropContext.drawImage(costume.image, 0, 0, costume.image.width/costume.resScale, costume.image.height/costume.resScale);
     this.backdropContext.restore();
   };
-
+	
   Stage.prototype.updateFilters = function() {
+	  
     this.backdropCanvas.style.opacity = Math.max(0, Math.min(1, 1 - this.filters.ghost / 100));
   };
 
@@ -1716,11 +1717,11 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
       context.scale(this.scale, this.scale);
       context.scale(costume.scale, costume.scale);
       context.translate(-costume.rotationCenterX, -costume.rotationCenterY);
-
+		var test = this.filters.ghost;
       if (!noEffects) context.globalAlpha = Math.max(0, Math.min(1, 1 - this.filters.ghost / 100));    
       
       //TODO: General Optimization
-      if(this.filters.pixelate !== 0 || this.filters.mosaic !== 0  || this.filters.brightness !== 0 ){
+      if(this.filters.pixelate !== 0 || this.filters.mosaic !== 0  || this.filters.brightness !== 0  ){
 		
         var effectsCanvas = document.createElement('canvas');
         effectsCanvas.width = costume.image.width;
@@ -1770,7 +1771,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         colorCanvas.parentNode.removeChild(colorCanvas);
         costumeCanvas.parentNode.removeChild(costumeCanvas);           
         */
-        
+       
         ///////
         
         if(this.filters.mosaic !== 0){
