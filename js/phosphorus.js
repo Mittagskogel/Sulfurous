@@ -2,7 +2,7 @@
 /*
  Sulfurous - an html5 player for Scratch projects
  
- Version: 0.81 July 5, 2017
+ Version: 0.82 July 6, 2017
 
  Sulfurous was created by Mittagskogel and further developed by FRALEX
  as part of their work at the Alpen-Adria-University Klagenfurt.
@@ -679,8 +679,6 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
     
     if (element.nodeName === 'linearGradient'){
       element.setAttribute('id', element.getAttribute('id') + svg.getAttribute('id'));
-      
-      if(element.getAttribute('gradientUnits')){
         element.setAttribute('gradientUnits', 'objectBoundingBox');
         //I really don't know what kind of algorithm scratch is following here, so this is just guesswork.
         var x1 = Number(element.getAttribute('x1'));
@@ -717,11 +715,13 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         element.setAttribute('x2', x2);
         element.setAttribute('y1', y1);
         element.setAttribute('y2', y2);
-      }
+ 
     }
 	
 	if(element.nodeName === 'radialGradient'){
 		element.setAttribute('id', element.getAttribute('id') + svg.getAttribute('id'));
+		
+		
 	}
     
     if (element.getAttribute('fill') ? element.getAttribute('fill').indexOf("url") > -1 : false){
