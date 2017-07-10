@@ -2,7 +2,7 @@
 /*
  Sulfurous - an html5 player for Scratch projects
  
- Version: 0.82 July 6, 2017
+ Version: 0.83 July 10, 2017
 
  Sulfurous was created by Mittagskogel and further developed by FRALEX
  as part of their work at the Alpen-Adria-University Klagenfurt.
@@ -16,6 +16,7 @@
  Sulfurous is released under the MIT license, the full source is available
  at https://github.com/mittagskogel/sulfurous
 */
+var ASCII = false;
 
 var P = (function() {
   'use strict';
@@ -625,6 +626,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
   };
 
   IO.fixSVG = function(svg, element) {
+	  
     if (element.nodeType !== 1) return element;
     if (element.nodeName.slice(0, 4).toLowerCase() === 'svg:') {
       var newElement = document.createElementNS('https://www.w3.org/2000/svg', element.localName);
@@ -649,7 +651,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
       }
       var size = +element.getAttribute('font-size');
       if (!size) {
-        element.setAttribute('font-size', size = 18);
+        element.setAttribute('font-size', size = 22);
       }
 
       //TODO: Find out what actual values have to be put here.
@@ -678,6 +680,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
     }
     
     if (element.nodeName === 'linearGradient'){
+		console.log("linearGradient");
       element.setAttribute('id', element.getAttribute('id') + svg.getAttribute('id'));
         element.setAttribute('gradientUnits', 'objectBoundingBox');
         //I really don't know what kind of algorithm scratch is following here, so this is just guesswork.
@@ -719,9 +722,59 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
     }
 	
 	if(element.nodeName === 'radialGradient'){
+		console.log("radialGradient");
 		element.setAttribute('id', element.getAttribute('id') + svg.getAttribute('id'));
 		
+		 element.setAttribute('gradientUnits', 'objectBoundingBox');
+        //I really don't know what kind of algorithm scratch is following here, so this is just guesswork.
+        var x1 = Number(element.getAttribute('x1'));
+        var x2 = Number(element.getAttribute('x2'));
+        var y1 = Number(element.getAttribute('y1'));
+        var y2 = Number(element.getAttribute('y2'));
+		var r  = Number(element.getAttribute('r'));
+        var cx = Number(element.getAttribute('cx'));
+		var cy = Number(element.getAttribute('cy'));
+			
+			console.log(r);
+			console.log(cx);
+			console.log(cy);
+			
+        if(x1 === x2){
+          x1 = 0;
+          x2 = 0;
+        }
+        else if(x1 < x2){
+          x1 = 0;
+          x2 = 1;
+        }
+        else{
+          x1 = 1;
+          x2 = 0;
+        }
 		
+        if(y1 === y2){
+          y1 = 0;
+          y2 = 0;
+        }
+        else if(y1 < y2){
+          y1 = 0;
+          y2 = 1;
+        }
+        else{
+          y1 = 1;
+          y2 = 0;
+        }
+      
+        element.setAttribute('x1', x1);
+        element.setAttribute('x2', x2);
+        element.setAttribute('y1', y1);
+        element.setAttribute('y2', y2);
+		element.setAttribute('cx', 100);
+		element.setAttribute('cy', 0);
+		element.setAttribute('r', 100);
+		console.log(element.getAttribute('r'));
+		console.log(element.getAttribute('x1'));
+		console.log(element.getAttribute('cx'));
 	}
     
     if (element.getAttribute('fill') ? element.getAttribute('fill').indexOf("url") > -1 : false){
@@ -769,7 +822,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         //svg.style.top = '-10000px';
    
         document.body.appendChild(svg);
-        
+		
         var viewBox = svg.viewBox.baseVal;
         
 				//get the viewbox of the svg
@@ -1182,25 +1235,136 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
     // hardware acceleration
     this.root.style.WebkitTransform = 'translateZ(0)';
 
-    this.root.addEventListener('keydown', function(e) {
-      if (e.ctrlKey || e.altKey || e.metaKey || e.keyCode === 27) {
-        return;
-      }
-      if (!this.keys[e.keyCode]) this.keys[128]++
-      this.keys[e.keyCode] = true;
-      e.stopPropagation();
-      if (e.target === this.canvas) {
-        e.preventDefault();
-        this.trigger('whenKeyPressed', e.keyCode);
-      }
+    // added old way here and split...
+	  
+      this.root.addEventListener('keypress', function(e) { // pf db3  
+       if (ASCII) {
+	 if (bDoro) { // DarDoro Fix
+	   // not used
+	   e.stopPropagation();
+	   e.preventDefault();
+	 }
+	 if (!bDoro) {
+           if (e.altKey || e.metaKey || e.keyCode === 27) { // tjvr
+             return; // PF allow e.ctrlKey || allow e.shiftkey
+           }
+           var key = e.keyCode;
+           //console.log(this.keys[key]); //
+           //e.stopPropagation();
+           if (e.target === this.canvas && !this.keys[key]) {
+	     this.keys[key] = true;
+	     self.key = key;
+	     e.stopPropagation(); // moved
+             e.preventDefault();
+	     //if (key < 65) {
+               this.trigger('whenKeyPressed', key);
+	     //}
+           }
+	 }
+       } else {
+	// TODO: as before (not needed)      
+       }	       
     }.bind(this));
 
+    this.root.addEventListener('keydown', function(e) { // 
+      if (ASCII) {
+	// DarDoro Fix
+        if (bDoro) {
+          var c = e.keyCode;
+	  //console.log(c)+"\n";
+          if( (c >= 16 && c <= 20) || (c >= 112 && c <= 123) || (c > 128) ) { /*Key modifiers shift, ctrl, alt, caps, F1..F12*/
+            c = 128;
+          }
+        
+	  if (c == 37) c = 28;
+	  if (c == 39) c = 29;
+	  if (c == 38) c = 30;
+	  if (c == 40) c = 31;    
+        
+          //if (!this.keys[c]) this.keys.any++; // pf detected elsewhere...
+          this.keys[c] = true;
+          e.stopPropagation();
+            if (e.target === this.canvas) {
+              e.preventDefault();
+              this.trigger('whenKeyPressed', c);
+            }
+        }
+	if (!bDoro) { // pf temp - old code but tested   
+          if (e.altKey || e.metaKey || e.keyCode === 27) { // tjvr
+            return; // PF allow e.ctrlKey || 
+          }
+          var key = e.keyCode;
+	  //console.log(key); //
+          e.stopPropagation();
+          if (e.target === this.canvas && !this.keys[key] && "16.17.37.38.39.40".match(key.toString())) { // db4
+	    //if (key == 16) key = 0;
+	    //if (key == 17) key = 0;  
+	    if (key == 37) key = 28;
+	    if (key == 39) key = 29;
+	    if (key == 38) key = 30;
+	    if (key == 40) key = 31;
+	    this.keys[key] = true;
+	    self.key = key;
+            e.preventDefault();
+            this.trigger('whenKeyPressed', key);
+          }
+	} // pf temp	
+      } else {
+        // TODO: as before    
+        if (e.altKey || e.metaKey || e.keyCode === 27) { // tjvr
+          return; // PF allow e.ctrlKey || 
+        }
+        //console.log(e.keyCode)+"\n";
+        this.keys[e.keyCode] = true;
+        e.stopPropagation();
+        if (e.target === this.canvas) {
+          e.preventDefault();
+          this.trigger('whenKeyPressed', e.keyCode);
+        }	       
+      }	       
+    }.bind(this));	  
+	  
     this.root.addEventListener('keyup', function(e) {
-      if (this.keys[e.keyCode]) this.keys[128]--
-      this.keys[e.keyCode] = false;
-      e.stopPropagation();
-      if (e.target === this.canvas) {
-        e.preventDefault();
+      if (ASCII) {
+        // DarDoro Fix
+        if (bDoro) {
+          var c = e.keyCode;
+	  //console.log(c); //
+          if( (c >= 16 && c <= 20) || ( c >= 112 && c <= 123) || (c > 128) ) { /*Key modifiers shift, ctrl, alt, caps, F1..F12*/
+            c = 128;
+          }
+        
+          if (c == 37) c = 28;
+          if (c == 39) c = 29;
+          if (c == 38) c = 30;
+          if (c == 40) c = 31;        
+        
+          //if (this.keys[c]) this.keys.any--; // pf detected elsewhere..
+          this.keys[c] = false;
+          e.stopPropagation();
+          if (e.target === this.canvas) {
+            e.preventDefault();
+          }
+        }
+	if (!bDoro) { // pf temp - old code but tested     
+          var key = e.keyCode;
+          //console.log(key); // db2
+          this.keys[key] = false;
+          if (key > 64 && key < 91) this.keys[key+32] = false; // was +32
+          this.keys[self.key] = false;
+          e.stopPropagation();
+          if (e.target === this.canvas) {
+            e.preventDefault();
+          }
+	} // pf temp
+        //bDoro = !bDoro; // bit flip
+      } else {
+	// TODO: as before   
+        this.keys[e.keyCode] = false;
+        e.stopPropagation();
+        if (e.target === this.canvas) {
+          e.preventDefault();
+        }	       
       }
     }.bind(this));
 	
@@ -1491,7 +1655,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
     context.save();
     context.scale(costume.scale, costume.scale);
     context.globalAlpha = Math.max(0, Math.min(1, 1 - this.filters.ghost / 100));
-    context.drawImage(costume.image, 0, 0);
+    context.drawImage(costume.image, 0, 0, costume.image.width/costume.resScale, costume.image.height/costume.resScale);
     context.restore();
 
     context.save();
@@ -1516,11 +1680,14 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
 
   var KEY_CODES = {
     'space': 32,
+	'ctrl': 17,
+	'shift': 16,
     'left arrow': 37,
     'up arrow': 38,
     'right arrow': 39,
     'down arrow': 40,
     'any': 128
+	
   };
 
   var getKeyCode = function(keyName) {
@@ -1687,14 +1854,14 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
     var y = this.scratchY;
     context.fillStyle = this.penCSS || 'hsl(' + this.penHue + ',' + this.penSaturation + '%,' + (this.penLightness > 100 ? 200 - this.penLightness : this.penLightness) + '%)';
 
-	//if(this.penSize <= 2 * 480 / this.stage.penCanvas.width){
-	//  context.fillRect(240 + x - this.penSize, 180 - y, this.penSize, this.penSize);
-	//}
-	//else{
+	if(this.penSize <= 2 * 480 / this.stage.penCanvas.width){
+	  context.fillRect(240 + x - this.penSize, 180 - y, this.penSize, this.penSize);
+	}
+	else{
 	context.beginPath();
     context.arc(240 + x, 180 - y, Math.floor(this.penSize / 2), 0, 2 * Math.PI, false);
     context.fill();
-	//}
+	}
   };
 
   Sprite.prototype.draw = function(context, noEffects) {
@@ -1717,12 +1884,14 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
       context.scale(this.scale, this.scale);
       context.scale(costume.scale, costume.scale);
       context.translate(-costume.rotationCenterX, -costume.rotationCenterY);
-		var test = this.filters.ghost;
+	
       if (!noEffects) context.globalAlpha = Math.max(0, Math.min(1, 1 - this.filters.ghost / 100));    
       
       //TODO: General Optimization
-      if(this.filters.pixelate !== 0 || this.filters.mosaic !== 0  || this.filters.brightness !== 0  ){
+      if(this.filters.pixelate !== 0 || this.filters.mosaic !== 0  || this.filters.brightness !== 0 && this.filters.brightness > 0 ){ // || this.filters.brightness !== 0 
 		
+	 // console.log(this.filters.brightness);
+	  
         var effectsCanvas = document.createElement('canvas');
         effectsCanvas.width = costume.image.width;
         effectsCanvas.height = costume.image.height;
@@ -1805,9 +1974,14 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         }
         
         ///////
+		
+		var d = new Date()
+
+		var brightness = Math.abs(this.filters.brightness);
        
        if(this.filters.brightness !== 0){
-		   
+		//   console.log(brightness);
+		//   console.log(d.getSeconds()+" "+d.getMilliseconds());
         //canvas for brightness overlay
         //TODO: Find out why brightness doesn't always match scratch.
         var brightnessCanvas = document.createElement('canvas');
@@ -1824,9 +1998,9 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         
         var imgData = brightnessContext.getImageData(0, 0, 1, 1);
         
-        var brightnessVal = this.filters.brightness * 255 / 101;
+        var brightnessVal = brightness * 255 / 101 ;
         
-        if(brightnessVal < 0) brightnessVal = -255 - brightnessVal;
+        
         
         imgData.data[0] =
         imgData.data[1] =
@@ -4251,7 +4425,8 @@ P.runtime = (function() {
     };
 
     P.Stage.prototype.step = function() {
-      self = this;
+
+	 self = this;
       VISUAL = false;
       var start = Date.now();
       do {
