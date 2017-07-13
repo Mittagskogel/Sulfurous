@@ -2,7 +2,7 @@
 /*
  Sulfurous - an html5 player for Scratch projects
  
- Version: 0.83 July 10, 2017
+ Version: 0.84 July 13, 2017
 
  Sulfurous was created by Mittagskogel and further developed by FRALEX
  as part of their work at the Alpen-Adria-University Klagenfurt.
@@ -15,6 +15,8 @@
  
  Sulfurous is released under the MIT license, the full source is available
  at https://github.com/mittagskogel/sulfurous
+ 
+ We got help from: https://github.com/htmlgames
 */
 var ASCII = false;
 
@@ -824,7 +826,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         document.body.appendChild(svg);
 		
         var viewBox = svg.viewBox.baseVal;
-        
+       
 				//get the viewbox of the svg
         if (viewBox && (viewBox.x || viewBox.y)) {
           //svg.width.baseVal.value = viewBox.width - viewBox.x;
@@ -1237,78 +1239,62 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
 
     // added old way here and split...
 	  
-      this.root.addEventListener('keypress', function(e) { // pf db3  
+     this.root.addEventListener('keypress', function(e) { // pf shift symbols helper.
        if (ASCII) {
-	 if (bDoro) { // DarDoro Fix
-	   // not used
-	   e.stopPropagation();
-	   e.preventDefault();
-	 }
-	 if (!bDoro) {
+	 
            if (e.altKey || e.metaKey || e.keyCode === 27) { // tjvr
-             return; // PF allow e.ctrlKey || allow e.shiftkey
+             //return; // PF allow e.ctrlKey || allow e.shiftkey
            }
            var key = e.keyCode;
-           //console.log(this.keys[key]); //
-           //e.stopPropagation();
+
+           //console.log(this.keys[key]); // debug only
            if (e.target === this.canvas && !this.keys[key]) {
-	     this.keys[key] = true;
-	     self.key = key;
-	     e.stopPropagation(); // moved
+
+	     ShiftKey = false;
+	     if (key > 64 && key < 91) {
+	       ShiftKey = true;	 
+	     }		   
+		   
+	     this.keys[key] = true; // mandatory for symbols
+	     self.key = key; // resets symbol keys
+	     e.stopPropagation();
              e.preventDefault();
-	     //if (key < 65) {
-               this.trigger('whenKeyPressed', key);
-	     //}
+             //this.trigger('whenKeyPressed', key); // *
            }
-	 }
+	 
        } else {
 	// TODO: as before (not needed)      
        }	       
     }.bind(this));
 
-    this.root.addEventListener('keydown', function(e) { // 
+    this.root.addEventListener('keydown', function(e) { // pf inc. arrow keys and shift key mapper
       if (ASCII) {
-	// DarDoro Fix
-        if (bDoro) {
-          var c = e.keyCode;
-	  //console.log(c)+"\n";
-          if( (c >= 16 && c <= 20) || (c >= 112 && c <= 123) || (c > 128) ) { /*Key modifiers shift, ctrl, alt, caps, F1..F12*/
-            c = 128;
-          }
-        
-	  if (c == 37) c = 28;
-	  if (c == 39) c = 29;
-	  if (c == 38) c = 30;
-	  if (c == 40) c = 31;    
-        
-          //if (!this.keys[c]) this.keys.any++; // pf detected elsewhere...
-          this.keys[c] = true;
-          e.stopPropagation();
-            if (e.target === this.canvas) {
-              e.preventDefault();
-              this.trigger('whenKeyPressed', c);
-            }
-        }
-	if (!bDoro) { // pf temp - old code but tested   
+
           if (e.altKey || e.metaKey || e.keyCode === 27) { // tjvr
             return; // PF allow e.ctrlKey || 
           }
           var key = e.keyCode;
-	  //console.log(key); //
+	  //console.log(key); // debug only
           e.stopPropagation();
-          if (e.target === this.canvas && !this.keys[key] && "16.17.37.38.39.40".match(key.toString())) { // db4
-	    //if (key == 16) key = 0;
+          if (e.target === this.canvas && !this.keys[key] && "16.17.37.38.39.40".match(key.toString())) { // 
+	    if (key == 16) key = 128; // (Shift key hack) was 0
 	    //if (key == 17) key = 0;  
 	    if (key == 37) key = 28;
 	    if (key == 39) key = 29;
 	    if (key == 38) key = 30;
 	    if (key == 40) key = 31;
-	    this.keys[key] = true;
+	    this.keys[key] = true; // pf done in keypress?
 	    self.key = key;
             e.preventDefault();
-            this.trigger('whenKeyPressed', key);
+	    if (ShiftKey) {
+	      //console.log("Shift Pressed\n"); // debug only
+              this.trigger('whenKeyPressed', 128);
+	      //this.trigger('whenKeyPressed', key);
+	    } else {
+	      this.trigger('whenKeyPressed', key);	    
+	    }
           }
-	} // pf temp	
+	
       } else {
         // TODO: as before    
         if (e.altKey || e.metaKey || e.keyCode === 27) { // tjvr
@@ -1326,38 +1312,23 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
 	  
     this.root.addEventListener('keyup', function(e) {
       if (ASCII) {
-        // DarDoro Fix
-        if (bDoro) {
-          var c = e.keyCode;
-	  //console.log(c); //
-          if( (c >= 16 && c <= 20) || ( c >= 112 && c <= 123) || (c > 128) ) { /*Key modifiers shift, ctrl, alt, caps, F1..F12*/
-            c = 128;
-          }
-        
-          if (c == 37) c = 28;
-          if (c == 39) c = 29;
-          if (c == 38) c = 30;
-          if (c == 40) c = 31;        
-        
-          //if (this.keys[c]) this.keys.any--; // pf detected elsewhere..
-          this.keys[c] = false;
-          e.stopPropagation();
-          if (e.target === this.canvas) {
-            e.preventDefault();
-          }
-        }
-	if (!bDoro) { // pf temp - old code but tested     
+    
           var key = e.keyCode;
+	  if (key == 16) key = 128; 
           //console.log(key); // db2
           this.keys[key] = false;
           if (key > 64 && key < 91) this.keys[key+32] = false; // was +32
           this.keys[self.key] = false;
+          if (ShiftKey) {
+	    //this.keys[128] = false;
+	  } else {
+	    //console.log (self.key + " :: " + key); // debug only
+	  }
           e.stopPropagation();
           if (e.target === this.canvas) {
             e.preventDefault();
           }
-	} // pf temp
-        //bDoro = !bDoro; // bit flip
+
       } else {
 	// TODO: as before   
         this.keys[e.keyCode] = false;
@@ -1888,7 +1859,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
       if (!noEffects) context.globalAlpha = Math.max(0, Math.min(1, 1 - this.filters.ghost / 100));    
       
       //TODO: General Optimization
-      if(this.filters.pixelate !== 0 || this.filters.mosaic !== 0  || this.filters.brightness !== 0 && this.filters.brightness > 0 ){ // || this.filters.brightness !== 0 
+      if(this.filters.color !== 0 || this.filters.pixelate !== 0 || this.filters.mosaic !== 0  || this.filters.brightness !== 0 && this.filters.brightness > 0 ){ // || this.filters.brightness !== 0 
 		
 	 // console.log(this.filters.brightness);
 	  
@@ -1899,49 +1870,35 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         document.body.appendChild(effectsCanvas);      
  
         effectsContext.drawImage(costume.image, 0, 0, effectsCanvas.width, effectsCanvas.height);       
-      
-        /*
-        //color
-        //I don't know how to do this (yet).
-        
-        //canvas for color overlay
-        var colorCanvas = document.createElement('canvas');
-        colorCanvas.width = 1;
-        colorCanvas.height = 1;
-        var colorContext = colorCanvas.getContext('2d');
-        document.body.appendChild(colorCanvas);
-        
-        var costumeCanvas = document.createElement('canvas');
-        costumeCanvas.width = costume.image.width;
-        costumeCanvas.height = costume.image.height;
-        var costumeContext = costumeCanvas.getContext('2d');
-        document.body.appendChild(costumeCanvas); 
-        
-        //create new object instead of reading? 
-        var imgData = colorContext.getImageData(0, 0, 1, 1);
-        
-        var colorVal = this.filters.color/200;
-        
-        imgData.data[0] = (Math.min(2, Math.max(1, Math.abs((colorVal%1)*2-1)*3))-1)*255;
-        imgData.data[1] = (Math.min(2, Math.max(1, Math.abs(((colorVal+2/3)%1)*2-1)*3))-1)*255;
-        imgData.data[2] = (Math.min(2, Math.max(1, Math.abs(((colorVal+1/3)%1)*2-1)*3))-1)*255;
-        imgData.data[3] = 255;     
-        
-        colorContext.putImageData(imgData, 0, 0);
-        
-        costumeContext.drawImage(costume.image, 0, 0);
-        costumeContext.globalCompositeOperation = 'color';
-        costumeContext.drawImage(colorCanvas, 0, 0, 1000, 1000);
-        costumeContext.globalCompositeOperation = 'destination-in';
-        costumeContext.drawImage(costume.image, 0, 0);       
+     
+ if (this.filters.color !== 0) {
 
-        context.drawImage(costumeCanvas, 0, 0);
-      
-        colorCanvas.parentNode.removeChild(colorCanvas);
-        costumeCanvas.parentNode.removeChild(costumeCanvas);           
-        */
-       
-        ///////
+	  var colorVal = (this.filters.color);// & 0xff;
+	
+	  effectsCanvas.width = costume.image.width;
+	  effectsCanvas.height = costume.image.height;		
+	  effectsContext.drawImage(costume.image, 0, 0, costume.image.width, costume.image.height);
+	  var effect = effectsContext.getImageData(0, 0, costume.image.width, costume.image.height);
+         
+	//	 console.log(colorVal);
+				
+		var hsvrgb = new hsvToRgb(colorVal, 100, 100);
+		var r = hsvrgb.r;
+		var g = hsvrgb.g;
+		var b = hsvrgb.b;
+	//	console.log(r);
+	//	console.log(g);
+	//	console.log(b);
+		
+		 // PF: TODO improve
+          for (var i = 0; i < effect.data.length; i += 4) {
+            effect.data[i + 0] = (effect.data[i + 0] + r) & 0xff;
+            effect.data[i + 1] = (effect.data[i + 1] + g) & 0xff;
+            effect.data[i + 2] = (effect.data[i + 2] + b) & 0xff;
+            effect.data[i + 3] = effect.data[i + 3]; // alpha
+	  }
+	  effectsContext.putImageData(effect, 0, 0);
+        }
         
         if(this.filters.mosaic !== 0){
         var costumeCanvas = document.createElement('canvas');
@@ -2039,6 +1996,84 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
     }
   };
 
+	function hsvToRgb(h, s, v) {
+    var r, g, b;
+    var i;
+    var f, p, q, t;
+     
+    // Make sure our arguments stay in-range
+    h = Math.max(0, Math.min(200, h));
+    s = Math.max(0, Math.min(100, s));
+    v = Math.max(0, Math.min(100, v));
+     
+    // We accept saturation and value arguments from 0 to 100 because that's
+    // how Photoshop represents those values. Internally, however, the
+    // saturation and value are calculated from a range of 0 to 1. We make
+    // That conversion here.
+    s /= 100;
+    v /= 100;
+     
+    if(s == 0) {
+        // Achromatic (grey)
+        r = g = b = v;
+        return {
+       r: Math.round(r * 255), 
+       g: Math.round(g * 255), 
+       b: Math.round(b * 255)
+		};
+    }
+     
+    h /= 33.3333; // sector 0 to 5
+    i = Math.floor(h);
+    f = h - i; // factorial part of h
+    p = v * (1 - s);
+    q = v * (1 - s * f);
+    t = v * (1 - s * (1 - f));
+     
+    switch(i) {
+        case 0:
+            r = v;
+            g = t;
+            b = p;
+            break;
+     
+        case 1:
+            r = q;
+            g = v;
+            b = p;
+            break;
+     
+        case 2:
+            r = p;
+            g = v;
+            b = t;
+            break;
+     
+        case 3:
+            r = p;
+            g = q;
+            b = v;
+            break;
+     
+        case 4:
+            r = t;
+            g = p;
+            b = v;
+            break;
+     
+        default: // case 5:
+            r = v;
+            g = p;
+            b = q;
+    }
+     
+    return {
+       r: Math.round(r * 255), 
+       g: Math.round(g * 255), 
+       b: Math.round(b * 255)
+    };
+}
+	
   Sprite.prototype.setDirection = function(degrees) {
     var d = degrees % 360;
     if (d > 180) d -= 360;
@@ -2134,7 +2169,16 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
 
     collisionContext.restore();
 
-    var data = collisionContext.getImageData(0, 0, b.right - b.left, b.top - b.bottom).data;
+	var width = collisionCanvas.width;
+	var height= collisionCanvas.height;
+	if(width <= 0){
+		width=1;
+	}
+	if(height <= 0){
+		height=1;
+	}
+	
+    var data = collisionContext.getImageData(0, 0, width, height).data;
 
     rgb = rgb & 0xffffff;
     var length = (b.right - b.left) * (b.top - b.bottom) * 4;
@@ -3295,10 +3339,12 @@ P.compile = (function() {
       } else if (block[0] === 'changeSizeBy:') {
 
         source += 'S.scale += ' + num(block[1]) + ' / 100;\n';
-
+		source += 'if (S.scale < 0) S.scale = 0;\n';
+		
       } else if (block[0] === 'setSizeTo:') {
 
         source += 'S.scale = ' + num(block[1]) + ' / 100;\n';
+		source += 'if (S.scale < 0) S.scale = 0;\n';
 
       } else if (block[0] === 'show') {
 
@@ -3653,9 +3699,9 @@ P.compile = (function() {
         source += '}\n';
 
       } else if (block[0] === 'wait:elapsed:from:') {
-		if(block[1] != 0){
+		
 			wait(num(block[1]));
-		}
+		
 
       } else if (block[0] === 'warpSpeed') {
 
