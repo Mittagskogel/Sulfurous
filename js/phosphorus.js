@@ -835,19 +835,16 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         viewBox.x = 0;
         viewBox.y = 0;
       }
-				//get the viewbox of the svg
+
+	//get the viewbox of the svg
         if (viewBox && (viewBox.x || viewBox.y)) {
-          //svg.width.baseVal.value = viewBox.width - viewBox.x;
-          //svg.height.baseVal.value = viewBox.height - viewBox.y;
-          //viewBox.x = 0;
-          //viewBox.y = 0;
-          //viewBox.width = 0;
-          //viewBox.height = 0;
-          var bb = svg.getBBox();
-          viewBox.width  = svg.width.baseVal.value = Math.ceil(bb.x + bb.width + 1);
-          viewBox.height = svg.height.baseVal.value = Math.ceil(bb.y + bb.height + 1);		       
-          viewBox.x = 0;
-          viewBox.y = 0;
+          if (svg.querySelector("path") || svg.querySelector("image")) {
+            var bb = svg.getBBox();
+            viewBox.width  = svg.width.baseVal.value = Math.ceil(bb.x + bb.width + 1);
+            viewBox.height = svg.height.baseVal.value = Math.ceil(bb.y + bb.height + 1);		       
+            viewBox.x = 0;
+            viewBox.y = 0;
+          }
         }
 
         //IO.fixSVG(svg, svg);
