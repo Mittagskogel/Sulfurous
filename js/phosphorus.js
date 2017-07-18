@@ -2,7 +2,7 @@
 /*
  Sulfurous - an html5 player for Scratch projects
  
- Version: 0.84 July 13, 2017
+ Version: 0.85 July 18, 2017
 
  Sulfurous was created by Mittagskogel and further developed by FRALEX
  as part of their work at the Alpen-Adria-University Klagenfurt.
@@ -196,8 +196,9 @@ var P = (function() {
   IO.ASSET_URL = 'https://cdn.assets.scratch.mit.edu/internalapi/asset/';
   IO.SOUNDBANK_URL = 'https://cdn.rawgit.com/LLK/scratch-flash/v429/src/soundbank/';
 
-  IO.FONTS = {
+   IO.FONTS = {
     '': 'Helvetica',
+    Scratch: 'Scratch',	  
     Donegal: 'Donegal One',
     Gloria: 'Gloria Hallelujah',
     Marker: 'Permanent Marker',
@@ -826,7 +827,14 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         document.body.appendChild(svg);
 		
         var viewBox = svg.viewBox.baseVal;
-       
+		
+        if (svg.querySelector("path") || svg.querySelector("image")) {
+        var bb = svg.getBBox();
+        viewBox.width  = svg.width.baseVal.value = Math.ceil(bb.x + bb.width + 1);
+        viewBox.height = svg.height.baseVal.value = Math.ceil(bb.y + bb.height + 1);		       
+        viewBox.x = 0;
+        viewBox.y = 0;
+      }
 				//get the viewbox of the svg
         if (viewBox && (viewBox.x || viewBox.y)) {
           //svg.width.baseVal.value = viewBox.width - viewBox.x;
@@ -1086,9 +1094,11 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         max = Infinity;
         break;
       case 'color':
+	  
         value = value % 200;
         if (value < 0) value += 200;
         max = 200;
+		
         break;
     }
     if (value < min) value = min;
@@ -1836,6 +1846,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
   };
 
   Sprite.prototype.draw = function(context, noEffects) {
+	  
     var costume = this.costumes[this.currentCostumeIndex];
     
     if (this.isDragging) {
@@ -1843,103 +1854,90 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
     }
 
     if (costume) {
-      context.save();
+     
+		context.save();
 
-      var z = this.stage.zoom * SCALE;
-      context.translate(((this.scratchX + 240) * z | 0) / z, ((180 - this.scratchY) * z | 0) / z);
-      if (this.rotationStyle === 'normal') {
-        context.rotate((this.direction - 90) * Math.PI / 180);
-      } else if (this.rotationStyle === 'leftRight' && this.direction < 0) {
-        context.scale(-1, 1);
-      }
-      context.scale(this.scale, this.scale);
-      context.scale(costume.scale, costume.scale);
-      context.translate(-costume.rotationCenterX, -costume.rotationCenterY);
+		var z = this.stage.zoom * SCALE;
+		context.translate(((this.scratchX + 240) * z | 0) / z, ((180 - this.scratchY) * z | 0) / z);
+		if (this.rotationStyle === 'normal') {
+			context.rotate((this.direction - 90) * Math.PI / 180);
+		} else if (this.rotationStyle === 'leftRight' && this.direction < 0) {
+		context.scale(-1, 1);
+		}	
+		context.scale(this.scale, this.scale);
+		context.scale(costume.scale, costume.scale);
+		context.translate(-costume.rotationCenterX, -costume.rotationCenterY);
 	
-      if (!noEffects) context.globalAlpha = Math.max(0, Math.min(1, 1 - this.filters.ghost / 100));    
+		if (!noEffects) context.globalAlpha = Math.max(0, Math.min(1, 1 - this.filters.ghost / 100));    
       
-      //TODO: General Optimization
-      if(this.filters.color !== 0 || this.filters.pixelate !== 0 || this.filters.mosaic !== 0  || this.filters.brightness !== 0 && this.filters.brightness > 0 ){ // || this.filters.brightness !== 0 
-		
-	 // console.log(this.filters.brightness);
+		//TODO: General Optimization
+		if(this.filters.color !== 0 || this.filters.pixelate !== 0 || this.filters.mosaic !== 0  || this.filters.brightness !== 0 ){
 	  
         var effectsCanvas = document.createElement('canvas');
         effectsCanvas.width = costume.image.width;
         effectsCanvas.height = costume.image.height;
         var effectsContext = effectsCanvas.getContext('2d');
         document.body.appendChild(effectsCanvas);      
- 
-        effectsContext.drawImage(costume.image, 0, 0, effectsCanvas.width, effectsCanvas.height);       
+		effectsContext.drawImage(costume.image, 0, 0, effectsCanvas.width, effectsCanvas.height);       
      
- if (this.filters.color !== 0) {
-
-	  var colorVal = (this.filters.color);// & 0xff;
+		if (this.filters.color !== 0) {
 	
-	  effectsCanvas.width = costume.image.width;
-	  effectsCanvas.height = costume.image.height;		
-	  effectsContext.drawImage(costume.image, 0, 0, costume.image.width, costume.image.height);
-	  var effect = effectsContext.getImageData(0, 0, costume.image.width, costume.image.height);
-         
-	//	 console.log(colorVal);
+			effectsCanvas.width = costume.image.width;
+			effectsCanvas.height = costume.image.height;		
+			effectsContext.drawImage(costume.image, 0, 0, costume.image.width, costume.image.height);
+			var effect = effectsContext.getImageData(0, 0, costume.image.width, costume.image.height);
+        
+			for (var i = 0; i < effect.data.length; i += 4) {
 				
-		var hsvrgb = new hsvToRgb(colorVal, 100, 100);
-		var r = hsvrgb.r;
-		var g = hsvrgb.g;
-		var b = hsvrgb.b;
-	//	console.log(r);
-	//	console.log(g);
-	//	console.log(b);
+				var colorOld = rgbToHsv(effect.data[i + 0],effect.data[i + 1],effect.data[i + 2]);
+				var colorNew = hsvToRgb(colorOld.h+this.filters.color/200,Math.round(colorOld.s),Math.round(colorOld.v));
 		
-		 // PF: TODO improve
-          for (var i = 0; i < effect.data.length; i += 4) {
-            effect.data[i + 0] = (effect.data[i + 0] + r) & 0xff;
-            effect.data[i + 1] = (effect.data[i + 1] + g) & 0xff;
-            effect.data[i + 2] = (effect.data[i + 2] + b) & 0xff;
-            effect.data[i + 3] = effect.data[i + 3]; // alpha
-	  }
-	  effectsContext.putImageData(effect, 0, 0);
-        }
+				effect.data[i + 0] = (colorNew.r) & 0xff;	// red
+				effect.data[i + 1] = (colorNew.g) & 0xff;	//green
+				effect.data[i + 2] = (colorNew.b) & 0xff;	//blue
+				effect.data[i + 3] = effect.data[i + 3];	// alpha
+			}
+			
+			effectsContext.putImageData(effect, 0, 0);
+			
+		}
         
         if(this.filters.mosaic !== 0){
-        var costumeCanvas = document.createElement('canvas');
-        costumeCanvas.width = effectsCanvas.width;
-        costumeCanvas.height = effectsCanvas.height;
-        var costumeContext = costumeCanvas.getContext('2d');
-        document.body.appendChild(costumeCanvas);     
+			
+			var costumeCanvas = document.createElement('canvas');
+			costumeCanvas.width = effectsCanvas.width;
+			costumeCanvas.height = effectsCanvas.height;
+			var costumeContext = costumeCanvas.getContext('2d');
+			document.body.appendChild(costumeCanvas);     
         
-        var mosaicVal = Math.floor((Math.abs(this.filters.mosaic)+5)/10)+1;
-        
-        var lineCanvas = document.createElement('canvas');
-        lineCanvas.width = effectsCanvas.width/mosaicVal;
-        lineCanvas.height = effectsCanvas.height;
-        var lineContext = lineCanvas.getContext('2d');
-        document.body.appendChild(lineCanvas);        
+			var mosaicVal = Math.floor((Math.abs(this.filters.mosaic)+5)/10)+1;
+			
+			var lineCanvas = document.createElement('canvas');
+			lineCanvas.width = effectsCanvas.width/mosaicVal;
+			lineCanvas.height = effectsCanvas.height;
+			var lineContext = lineCanvas.getContext('2d');
+			document.body.appendChild(lineCanvas);        
                 
-        for(var i = 0; i < mosaicVal; i++){
-           lineContext.drawImage(effectsCanvas, 0, i*costumeCanvas.height/mosaicVal, costumeCanvas.width/mosaicVal, costumeCanvas.height/mosaicVal);
-        }           
+			for(var i = 0; i < mosaicVal; i++){
+				lineContext.drawImage(effectsCanvas, 0, i*costumeCanvas.height/mosaicVal, costumeCanvas.width/mosaicVal, costumeCanvas.height/mosaicVal);
+			}           
                 
-        for(var i = 0; i < mosaicVal; i++){
-           costumeContext.drawImage(lineCanvas, i*costumeCanvas.width/mosaicVal, 0, costumeCanvas.width/mosaicVal, costumeCanvas.height);
-        }
+			for(var i = 0; i < mosaicVal; i++){
+				costumeContext.drawImage(lineCanvas, i*costumeCanvas.width/mosaicVal, 0, costumeCanvas.width/mosaicVal, costumeCanvas.height);
+			}
         
-        effectsContext.clearRect(0, 0, effectsCanvas.width, effectsCanvas.height);
-        effectsContext.drawImage(costumeCanvas, 0, 0);
+			effectsContext.clearRect(0, 0, effectsCanvas.width, effectsCanvas.height);
+			effectsContext.drawImage(costumeCanvas, 0, 0);
         
-        costumeCanvas.parentNode.removeChild(costumeCanvas);
-        lineCanvas.parentNode.removeChild(lineCanvas);
-        }
-        
-        ///////
-		
-		var d = new Date()
-
-		var brightness = Math.abs(this.filters.brightness);
+			costumeCanvas.parentNode.removeChild(costumeCanvas);
+			lineCanvas.parentNode.removeChild(lineCanvas);
+		}
        
        if(this.filters.brightness !== 0){
-		//   console.log(brightness);
-		//   console.log(d.getSeconds()+" "+d.getMilliseconds());
-        //canvas for brightness overlay
+		
+			console.log(this.filters.brightness);
+			
+   //canvas for brightness overlay
         //TODO: Find out why brightness doesn't always match scratch.
         var brightnessCanvas = document.createElement('canvas');
         brightnessCanvas.width = 1;
@@ -1955,9 +1953,9 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         
         var imgData = brightnessContext.getImageData(0, 0, 1, 1);
         
-        var brightnessVal = brightness * 255 / 101 ;
+        var brightnessVal = this.filters.brightness * 255 / 100;
         
-        
+        if(brightnessVal < 0) brightnessVal = -255 - brightnessVal;
         
         imgData.data[0] =
         imgData.data[1] =
@@ -1983,9 +1981,15 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         effectsContext.drawImage(costumeCanvas, 0, 0);
       
         brightnessCanvas.parentNode.removeChild(brightnessCanvas);
-        costumeCanvas.parentNode.removeChild(costumeCanvas);            
+        costumeCanvas.parentNode.removeChild(costumeCanvas);           
         }
         
+		if(this.filters.pixelate !== 0){
+			
+			//console.log(this.filters.pixelate);
+			
+		}
+		
         context.drawImage(effectsCanvas, 0, 0, costume.image.width/costume.resScale, costume.image.height/costume.resScale);
         
         effectsCanvas.parentNode.removeChild(effectsCanvas);
@@ -1997,81 +2001,50 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
   };
 
 	function hsvToRgb(h, s, v) {
-    var r, g, b;
-    var i;
-    var f, p, q, t;
-     
-    // Make sure our arguments stay in-range
-    h = Math.max(0, Math.min(200, h));
-    s = Math.max(0, Math.min(100, s));
-    v = Math.max(0, Math.min(100, v));
-     
-    // We accept saturation and value arguments from 0 to 100 because that's
-    // how Photoshop represents those values. Internally, however, the
-    // saturation and value are calculated from a range of 0 to 1. We make
-    // That conversion here.
-    s /= 100;
-    v /= 100;
-     
-    if(s == 0) {
-        // Achromatic (grey)
-        r = g = b = v;
-        return {
-       r: Math.round(r * 255), 
-       g: Math.round(g * 255), 
-       b: Math.round(b * 255)
-		};
+  var r, g, b;
+
+  var i = Math.floor(h * 6);
+  var f = h * 6 - i;
+  var p = v * (1 - s);
+  var q = v * (1 - f * s);
+  var t = v * (1 - (1 - f) * s);
+
+  switch (i % 6) {
+    case 0: r = v, g = t, b = p; break;
+    case 1: r = q, g = v, b = p; break;
+    case 2: r = p, g = v, b = t; break;
+    case 3: r = p, g = q, b = v; break;
+    case 4: r = t, g = p, b = v; break;
+    case 5: r = v, g = p, b = q; break;
+  }
+
+  return {r: r * 255,g: g * 255,b: b * 255 };
+}
+
+	function rgbToHsv(r, g, b) {
+  r /= 255, g /= 255, b /= 255;
+
+  var max = Math.max(r, g, b), min = Math.min(r, g, b);
+  var h, s, v = max;
+
+  var d = max - min;
+  s = max == 0 ? 0 : d / max;
+
+  if (max == min) {
+    h = 0; // achromatic
+  } else {
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
     }
-     
-    h /= 33.3333; // sector 0 to 5
-    i = Math.floor(h);
-    f = h - i; // factorial part of h
-    p = v * (1 - s);
-    q = v * (1 - s * f);
-    t = v * (1 - s * (1 - f));
-     
-    switch(i) {
-        case 0:
-            r = v;
-            g = t;
-            b = p;
-            break;
-     
-        case 1:
-            r = q;
-            g = v;
-            b = p;
-            break;
-     
-        case 2:
-            r = p;
-            g = v;
-            b = t;
-            break;
-     
-        case 3:
-            r = p;
-            g = q;
-            b = v;
-            break;
-     
-        case 4:
-            r = t;
-            g = p;
-            b = v;
-            break;
-     
-        default: // case 5:
-            r = v;
-            g = p;
-            b = q;
-    }
-     
-    return {
-       r: Math.round(r * 255), 
-       g: Math.round(g * 255), 
-       b: Math.round(b * 255)
-    };
+
+    h /= 6;
+  }
+
+  return {	 h: h,
+			s: s,
+			v: v };
 }
 	
   Sprite.prototype.setDirection = function(degrees) {
@@ -3774,7 +3747,7 @@ P.compile = (function() {
     for (var i = 1; i < script.length; i++) {
       compile(script[i]);
     }
-
+		console.log(source);
     if (script[0][0] === 'procDef') {
       source += 'endCall();\n';
       source += 'return;\n';
