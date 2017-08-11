@@ -240,7 +240,7 @@
     if(embedDoubleResolution.checked) embedCustomResolutionValue.value = 960;
     //remember to change the URL back to 'https://' + location.host when putting this back online...
     //embedCode.value = P.player.projectId ? '<script src=file:///D:/Mittagskogel/Sulfurous' + '/js/embed.js?id=' + P.player.projectId + '&resolution-x=' + embedCustomResolutionValue.value + (embedHideControls.checked ? '&ui=false' : '&auto-start=' + embedAutoStart.checked + '&light-content=' + embedLightContent.checked) + '></' + 'script>' : '';
-    embedCode.value = P.player.projectId ? '<script src=https://sulfurous.aau.at/js/embed.js?id=' + P.player.projectId + '&resolution-x=' + embedCustomResolutionValue.value + (embedHideControls.checked ? '&ui=false' : '&auto-start=' + embedAutoStart.checked + '&light-content=' + embedLightContent.checked) + '></' + 'script>' : '';    
+    embedCode.value = P.player.projectId ? '<script src=https://sulfurous.aau.at/js/embed.js?id=' + P.player.projectId + (embedCustomResolution.checked || embedDoubleResolution.checked ? ('&resolution-x=' + embedCustomResolutionValue.value) : ``) + (embedHideControls.checked ? '&ui=false' : '&auto-start=' + embedAutoStart.checked + '&light-content=' + embedLightContent.checked) + '></' + 'script>' : '';    
     embedCustomResolutionValue.disabled = !embedCustomResolution.checked;
     embedAutoStart.disabled =
     embedLightContent.disabled = embedHideControls.checked;
