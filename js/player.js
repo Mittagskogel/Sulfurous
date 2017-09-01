@@ -1,7 +1,10 @@
 P.player = (function() {
   'use strict';
   
-  var resolution;
+  var aspectX;
+  var aspectY;
+  var resolutionX = 480;
+  var resolutionY = 360;
   
   var stage;
   var frameId = null;
@@ -24,10 +27,11 @@ P.player = (function() {
 
   var flagTouchTimeout;
 
-  function setResolution(res){
-    resolution = res;
-    player.style.width = resolution + 'px';
-    player.style.height = resolution*3/4 + 'px'
+  function setResolution(resX, resY){
+    resolutionX = resX;
+	resolutionY = resY;
+    player.style.width = resolutionX + 'px';
+    player.style.height = resolutionY + 'px'
   } 
   
   function flagTouchStart() {
@@ -90,10 +94,16 @@ P.player = (function() {
       if (isFullScreen) {
         var el = document.documentElement;
         if (el.requestFullScreenWithKeys) {
-          el.requestFullScreenWithKeys();
+		  el.requestFullScreenWithKeys();
         } else if (el.webkitRequestFullScreen) {
           el.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT);
         }
+		else if (el.mozRequestFullScreen){
+		  el.mozRequestFullScreen();
+		}
+		else{
+		  console.warn("No full screen available.");
+		}
       } else {
         if (document.exitFullscreen) {
           document.exitFullscreen();
@@ -105,7 +115,7 @@ P.player = (function() {
       }
     }
     if (!isFullScreen) {
-      document.body.style.width =
+	  document.body.style.width = resolutionX + 'px';
       document.body.style.height =
       document.body.style.marginLeft =
       document.body.style.marginTop = '';
@@ -130,24 +140,23 @@ P.player = (function() {
       var padding = 8;
       var w = window.innerWidth - padding * 2;
       var h = window.innerHeight - padding - controls.offsetHeight;
-      w = Math.min(w, h / .75);
-      h = w * .75 + controls.offsetHeight;
+      w = Math.min(w, h * resolutionX / resolutionY);
+      h = w * resolutionY / resolutionX + controls.offsetHeight;
       document.body.style.width = w + 'px';
       document.body.style.height = h + 'px';
       document.body.style.marginLeft = (window.innerWidth - w) / 2 + 'px';
-      document.body.style.marginTop = (window.innerHeight - h - padding) / 2 + 'px';
-      stage.setZoom(w / 480);
+      document.body.style.marginTop =  (window.innerHeight - h + padding) / 2 + 'px';
+      stage.setZoom(w / 480, w * resolutionY / resolutionX / 360);
     } else {
-      stage.setZoom(resolution ? resolution/480 : 1);
+      stage.setZoom(resolutionX ? resolutionX/480 : 1, resolutionY ? resolutionY/360 : 1);
     }
   }
 
   function preventDefault(e) {
     e.preventDefault();
   }
-
+	
   window.addEventListener('resize', updateFullScreen);
-
   if (P.hasTouchEvents) {
     flag.addEventListener('touchstart', flagTouchStart);
     flag.addEventListener('touchend', flagClick);
@@ -162,13 +171,14 @@ P.player = (function() {
 
     document.addEventListener('touchmove', function(e) {
       if (isFullScreen) e.preventDefault();
-    });
-  } else {
-    flag.addEventListener('click', flagClick);
-    pause.addEventListener('click', pauseClick);
-    stop.addEventListener('click', stopClick);
-    fullScreen.addEventListener('click', fullScreenClick);
+    });	
   }
+  
+	flag.addEventListener('click', flagClick);
+  pause.addEventListener('click', pauseClick);
+  stop.addEventListener('click', stopClick);
+  fullScreen.addEventListener('click', fullScreenClick);
+    
 
   document.addEventListener("fullscreenchange", function () {
     if (isFullScreen !== document.fullscreen) fullScreenClick();
@@ -229,13 +239,14 @@ P.player = (function() {
         }, 300);
       }, 100);
 
-      var zoom = stage ? stage.zoom : 1;
-      zoom = resolution ? resolution/480 : zoom;
+      var zoomX = stage ? stage.zoomX : 1;
+	  var zoomY = stage ? stage.zoomY : 1;
+      zoomX = resolutionX ? resolutionX/480 : zoomX;
+	  zoomY = resolutionY ? resolutionY/360 : zoomY;
       
       window.stage = stage = s;
       stage.start();
-      stage.setZoom(zoom);
-      //stage.setZoom(2);
+      stage.setZoom(zoomX, zoomY);
       
       stage.root.addEventListener('keydown', exitFullScreen);
       stage.handleError = showError;

@@ -4,7 +4,7 @@
 <meta name=apple-mobile-web-app-capable content=yes>
 <meta name=apple-mobile-web-app-status-bar-style content=black>
 <title>sulfurous</title>
-<link rel=icon type="image/png" href="../img/favicon.ico">
+<link rel=icon href="../img/favicon.ico">
 <link rel=stylesheet href=../css/app.css>
 <div class=player></div>
 <div class=splash>
@@ -22,6 +22,7 @@
 <script src=../js/fonts.js></script>
 <script src=//cdnjs.cloudflare.com/ajax/libs/jszip/2.4.0/jszip.js></script>
 <script src=../js/phosphorus.js></script>
+<script src=../fonts/fonts.js></script>
 <script>
 
 (function () {
@@ -39,7 +40,10 @@
   var projectTitle = '';
   var turbo = false;
   var fullScreen = true;
-  var resolution = 480;
+  var aspectX = 4;
+  var aspectY = 3;
+  var resolutionX = 480;
+  var resolutionY = 360;
 
   var params = location.search.substr(1).split('&');
   params.forEach(function(p) {
@@ -55,16 +59,25 @@
         case 'full-screen':
           fullScreen = parts[1] !== 'false';
           break;
+		case 'aspect-x':
+		  aspectX = Number(parts[1]);
+		  break;
+		case 'aspect-y':
+		  aspectY = Number(parts[1]);
+		  break;
         case 'resolution-x':
-          resolution = Number(parts[1]);
+          resolutionX = Number(parts[1]);
           break;
+		case 'resolution-y':
+		  resolutionY = Number(parts[1]);
+		  break;
         default:
           console.log('Skipping unknown option: ' + parts[0] + '=' + parts[1]);
       }
     }
   });
   
-  P.resolution = resolution;
+  P.resolution = resolutionX;
 
   var splash = document.querySelector('.splash');
   var progressBar = document.querySelector('.progress-bar');
@@ -76,14 +89,62 @@
 
   function layout() {
     if (!stage) return;
-    var w = Math.min(window.innerWidth, window.innerHeight / .75);
-    if (!fullScreen) w = resolution;
-    var h = w * .75;
+    var w = Math.min(window.innerWidth, window.innerHeight * aspectX / aspectY);
+    if (!fullScreen) w = resolutionX;
+    var h = w * aspectY / aspectX;
+	if (!fullScreen) h = resolutionY;
     player.style.left = (window.innerWidth - w) / 2 + 'px';
     player.style.top = (window.innerHeight - h) / 2 + 'px';
-    stage.setZoom(w / 480);
+    stage.setZoom(w / 480, h / 360);
     stage.draw();
+  }	
+
+	function mobileFullScreen(e){
+	  if(e) e.preventDefault();
+	  document.documentElement.classList.toggle('fs');
+		
+		if(!e){
+			var el = document.documentElement;
+			if (el.requestFullScreenWithKeys) {
+				el.requestFullScreenWithKeys();
+			} else if (el.webkitRequestFullScreen) {
+				el.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT);
+			} else if (el.mozRequestFullScreen){
+				el.mozRequestFullScreen();
+			}	else{
+			  console.warn('No full screen available.');
+			}
+		}
+		updateFullScreen();
+	}
+	
+	function updateFullScreen() {
+    if (!stage) return;
+		
+		  resolutionX = !resolutionX ? 480 : resolutionX;
+			resolutionY = !resolutionY ? 360 : resolutionY;
+		
+      window.scrollTo(0, 0);
+      var padding = 8;
+      var w = window.innerWidth - padding * 2;
+      var h = window.innerHeight - padding;
+      w = Math.min(w, h * resolutionX / resolutionY);
+      h = w * resolutionY / resolutionX;
+      document.body.style.width = w + 'px';
+      document.body.style.height = h + 'px';
+      document.body.style.marginLeft = (window.innerWidth - w) / 2 + 'px';
+      document.body.style.marginTop =  (window.innerHeight - h + padding) / 2 + 'px';
+      stage.setZoom(w / 480, w * resolutionY / resolutionX / 360);
   }
+	
+	
+	if(P.hasTouchEvents){
+	  document.addEventListener('load', alert('Use two finger tap in portrait orientation and turn to landscape orientation for full screen.'));
+		document.addEventListener('touchstart', function(e) {
+	 	if(e.targetTouches.length >= 2)
+	    mobileFullScreen(e);
+	  });
+	}
 
   function showError(e) {
     error.style.display = 'table';

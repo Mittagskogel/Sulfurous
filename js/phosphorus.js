@@ -2,7 +2,7 @@
 /*
  Sulfurous - an html5 player for Scratch projects
  
- Version: 0.85 July 18, 2017
+ Version: 0.86 July 18, 2017
 
  Sulfurous was created by Mittagskogel and further developed by FRALEX
  as part of their work at the Alpen-Adria-University Klagenfurt.
@@ -194,7 +194,7 @@ var P = (function() {
 
   IO.PROJECT_URL = 'https://projects.scratch.mit.edu/internalapi/project/';
   IO.ASSET_URL = 'https://cdn.assets.scratch.mit.edu/internalapi/asset/';
-  IO.SOUNDBANK_URL = 'https://cdn.rawgit.com/LLK/scratch-flash/v429/src/soundbank/';
+  IO.SOUNDBANK_URL = 'https://cdn.rawgit.com/LLK/scratch-flash/v448/src/soundbank/';
 
    IO.FONTS = {
     '': 'Helvetica',
@@ -207,11 +207,15 @@ var P = (function() {
 
   IO.LINE_HEIGHTS = {
     'Helvetica': 1.13,
+    'Scratch': 1.0,
     'Donegal One': 1.25,
     'Gloria Hallelujah': 1.97,
     'Permanent Marker': 1.43,
     'Mystery Quest': 1.37
   };
+  
+  IO.ADPCM_STEPS = [7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 19, 21, 23, 25, 28, 31, 34, 37, 41, 45, 50, 55, 60, 66, 73, 80, 88, 97, 107, 118, 130, 143, 157, 173, 190, 209, 230, 253, 279, 307, 337, 371, 408, 449, 494, 544, 598, 658, 724, 796, 876, 963, 1060, 1166, 1282, 1411, 1552, 1707, 1878, 2066, 2272, 2499, 2749, 3024, 3327, 3660, 4026, 4428, 4871, 5358, 5894, 6484, 7132, 7845, 8630, 9493, 10442, 11487, 12635, 13899, 15289, 16818, 18500, 20350, 22385, 24623, 27086, 29794, 32767];
+  IO.ADPCM_INDEX = [-1, -1, -1, -1, 2, 4, 6, 8, -1, -1, -1, -1, 2, 4, 6, 8];
 
   IO.init = function(request) {
     IO.projectRequest = request;
@@ -315,7 +319,7 @@ var P = (function() {
     var request = new CompositeRequest;
 
     request.defer = true;
-    request.add(P.IO.load('https://crossorigin.me/https://scratch.mit.edu/projects/' + id + '/').onLoad(function(data) {
+    request.add(P.IO.load('https://scratch.mit.edu/projects/' + id + '/').onLoad(function(data) {
       var m = /<title>\s*(.+?)(\s+on\s+Scratch)?\s*<\/title>/.exec(data);
       if (callback) request.onLoad(callback.bind(self));
       if (m) {
@@ -422,10 +426,43 @@ var P = (function() {
       }
     }
   };
-
+  
+  IO.arrayBufferToBase64 = function(buffer){
+    var bytes = new Uint8Array(buffer);
+    var len = buffer.byteLength;
+    var base64 = '';
+    for(var i = 0; i < len; i++){
+      base64 += String.fromCharCode(bytes[i]);
+    }
+    return btoa(base64);
+  }
+  
+  IO.base64ToArrayBuffer = function(base64){
+    var binaryString = atob(base64);
+    var len = binaryString.length;
+    var bytes = new Uint8Array(len);
+    for(var i = 0; i < len; i++){
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes.buffer;
+  }
+  
+  //IO.base64output = '';
+  
   IO.loadWavBuffer = function(name) {
     var request = new Request;
     IO.load(IO.SOUNDBANK_URL + wavFiles[name], function(ab) {
+      
+      //Code for exporting soundbank to text file.
+      /*
+      IO.base64output = IO.base64output + 'A.' + name + ' = \'' + IO.arrayBufferToBase64(ab) + '\'\n';
+      var el = document.createElement("a");
+      el.setAttribute('href', 'data:application/octet-stream;charset=utf-8,' + encodeURIComponent(IO.base64output));
+      el.appendChild(document.createTextNode('wav files'));
+      document.body.appendChild(el);
+      console.log(name);
+      */     
+      
       IO.decodeAudio(ab, function(buffer) {
         IO.wavBuffers[name] = buffer;
         request.load();
@@ -436,158 +473,101 @@ var P = (function() {
     return request;
   };
 
-//Rewrite audio headers. Code by "htmlgames" (PF)
-// PF - New audio stuff ***
-
+  
   IO.decodeAudio = function(ab, cb) {
     if (audioContext) {
-    // PF check buffer type is PCM or ADPCM 1st? (ie headers)
-	var abc = false;
-	var uInt8Array = new Uint8Array(ab);
-	if (readBytes(20, 2, uInt8Array) == 17) { // 11 hex (needs to be 1)
-		console.warn('Processing audio conversion');
-      		// PF it's most likely ADPCM - lets hack the header and correct the buffer
-		abc = readADPCM(uInt8Array);
-	}
-        if (abc) { // new
-	  audioContext.decodeAudioData(abc, function(buffer) {
+       IO.decodeADPCMAudio(ab, function(err, buffer) {
+        if (buffer) return setTimeout(function() {cb(buffer)});
+        var p = audioContext.decodeAudioData(ab, function(buffer) {
           cb(buffer);
-          }, function(err) {
-          console.warn('Failed to convert audio. ' + err);
+        }, function(err2) {
+          console.warn(err, err2);
           cb(null);
-          });
-	} else { // old
-	  audioContext.decodeAudioData(ab, function(buffer) {
-          cb(buffer);
-          }, function(err) {
-          console.warn('Failed to load audio. ' + err);
-          cb(null);
-          });
-	}
+        });
+        if (p.catch) p.catch(function() {});
+      });
     } else {
       setTimeout(cb);
     }
   };
 
-// helper function
-function readBytes(start, length, uInt8Array) {
-	var returnval = 0;
-	for (var j = 0; j < length; j++) {
-		returnval += uInt8Array[start + j] << (8 * j);
-	}
-	return returnval;
-}
+  IO.decodeADPCMAudio = function(ab, cb) {
+    var dv = new DataView(ab);
+    if (dv.getUint32(0) !== 0x52494646 || dv.getUint32(8) !== 0x57415645) {
+      return cb(new Error('Unrecognized audio format'));
+    }
 
-function readADPCM(uInt8Array) {
+    var blocks = {};
+    var i = 12, l = dv.byteLength - 8;
+    while (i < l) {
+      blocks[String.fromCharCode(
+        dv.getUint8(i),
+        dv.getUint8(i + 1),
+        dv.getUint8(i + 2),
+        dv.getUint8(i + 3))] = i;
+      i += 8 + dv.getUint32(i + 4, true);
+    }
 
-	var blockAlign = readBytes(32, 2, uInt8Array);
-	var samplesPerBlock = (blockAlign - 4);
-	var sampleRate = readBytes(24, 4, uInt8Array);
+    var format        = dv.getUint16(20, true);
+    var channels      = dv.getUint16(22, true);
+    var sampleRate    = dv.getUint32(24, true);
+    var byteRate      = dv.getUint32(28, true);
+    var blockAlign    = dv.getUint16(32, true);
+    var bitsPerSample = dv.getUint16(34, true);
 
-	var offset = (readBytes(20, 2, uInt8Array) != 1) ? 38 + readBytes(36, 2, uInt8Array) : 36;
-	offset += 8 + readBytes(offset + 4, 4, uInt8Array);
+    if (format === 17) {
+      var samplesPerBlock = dv.getUint16(38, true);
+      var blockSize = ((samplesPerBlock - 1) / 2) + 4;
 
-	var soundBytes = readBytes(offset + 4, 4, uInt8Array);
-	var nBlocks = soundBytes / blockAlign;
-	offset += 8;
+      var frameCount = dv.getUint32(blocks.fact + 8, true);
 
-	var resultStepChange = [-1, -1, -1, -1, 2, 4, 6, 8, -1, -1, -1, -1, 2, 4, 6, 8];
-	var stepSizes = [7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 19, 21, 23, 25, 28, 31, 34, 37, 41, 45, 50, 55, 60, 66, 73, 80, 88, 97, 107, 118, 130, 143, 157, 173, 190, 209, 230, 253, 279, 307, 337, 371, 408, 449, 494, 544, 598, 658, 724, 796, 876, 963, 1060, 1166, 1282, 1411, 1552, 1707, 1878, 2066, 2272, 2499, 2749, 3024, 3327, 3660, 4026, 4428, 4871, 5358, 5894, 6484, 7132, 7845, 8630, 9493, 10442, 11487, 12635, 13899, 15289, 16818, 18500, 20350, 22385, 24623, 27086, 29794, 32767];
+      var buffer = audioContext.createBuffer(1, frameCount, sampleRate);
+      var channel = buffer.getChannelData(0);
 
-	var stepID = 8;
-	var step = 16;
-	var volume = 0;
-	var sdi = 0;
-	var in_s;
-	var s = 0;
-	var byte;
-	var nib;
-	var diff;
+      var sample, index = 0;
+      var step, code, delta;
+      var lastByte = -1;
 
-	var length = (samplesPerBlock * 4 + 2) * nBlocks;
-	var soundBuf = new ArrayBuffer(length + 32);
-	var soundData = new Uint8Array(soundBuf, 32, length);
-
-	for (var b = 0; b < nBlocks; b++)
-	{
-		in_s = s;
-
-		volume = readBytes(s + offset, 2, uInt8Array)
-		if (volume > 32767) volume = (volume - 65536);
-		stepID = Math.max(0, Math.min(readBytes(s + offset + 2, 1, uInt8Array), 88));
-		s += 4;
-
-		var sample = Math.round(volume);
-		if (sample < 0) sample += 65536; // 2's complement signed
-
-		soundData[sdi++] = sample % 256;
-		soundData[sdi++] = Math.floor(sample / 256);
-
-		for (var as = 0; as < samplesPerBlock; as++)
-		{
-			byte = uInt8Array[s + offset].toString(2);
-			while (byte.length < 8) {
-				byte = "0" + byte;
-			}
-
-			for (var nibble = 0; nibble < 2; nibble++)
-			{
-				nib = parseInt(byte.substr(nibble*4, 4), 2);
-				nib &= 15;
-				step = stepSizes[stepID];
-				diff = step >> 3;
-				if (nib & 1) diff += step >> 2;
-				if (nib & 2) diff += step >> 1;
-				if (nib & 4) diff += step;
-				if (nib & 8) diff = 0 - diff;
-				volume = Math.max(Math.min(32767, volume + diff), -32768);
-				var sample = Math.round(volume);
-				if (sample < 0) sample += 65536; // 2's complement signed
-				soundData[sdi++] = sample % 256;
-				soundData[sdi++] = Math.floor(sample / 256);
-				stepID = Math.max(0, Math.min(stepID + resultStepChange[nib], 88));
-			}
-			s += 1;
-		}
-		s = in_s + blockAlign;
-	}
-
-	return encodeAudio16bit(soundData, sampleRate, soundBuf);
-}
-
-function encodeAudio16bit(soundData, sampleRate, soundBuf) {
-
-	// 16-bit mono WAVE header template
-	var header = "RIFF<##>WAVEfmt \x10\x00\x00\x00\x01\x00\x01\x00<##><##>\x02\x00\x10\x00data<##>";
-
-	// Helper to insert a 32-bit little endian int.
-	function insertLong(value) {
-		var bytes = "";
-		for (var i = 0; i < 4; ++i) {
-			bytes += String.fromCharCode(value % 256);
-			value = Math.floor(value / 256);
-		}
-		header = header.replace('<##>', bytes);
-	}
-
-	var n = soundData.length / 2; // as buffer
-	insertLong(36 + n * 2); // ChunkSize
-	insertLong(sampleRate); // SampleRate
-	insertLong(sampleRate * 2); // ByteRate
-	insertLong(n * 2); // Subchunk2Size
-
-	// Output sound data
-	var bytes = new Uint8Array(soundBuf, 0, 40); // 32
-	for (var i = 0; i < header.length; i++)
-	{
-  		bytes[i] = header.charCodeAt(i);
-	}
-	console.log(new Uint8Array(soundBuf));
-	return soundBuf.slice(0);      
-}
-
-// PF end of New audio stuff ***
-
+      var offset = blocks.data + 8;
+      i = offset;
+      var j = 0;
+      while (true) {
+        if ((((i - offset) % blockSize) == 0) && (lastByte < 0)) {
+          if (i >= dv.byteLength) break;
+          sample = dv.getInt16(i, true); i += 2;
+          index = dv.getUint8(i); i += 1;
+          i++;
+          if (index > 88) index = 88;
+          channel[j++] = sample / 32767;
+        } else {
+          if (lastByte < 0) {
+            if (i >= dv.byteLength) break;
+            lastByte = dv.getUint8(i); i += 1;
+            code = lastByte & 0xf;
+          } else {
+            code = (lastByte >> 4) & 0xf;
+            lastByte = -1;
+          }
+          step = IO.ADPCM_STEPS[index];
+          delta = 0;
+          if (code & 4) delta += step;
+          if (code & 2) delta += step >> 1;
+          if (code & 1) delta += step >> 2;
+          delta += step >> 3;
+          index += IO.ADPCM_INDEX[code];
+          if (index > 88) index = 88;
+          if (index < 0) index = 0;
+          sample += (code & 8) ? -delta : delta;
+          if (sample > 32767) sample = 32767;
+          if (sample < -32768) sample = -32768;
+          channel[j++] = sample / 32768;
+        }
+      }
+      return cb(null, buffer);
+    }
+    cb(new Error('Unrecognized WAV format ' + format));
+  };
+  
   IO.loadBase = function(data) {
     data.scripts = data.scripts || [];
     data.costumes = IO.loadArray(data.costumes, IO.loadCostume);
@@ -632,6 +612,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
 	  
     if (element.nodeType !== 1) return element;
     if (element.nodeName.slice(0, 4).toLowerCase() === 'svg:') {
+      /*
       var newElement = document.createElementNS('https://www.w3.org/2000/svg', element.localName);
       var attributes = element.attributes;
       var newAttributes = newElement.attributes;
@@ -642,7 +623,64 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         newElement.appendChild(element.firstChild);
       }
       element = newElement;
+      */
     }
+    
+    //Embed fonts in svg:
+    if (element.nodeName === 'svg') {
+      var defs = document.createElement('defs');
+      element.appendChild(defs);
+      
+      var style = document.createElement('style');
+      defs.appendChild(style);
+      
+      var embedText = '';
+      
+      
+      if(element.querySelector('[font-family="Scratch"]')){
+        embedText += '@font-face{\n';
+        embedText += 'font-family: Scratch;\nsrc: url(\"data:application/x-font-ttf;base64,';
+        embedText += F.Scratch;
+        embedText += '\");\n';
+        embedText += '}\n';
+      }
+      
+      if(element.querySelector('[font-family="Donegal"]')){
+        embedText += '@font-face{\n';
+        embedText += 'font-family: Donegal One;\nsrc: url(\"data:application/x-font-ttf;base64,';
+        embedText += F.Donegal;
+        embedText += '\");\n';
+        embedText += '}\n';      
+      }
+      
+      if(element.querySelector('[font-family="Gloria"]')){
+        embedText += '@font-face{\n';
+        embedText += 'font-family: Gloria Hallelujah;\nsrc: url(\"data:application/x-font-ttf;base64,';
+        embedText += F.Gloria;
+        embedText += '\");\n';
+        embedText += '}\n';      
+      }
+      
+      if(element.querySelector('[font-family="Marker"]')){
+        embedText += '@font-face{\n';
+        embedText += 'font-family: Permanent Marker;\nsrc: url(\"data:application/x-font-ttf;base64,';
+        embedText += F.Marker;
+        embedText += '\");\n';
+        embedText += '}\n';      
+      }
+      
+      if(element.querySelector('[font-family="Mystery"]')){
+        embedText += '@font-face{\n';
+        embedText += 'font-family: Mystery Quest;\nsrc: url(\"data:application/x-font-ttf;base64,';
+        embedText += F.Mystery;
+        embedText += '\");\n';
+        embedText += '}\n';            
+      }
+      
+      var info = document.createTextNode(embedText);
+      style.appendChild(info);
+    }    
+    
     if (element.nodeName === 'text') {
       
       var font = element.getAttribute('font-family') || '';
@@ -654,36 +692,39 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
       }
       var size = +element.getAttribute('font-size');
       if (!size) {
-        element.setAttribute('font-size', size = 22);
+        element.setAttribute('font-size', size = 18);
       }
-
+      
+      
       //TODO: Find out what actual values have to be put here.
-      element.setAttribute('x', 0);
-      element.setAttribute('y', size*IO.LINE_HEIGHTS[font]);
+      //element.setAttribute('x', 0);
+      //element.setAttribute('y', size*IO.LINE_HEIGHTS[font]);
+      var bb = element ? element.getBBox() : null;
+      var x = 4 - .6 * element.transform.baseVal.consolidate().matrix.a;
+      var y = (element.getAttribute('y') - bb.y) * 1.1;
+      element.setAttribute('x', x);
+      element.setAttribute('y', y);
+      
       
       var lines = element.textContent.split('\n');
       if (lines.length > 1) {
         element.textContent = lines[0];
         var lineHeight = IO.LINE_HEIGHTS[font] || 1;
         for (var i = 1, l = lines.length; i < l; i++) {
-          var tspan = document.createElementNS(null, 'tspan');
+          var tspan = document.createElementNS("http://www.w3.org/2000/svg", 'tspan');
           tspan.textContent = lines[i];
-          tspan.setAttribute('x', 0);
-          tspan.setAttribute('y', size*(i+1)*lineHeight);//y + size * i * lineHeight);
-          tspan.setAttribute('id', 'ID' + Math.random());
+          tspan.setAttribute('x', x);
+          tspan.setAttribute('y', y + size * i * lineHeight);
           element.appendChild(tspan);
         }
       }
       
-      // svg.style.cssText = '';
-      // console.log(element.textContent, 'data:image/svg+xml;base64,' + btoa(svg.outerHTML));
     } else if ((element.hasAttribute('x') || element.hasAttribute('y')) && element.hasAttribute('transform')) {
       element.setAttribute('x', 0);
       element.setAttribute('y', 0);
     }
     
     if (element.nodeName === 'linearGradient'){
-		console.log("linearGradient");
       element.setAttribute('id', element.getAttribute('id') + svg.getAttribute('id'));
         element.setAttribute('gradientUnits', 'objectBoundingBox');
         //I really don't know what kind of algorithm scratch is following here, so this is just guesswork.
@@ -725,63 +766,16 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
     }
 	
 	if(element.nodeName === 'radialGradient'){
-		console.log("radialGradient");
 		element.setAttribute('id', element.getAttribute('id') + svg.getAttribute('id'));
-		
-		 element.setAttribute('gradientUnits', 'objectBoundingBox');
-        //I really don't know what kind of algorithm scratch is following here, so this is just guesswork.
-        var x1 = Number(element.getAttribute('x1'));
-        var x2 = Number(element.getAttribute('x2'));
-        var y1 = Number(element.getAttribute('y1'));
-        var y2 = Number(element.getAttribute('y2'));
-		var r  = Number(element.getAttribute('r'));
-        var cx = Number(element.getAttribute('cx'));
-		var cy = Number(element.getAttribute('cy'));
-			
-			console.log(r);
-			console.log(cx);
-			console.log(cy);
-			
-        if(x1 === x2){
-          x1 = 0;
-          x2 = 0;
-        }
-        else if(x1 < x2){
-          x1 = 0;
-          x2 = 1;
-        }
-        else{
-          x1 = 1;
-          x2 = 0;
-        }
-		
-        if(y1 === y2){
-          y1 = 0;
-          y2 = 0;
-        }
-        else if(y1 < y2){
-          y1 = 0;
-          y2 = 1;
-        }
-        else{
-          y1 = 1;
-          y2 = 0;
-        }
-      
-        element.setAttribute('x1', x1);
-        element.setAttribute('x2', x2);
-        element.setAttribute('y1', y1);
-        element.setAttribute('y2', y2);
-		element.setAttribute('cx', 100);
-		element.setAttribute('cy', 0);
-		element.setAttribute('r', 100);
-		console.log(element.getAttribute('r'));
-		console.log(element.getAttribute('x1'));
-		console.log(element.getAttribute('cx'));
+		element.setAttribute('gradientUnits', 'objectBoundingBox');
 	}
     
     if (element.getAttribute('fill') ? element.getAttribute('fill').indexOf("url") > -1 : false){
       element.setAttribute('fill', element.getAttribute('fill').replace(/.$/, svg.getAttribute('id')));
+    }
+		
+		if (element.getAttribute('stroke') ? element.getAttribute('stroke').indexOf("url") > -1 : false){
+      element.setAttribute('stroke', element.getAttribute('stroke').replace(/.$/, svg.getAttribute('id')));
     }
     
     [].forEach.call(element.childNodes, function(child){
@@ -809,42 +803,42 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         //div.innerHTML = source.replace(/(<\/?)svg:/g, '$1');
         //var svg = div.firstElementChild;		
 				
-				//parse svg source
         var svg = new DOMParser().parseFromString(source, 'image/svg+xml').firstElementChild;
-				//use md5 hash as unique name for svg image
         svg.id = 'svg' + md5.split('.')[0];
         if(svg.getAttribute('width') === '0' || svg.getAttribute('height') === '0'){
-					//create namespace for svg if it is empty
           svg = document.createElementNS('https://www.w3.org/2000/svg', svg.localName);
         }
-        else svg = IO.fixSVG(svg, svg);
-        
-        //svg.style.visibility = 'hidden';
-        //svg.style.position = 'absolute';
-        //svg.style.left = '-10000px';
-        //svg.style.top = '-10000px';
-   
-        document.body.appendChild(svg);
+        else{
+          document.body.appendChild(svg);
+          svg = IO.fixSVG(svg, svg);
+        }
 		
-        var viewBox = svg.viewBox.baseVal;
+		//Some svg tags are completely emty for some reason, so we simply ignore these
+		if(!svg.style) return;		
+		//When viewBox doesn't exist yet, some browsers don't automatically create an object,
+		//so we need to do that manually. (SVGRect doesn't seem to have a constructor either)
+        var viewBox = svg.viewBox && svg.viewBox.baseVal ? svg.viewBox.baseVal : {width: 0, height: 0, x: 0, y: 0};
 		
         if (svg.querySelector("path") || svg.querySelector("image")) {
         var bb = svg.getBBox();
         viewBox.width  = svg.width.baseVal.value = Math.ceil(bb.x + bb.width + 1);
-        viewBox.height = svg.height.baseVal.value = Math.ceil(bb.y + bb.height + 1);		       
+        viewBox.height = svg.height.baseVal.value = Math.ceil(bb.y + bb.height + 1);				
         viewBox.x = 0;
         viewBox.y = 0;
       }
-
-	//get the viewbox of the svg
+				//get the viewbox of the svg
         if (viewBox && (viewBox.x || viewBox.y)) {
-          if (svg.querySelector("path") || svg.querySelector("image")) {
-            var bb = svg.getBBox();
-            viewBox.width  = svg.width.baseVal.value = Math.ceil(bb.x + bb.width + 1);
-            viewBox.height = svg.height.baseVal.value = Math.ceil(bb.y + bb.height + 1);		       
-            viewBox.x = 0;
-            viewBox.y = 0;
-          }
+          //svg.width.baseVal.value = viewBox.width - viewBox.x;
+          //svg.height.baseVal.value = viewBox.height - viewBox.y;
+          //viewBox.x = 0;
+          //viewBox.y = 0;
+          //viewBox.width = 0;
+          //viewBox.height = 0;
+          var bb = svg.getBBox();
+          viewBox.width  = svg.width.baseVal.value = Math.ceil(bb.x + bb.width + 1);
+          viewBox.height = svg.height.baseVal.value = Math.ceil(bb.y + bb.height + 1);	
+          viewBox.x = 0;
+          viewBox.y = 0;
         }
 
         //IO.fixSVG(svg, svg);
@@ -852,10 +846,10 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
         //div.appendChild(svg);
         //svg.style.visibility = 'visible';
         //svg.style.cssText = '';
-        
+
         svg.style['image-rendering'] = '-moz-crisp-edges';
         svg.style['image-rendering'] = 'pixelated';
-        
+		
         //svg.style.overflow = 'visible';
         //svg.style.width = '100%';
         
@@ -1183,8 +1177,10 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
     this.nextPromptId = 0;
     this.tempoBPM = 60;
     this.videoAlpha = 1;
-    this.zoom = 1;
-    this.maxZoom = SCALE;
+    this.zoomX = 1;
+	this.zoomY = 1;
+    this.maxZoomX = SCALE;
+	this.maxZoomY = SCALE;
     this.baseNow = 0;
     this.baseTime = 0;
     this.timerStart = 0;
@@ -1202,7 +1198,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
     this.root.style.overflow = 'hidden';
     this.root.style.width = '480px';
     this.root.style.height = '360px';
-    this.root.style.fontSize = '1px';
+    this.root.style.fontSize = '10px';
     this.root.style.background = '#fff';
     this.root.style.WebkitUserSelect =
     this.root.style.MozUserSelect =
@@ -1367,6 +1363,21 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
       document.addEventListener('touchend', function(e) {
         this.releaseMouse();
       }.bind(this));
+	  
+	  // Eventlistener for starting audio on mobile.
+	  document.addEventListener('touchend', function(e) {
+		if(!audioContext.mInit){
+		  audioContext.mInit = true;
+		  var osc = audioContext.createOscillator();
+		  osc.frequency.value = 0;
+		  osc.connect(audioContext.destination);
+		  osc.start(0);
+		  osc.stop(0);
+		}
+	  }.bind(this));
+	  
+	  
+	  //if(hasTouchEvents){
 
     //} else {
 
@@ -1393,13 +1404,15 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
 
     this.prompter = document.createElement('div');
     this.root.appendChild(this.prompter);
+		this.prompter.style.zIndex = '1';
+		this.prompter.style.pointerEvents = 'auto';
     this.prompter.style.position = 'absolute';
     this.prompter.style.left =
-    this.prompter.style.right = '14em';
-    this.prompter.style.bottom = '6em';
-    this.prompter.style.padding = '5em 30em 5em 5em';
-    this.prompter.style.border = '3em solid rgb(46, 174, 223)';
-    this.prompter.style.borderRadius = '8em';
+    this.prompter.style.right = '1.4em';
+    this.prompter.style.bottom = '.6em';
+    this.prompter.style.padding = '.5em 3.0em .5em .5em';
+    this.prompter.style.border = '.3em solid rgb(46, 174, 223)';
+    this.prompter.style.borderRadius = '.8em';
     this.prompter.style.background = '#fff';
     this.prompter.style.display = 'none';
 
@@ -1407,7 +1420,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
     this.prompter.appendChild(this.promptTitle);
     this.promptTitle.textContent = '';
     this.promptTitle.style.cursor = 'default';
-    this.promptTitle.style.font = 'bold 13em sans-serif';
+    this.promptTitle.style.font = 'bold 1.3em sans-serif';
     this.promptTitle.style.margin = '0 '+(-25/13)+'em '+(5/13)+'em 0';
     this.promptTitle.style.whiteSpace = 'pre';
     this.promptTitle.style.overflow = 'hidden';
@@ -1419,7 +1432,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
     this.prompt.style.background = '#eee';
     this.prompt.style.MozBoxSizing =
     this.prompt.style.boxSizing = 'border-box';
-    this.prompt.style.font = '13em sans-serif';
+    this.prompt.style.font = '1.3em sans-serif';
     this.prompt.style.padding = '0 '+(3/13)+'em';
     this.prompt.style.outline = '0';
     this.prompt.style.margin = '0';
@@ -1434,13 +1447,13 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
 
     this.promptButton = document.createElement('div');
     this.prompter.appendChild(this.promptButton);
-    this.promptButton.style.width = '22em';
-    this.promptButton.style.height = '22em';
+    this.promptButton.style.width = '2.2em';
+    this.promptButton.style.height = '2.2em';
     this.promptButton.style.position = 'absolute';
-    this.promptButton.style.right = '4em';
-    this.promptButton.style.bottom = '4em';
-    this.promptButton.style.background = 'url(icons.svg) -165em -37em';
-    this.promptButton.style.backgroundSize = '320em 96em';
+    this.promptButton.style.right = '.4em';
+    this.promptButton.style.bottom = '.4em';
+    this.promptButton.style.background = 'url(/img/icons.svg) -16.5em -3.7em';
+    this.promptButton.style.backgroundSize = '32.0em 9.6em';
 
     this.prompt.addEventListener('keydown', function(e) {
       if (e.keyCode === 13) {
@@ -1483,8 +1496,9 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
 
   Stage.prototype.updateMouse = function(e) {
     var bb = this.canvas.getBoundingClientRect();
-    var x = (e.clientX - bb.left) / this.zoom - 240;
-    var y = 180 - (e.clientY - bb.top) / this.zoom;
+	var z = Math.max(this.zoomX, this.zoomY);
+    var x = (e.clientX - bb.left) / z - 240;
+    var y = 180 - (e.clientY - bb.top) / z;
     this.rawMouseX = x;
     this.rawMouseY = y;
     if (x < -240) x = -240;
@@ -1496,13 +1510,13 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
   };
 
   Stage.prototype.updateBackdrop = function() {
-    this.backdropCanvas.width = this.zoom * SCALE * 480;
-    this.backdropCanvas.height = this.zoom * SCALE * 360;
+    this.backdropCanvas.width = this.zoomX * SCALE * 480;
+    this.backdropCanvas.height = this.zoomY * SCALE * 360;
     var costume = this.costumes[this.currentCostumeIndex];
     this.backdropContext.save();
-    var s = this.zoom * SCALE * costume.scale;
-    this.backdropContext.scale(s, s);
-    this.backdropContext.drawImage(costume.image, 0, 0, costume.image.width/costume.resScale, costume.image.height/costume.resScale);
+    var s = Math.max(this.zoomX * SCALE * costume.scale, this.zoomY * SCALE * costume.scale);
+    this.backdropContext.scale(s, s);    
+    this.backdropContext.drawImage(costume.image, 0, 0, costume.image.width/costume.resScale, costume.image.height/costume.resScale);    
     this.backdropContext.restore();
   };
 	
@@ -1511,30 +1525,33 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
     this.backdropCanvas.style.opacity = Math.max(0, Math.min(1, 1 - this.filters.ghost / 100));
   };
 
-  Stage.prototype.setZoom = function(zoom) {
-    if (this.zoom === zoom) return;
-    if (this.maxZoom < zoom * SCALE) {
-      this.maxZoom = zoom * SCALE;
+  Stage.prototype.setZoom = function(zoomX, zoomY) {
+    if ((this.zoomX === zoomX) && (this.zoomY === zoomY)) return;
+	var ps = Math.max(zoomX, zoomY);
+    if ((this.maxZoomX < zoomX * SCALE) || (this.maxZoomY < zoomY * SCALE)) {
+      this.maxZoomX = zoomX * SCALE;
+	  this.maxZoomY = zoomY * SCALE;
       var canvas = document.createElement('canvas');
       canvas.width = this.penCanvas.width;
       canvas.height = this.penCanvas.height;
       canvas.getContext('2d').drawImage(this.penCanvas, 0, 0);
-      this.penCanvas.width = 480 * zoom * SCALE;
-      this.penCanvas.height = 360 * zoom * SCALE;
-      this.penContext.drawImage(canvas, 0, 0, 480 * zoom * SCALE, 360 * zoom * SCALE);
-      this.penContext.scale(this.maxZoom, this.maxZoom);
-      this.penContext.lineCap = 'round';
+      this.penCanvas.width = 480 * ps * SCALE;
+      this.penCanvas.height = 360 * ps * SCALE;
+      this.penContext.drawImage(canvas, 0, 0, 480 * ps * SCALE, 360 * ps * SCALE);
+      this.penContext.scale(this.maxZoomX, this.maxZoomY);
+      this.penContext.lineCap = 'round';	
     }
     this.root.style.width =
     this.canvas.style.width =
-    this.backdropCanvas.style.width =
-    this.penCanvas.style.width = (480 * zoom | 0) + 'px';
+    this.backdropCanvas.style.width = (480 * zoomX | 0) + 'px';
+    this.penCanvas.style.width = (480 * ps | 0) + 'px';
     this.root.style.height =
     this.canvas.style.height =
-    this.backdropCanvas.style.height =
-    this.penCanvas.style.height = (360 * zoom | 0) + 'px';
-    this.root.style.fontSize = zoom + 'px';
-    this.zoom = zoom;
+    this.backdropCanvas.style.height = (360 * zoomY | 0) + 'px';
+    this.penCanvas.style.height = (360 * ps | 0) + 'px';
+    this.root.style.fontSize = ps * 10 + 'px';
+    this.zoomX = zoomX;
+	this.zoomY = zoomY;
     this.updateBackdrop();
   };
 
@@ -1607,10 +1624,11 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
   Stage.prototype.draw = function() {
     var context = this.context;
 	
-    this.canvas.width = 480 * this.zoom * SCALE; // clear
-    this.canvas.height = 360 * this.zoom * SCALE;
-
-    context.scale(this.zoom * SCALE, this.zoom * SCALE);
+    this.canvas.width = 480 * this.zoomX * SCALE; // clear
+    this.canvas.height = 360 * this.zoomY * SCALE;
+    
+	var s = Math.max(this.zoomX * SCALE, this.zoomY * SCALE);
+    context.scale(s, s);
     this.drawOn(context);
 
     if (this.hidePrompt) {
@@ -1632,12 +1650,13 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
     var costume = this.costumes[this.currentCostumeIndex];
     context.save();
     context.scale(costume.scale, costume.scale);
-    context.globalAlpha = Math.max(0, Math.min(1, 1 - this.filters.ghost / 100));
+    context.globalAlpha = Math.max(0, Math.min(1, 1 - this.filters.ghost / 100));    
     context.drawImage(costume.image, 0, 0, costume.image.width/costume.resScale, costume.image.height/costume.resScale);
     context.restore();
 
     context.save();
-    context.scale(1 / this.maxZoom, 1 / this.maxZoom);
+	var s = Math.max(this.maxZoomX, this.maxZoomY);
+    context.scale(1 / s, 1 / s);
     context.drawImage(this.penCanvas, 0, 0);
     context.restore();
 
@@ -1854,7 +1873,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
      
 		context.save();
 
-		var z = this.stage.zoom * SCALE;
+		var z = Math.max(this.stage.zoomX * SCALE, this.stage.zoomY * SCALE);
 		context.translate(((this.scratchX + 240) * z | 0) / z, ((180 - this.scratchY) * z | 0) / z);
 		if (this.rotationStyle === 'normal') {
 			context.rotate((this.direction - 90) * Math.PI / 180);
@@ -1868,8 +1887,11 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
 		if (!noEffects) context.globalAlpha = Math.max(0, Math.min(1, 1 - this.filters.ghost / 100));    
       
 		//TODO: General Optimization
-		if(this.filters.color !== 0 || this.filters.pixelate !== 0 || this.filters.mosaic !== 0  || this.filters.brightness !== 0 ){
-	  
+		if(this.filters.color !== 0 || this.filters.pixelate !== 0 || this.filters.mosaic !== 0  || this.filters.brightness !== 0 || this.filters.fisheye !== 0){
+		
+		var ciw = (true) ? 480 : costume.image.width;
+	var cih = (true) ? 360 : costume.image.height;
+		
         var effectsCanvas = document.createElement('canvas');
         effectsCanvas.width = costume.image.width;
         effectsCanvas.height = costume.image.height;
@@ -1930,62 +1952,36 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
 			lineCanvas.parentNode.removeChild(lineCanvas);
 		}
        
-       if(this.filters.brightness !== 0){
+      if (this.filters.brightness !== 0) {
+		  var brightness = this.filters.brightness;
+	  if (brightness > 0) brightness = brightness *1;
+	  var brightnessVal = (brightness / 100 * 255);
 		
-			console.log(this.filters.brightness);
-			
-   //canvas for brightness overlay
-        //TODO: Find out why brightness doesn't always match scratch.
-        var brightnessCanvas = document.createElement('canvas');
-        brightnessCanvas.width = 1;
-        brightnessCanvas.height = 1;
-        var brightnessContext = brightnessCanvas.getContext('2d');
-        document.body.appendChild(brightnessCanvas);
-        
-        var costumeCanvas = document.createElement('canvas');
-        costumeCanvas.width = effectsCanvas.width;
-        costumeCanvas.height = effectsCanvas.height;
-        var costumeContext = costumeCanvas.getContext('2d');
-        document.body.appendChild(costumeCanvas); 
-        
-        var imgData = brightnessContext.getImageData(0, 0, 1, 1);
-        
-        var brightnessVal = this.filters.brightness * 255 / 100;
-        
-        if(brightnessVal < 0) brightnessVal = -255 - brightnessVal;
-        
-        imgData.data[0] =
-        imgData.data[1] =
-        imgData.data[2] = Math.abs(brightnessVal);
-        imgData.data[3] = 255;     
-        
-        brightnessContext.putImageData(imgData, 0, 0);
-        
-        if(brightnessVal < 0){
-           costumeContext.drawImage(brightnessCanvas, 0, 0, costumeCanvas.width, costumeCanvas.height);
-           costumeContext.globalCompositeOperation = 'destination-in';
-           costumeContext.drawImage(effectsCanvas, 0, 0);
-           costumeContext.globalCompositeOperation = 'multiply';
-           costumeContext.drawImage(effectsCanvas, 0, 0);
-        }
-        else{
-           costumeContext.drawImage(effectsCanvas, 0, 0);      
-           costumeContext.globalCompositeOperation = 'lighter';  
-           costumeContext.drawImage(brightnessCanvas, 0, 0, costumeCanvas.width, costumeCanvas.height);
-           costumeContext.globalCompositeOperation = 'destination-in';
-           costumeContext.drawImage(effectsCanvas, 0, 0);
-        }
-        effectsContext.drawImage(costumeCanvas, 0, 0);
-      
-        brightnessCanvas.parentNode.removeChild(brightnessCanvas);
-        costumeCanvas.parentNode.removeChild(costumeCanvas);           
+	  effectsCanvas.width = ciw;
+	  effectsCanvas.height = cih;		
+	  effectsContext.drawImage(costume.image, 0, 0, ciw, cih);
+	  var effect = effectsContext.getImageData(0, 0, ciw, cih);
+          // PF: TODO improve
+          for (var i = 0; i < effect.data.length; i += 4) {
+            effect.data[i + 0] = (effect.data[i + 0] + brightnessVal);
+            effect.data[i + 1] = (effect.data[i + 1] + brightnessVal);
+            effect.data[i + 2] = (effect.data[i + 2] + brightnessVal);
+            effect.data[i + 3] = effect.data[i + 3] ; // alpha
+	  }
+	  effectsContext.putImageData(effect, 0, 0);  
         }
         
-		if(this.filters.pixelate !== 0){
-			
-			//console.log(this.filters.pixelate);
-			
-		}
+		if (this.filters.pixelate !== 0) {
+          effectsCanvas.width = 10 * ciw / (this.filters.pixelate + ciw / 10);
+          effectsCanvas.height = 10 * cih / (this.filters.pixelate + cih / 10);
+    	  effectsContext.imageSmoothingEnabled = false; // PF
+    	  effectsContext.msImageSmoothingEnabled = false;
+          // draw the original image at a fraction of the final size
+          effectsContext.drawImage(costume.image, 0, 0, effectsCanvas.width, effectsCanvas.height);
+          // ready to enlarge the minimized image to full size - see * below
+        }
+	    
+		 
 		
         context.drawImage(effectsCanvas, 0, 0, costume.image.width/costume.resScale, costume.image.height/costume.resScale);
         
@@ -1995,6 +1991,9 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
 
       context.restore();
     }
+	
+	
+	
   };
 
 	function hsvToRgb(h, s, v) {
@@ -2313,7 +2312,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
       this.bubble.style.borderRadius = ''+(10/14)+'em';
       this.bubble.style.background = '#fff';
       this.bubble.style.position = 'absolute';
-      this.bubble.style.font = 'bold 14em sans-serif';
+      this.bubble.style.font = 'bold 1.4em sans-serif';
       this.bubble.style.whiteSpace = 'pre-wrap';
       this.bubble.style.wordWrap = 'break-word';
       this.bubble.style.textAlign = 'center';
@@ -2323,7 +2322,7 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
       this.bubblePointer.style.position = 'absolute';
       this.bubblePointer.style.height = ''+(21/14)+'em';
       this.bubblePointer.style.width = ''+(44/14)+'em';
-      this.bubblePointer.style.background = 'url(icons.svg) '+(-195/14)+'em '+(-4/14)+'em';
+      this.bubblePointer.style.background = 'url(/img/icons.svg) '+(-195/14)+'em '+(-4/14)+'em';
       this.bubblePointer.style.backgroundSize = ''+(320/14)+'em '+(96/14)+'em';
       this.stage.root.appendChild(this.bubble);
     }
@@ -2335,18 +2334,37 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
   };
 
   Sprite.prototype.updateBubble = function() {
+	  
+	//var bWidth = this.bubble.offsetWidth;
+	//var bHeight = Math.max(this.stage.zoomX, this.stage.zoomY * 0.75);
+	  
     if (!this.visible || !this.saying) {
       this.bubble.style.display = 'none';
       return;
     }
     var b = this.rotatedBounds();
+	var z = Math.max(this.stage.zoomX, this.stage.zoomY);
+    var width = this.bubble.offsetWidth / z;
+    var height = this.bubble.offsetHeight / z;
+	
+	var stageTop;
+	var stageRight;
+	if(this.stage.zoomX <= this.stage.zoomY){
+		stageTop = 360;
+		stageRight = 480 * this.stage.zoomX / this.stage.zoomY;		
+	}
+	else{
+		stageTop = 360 * this.stage.zoomY / this.stage.zoomX;
+		stageRight = 480;
+	}
+	
     var left = 240 + b.right;
-    var bottom = 180 + b.top;
-    var width = this.bubble.offsetWidth / this.stage.zoom;
-    var height = this.bubble.offsetHeight / this.stage.zoom;
+	var bottom = stageTop - 180 + b.top;
+
+	
     this.bubblePointer.style.top = ((height - 6) / 14) + 'em';
-    if (left + width + 2 > 480) {
-      this.bubble.style.right = ((240 - b.left) / 14) + 'em';
+    if (left + width + 2 > stageRight) {
+      this.bubble.style.right = ((stageRight - 240 - b.left) / 14) + 'em';
       this.bubble.style.left = 'auto';
       this.bubblePointer.style.right = (3/14)+'em';
       this.bubblePointer.style.left = 'auto';
@@ -2358,8 +2376,8 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
       this.bubblePointer.style.right = 'auto';
       this.bubblePointer.style.backgroundPositionY = (-4/14)+'em';
     }
-    if (bottom + height + 2 > 360) {
-      bottom = 360 - height - 2;
+    if (bottom + height + 2 > stageTop) {
+      bottom = stageTop - height - 2;
     }
     if (bottom < 19) {
       bottom = 19;
@@ -2412,7 +2430,6 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
     if (!this.baseLayer.width || this.textLayer && !this.textLayer.width) {
       return;
     }
-    
     this.image.width = this.baseLayer.width*this.resScale;
     this.image.height = this.baseLayer.height*this.resScale;
     
@@ -2698,7 +2715,8 @@ function encodeAudio16bit(soundData, sampleRate, soundBuf) {
 
   var AudioContext = window.AudioContext || window.webkitAudioContext;
   var audioContext = AudioContext && new AudioContext;
-
+  audioContext.mInit = false;
+  
   return {
     hasTouchEvents: hasTouchEvents,
     getKeyCode: getKeyCode,
@@ -2858,8 +2876,29 @@ P.compile = (function() {
         return 'self.getCostumeName()';
 
       } else if (e[0] === 'readVariable') {
-
-        return varRef(e[1]);
+		    
+        switch(e[1]){
+          case 'sulf.time':
+            return 'Date.now()';
+          case 'sulf.version':
+            return '0.86';
+          case 'sulf.resolutionX':
+            return 'self.canvas.width';
+          case 'sulf.resolutionY':
+            return 'self.canvas.height';
+          case 'sulf.hasTouchEvents':
+            return 'P.hasTouchEvents';
+          default:
+            return varRef(e[1]);
+        }
+		  
+        /*
+				if(e[1]==='sulf.time') return 'Date.now()';
+				
+				if(e[1]==='sulf.version') return '0.86';
+				if(e[1]==='sulf.resolutionX') return 'self.canvas.width';
+				if(e[1]==='sulf.resolutionY') return 'self.canvas.height';
+        */
 
       } else if (e[0] === 'contentsOfList:') {
 
@@ -3417,8 +3456,9 @@ P.compile = (function() {
 
       } else if (block[0] === 'clearPenTrails') { /* Pen */
 
-        source += 'self.penCanvas.width = 480 * self.maxZoom;\n';
-        source += 'self.penContext.scale(self.maxZoom, self.maxZoom);\n';
+        source += 'self.penCanvas.width = 480 * self.maxZoomX;\n';
+		source += 'self.penCanvas.height = 360 * self.maxZoomY;\n';
+        source += 'self.penContext.scale(self.maxZoomX, self.maxZoomY);\n';
         source += 'self.penContext.lineCap = "round";\n'
 
       } else if (block[0] === 'putPenDown') {
@@ -3744,7 +3784,7 @@ P.compile = (function() {
     for (var i = 1; i < script.length; i++) {
       compile(script[i]);
     }
-		console.log(source);
+		//console.log(source);
     if (script[0][0] === 'procDef') {
       source += 'endCall();\n';
       source += 'return;\n';

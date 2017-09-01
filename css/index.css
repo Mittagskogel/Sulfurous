@@ -10,6 +10,12 @@ body {
   margin: 16px 0 0;
   position: relative;
 }
+.version {
+  padding-left: 2%;
+  font-size: 20%;
+  /* use same color as url */
+  color: rgba(0, 0, 0, .4);
+}
 .url {
   position: relative;
   background: 0;
@@ -131,6 +137,10 @@ code {
 }
 .package input[type=checkbox] {
   margin: 0 0 0 16px;
+}
+
+.xyinput{
+	width: 8ch;
 }
 
 #embed-code {
