@@ -3268,8 +3268,9 @@ P.compile = (function() {
       } else if (block[0] === 'showBackground:' ||
                  block[0] === 'startScene') {
 
+        source += 'var bgname = self.getCostumeName();\n';
         source += 'self.setCostume(' + val(block[1]) + ');\n';
-        source += 'var threads = sceneChange();\n';
+        source += 'var threads = (self.getCostumeName()!= bgname)? sceneChange(): "";\n';
         source += 'if (threads.indexOf(BASE) !== -1) return;\n';
 
       } else if (block[0] === 'nextBackground' ||
