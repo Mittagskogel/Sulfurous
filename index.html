@@ -6,8 +6,12 @@
 <link rel=stylesheet href=css/player.css>
 <link rel=stylesheet href=css/index.css>
 
+
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/qrcode.min.js"></script>
+
 <div class=area id=title-area>
-<h1 class=title>sulfurous<span class=version>v 0.86</span></h1>
+<h1 class=title>sulfurous<span class=version>WebGL v 0.02</span></h1>
 <p>Sulfurous, just like Phosphorus, runs your Scratch projects really fast by compiling them to JavaScript. Try it out by pasting a URL or project ID into the field below or <a class=dropdown>choosing an example<select id=examples>
   <option value>
   <option value=11397100>3D Remix by DadOfMrLog
@@ -33,6 +37,9 @@
 <div class=player></div>
 <div class=internal-error>
   An internal error occurred. <a id=error-bug-link target=_blank href=https://github.com/mittagskogel/sulfurous/issues/new>Click here</a> to file a bug report.
+</div>
+<div class=webgl-error>
+  It looks like your device doesn't support WebGL. You can try viewing this project in the legacy player <a id=legacy-link target=_blank href=https://sulfurous.aau.at/legacy>here</a>.
 </div>
 </div>
 
@@ -70,6 +77,7 @@
 	<input type=number id=package-custom-resolution-y-value min=1 max=16000 class=xyinput>
   </p>
 </section>
+
 <section class=package>
   <h1>Embed this project</h1>
   <p>Include the sulfurous player in your web site.</p>
@@ -92,6 +100,7 @@
 	<input type=number id=embed-custom-resolution-y-value min=1 max=16000 class=xyinput>
   </p>
 </section>
+
 <section>
   <h1>Report a problem</h1>
   <p>Sulfurous is still in development. <a id=bug-link target=_blank href=https://github.com/mittagskogel/sulfurous/issues/new>Click here</a> to report a problem with this project.</p>
@@ -102,17 +111,27 @@
   <p>Sulfurous was created by <a href=https://github.com/mittagskogel>Mittagskogel</a> and further developed by <a href=https://github.com/FRALEXGAMING>FRALEX</a> as part of their work at the <a href="https:\\www.aau.at">Alpen-Adria-University Klagenfurt</a>. Sulfurous is based off Phosphorus, which was created by <a href=https://github.com/nathan>Nathan Dinsmore</a>. Its CPS-style compilation and overall design was inspired by <a href=https://github.com/RHY3756547>Rhys Simpson</a>'s <a href=https://code.google.com/p/sb2-js/>sb2.js</a>. It would have more bugs if not for <a href=https://github.com/trumank>Truman Kilen</a>. It uses the <a href=https://stuk.github.io/jszip/>JSZip</a> library, created by <a href=https://github.com/stuk>Stuart Knightley</a>, <a href=https://github.com/dduponchel>David Duponchel</a>, Franz Buchinger, and <a href=https://github.com/aadsm>António Afonso</a>, to read <code>.sb2</code> files and compressed projects, and the <a href=https://code.google.com/p/canvg/>canvg</a> library, created by <a href=https://code.google.com/u/gabelerner@gmail.com/>Gabe Lerner</a>, to render SVGs in <code>&lt;canvas&gt;</code> elements.
   <h1>Code</h1>
   <p>Sulfurous is released under the MIT license, the source code for Sulfurous is available <a href=https://github.com/mittagskogel/sulfurous>on GitHub</a>. See <a href=https://github.com/nathan/phosphorus>Phosphorus</a> for the original version.</p>
+
+  <h1>QR-Code with Link to your Project</h1>
+<br />
+<div id="qrcode"></div>
 </section>
+<img class="featured-image" alt="Sulfurous screenshot" src="img/featured-image">
+
 <script src=js/fonts.js></script>
 <script src=https://cdnjs.cloudflare.com/ajax/libs/jszip/2.4.0/jszip.js></script>
+<script src=js/gl-matrix-min.js></script>
 <script src=js/phosphorus.js></script>
 <script src=js/player.js></script>
+<script src=js/shaders.js></script>
 <script src=fonts/fonts.js></script>
 <script>
 
 (function() {
   'use strict';
 	
+  var qrcode = new QRCode("qrcode");
+
   var prefix = 'https://scratch.mit.edu/projects/';
 
   var initialId = location.hash.substr(1);
@@ -275,6 +294,9 @@
 	packageFullScreenAspectRatio.disabled = !packageFullScreen.checked;
     packageAspectRatioX.disabled = !(packageFullScreenAspectRatio.checked && packageFullScreen.checked);
     packageAspectRatioY.disabled = !(packageFullScreenAspectRatio.checked && packageFullScreen.checked);
+
+qrcode.makeCode(packageLink.href);
+
   }
   
   packageTurbo.addEventListener('change', updatePackageLink);
