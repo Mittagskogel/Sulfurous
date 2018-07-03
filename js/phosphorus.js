@@ -2,7 +2,7 @@
 /*
  Sulfurous - an html5 player for Scratch projects
  
- Version: 0.86 July 18, 2017
+ Version: 0.87 July 03, 2018
 
  Sulfurous was created by Mittagskogel and further developed by FRALEX
  as part of their work at the Alpen-Adria-University Klagenfurt.
@@ -86,6 +86,200 @@ var P = (function() {
     };
   };
 
+  
+  //  WebGL generic drawing functions to be used by Stage and Sprite.
+
+  var initShaderProgram = function(gl, vsSource, fsSource){
+    const vertexShader   = loadShader(gl, gl.VERTEX_SHADER, vsSource);
+    const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
+    
+    const shaderProgram = gl.createProgram();
+    gl.attachShader(shaderProgram, vertexShader);
+    gl.attachShader(shaderProgram, fragmentShader);
+    gl.linkProgram(shaderProgram);
+    
+    if(!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)){
+      console.warn('Could not initialize shaders. ' + gl.getProgramInfoLog(shaderProgram));
+      return null;
+    }
+    
+    return shaderProgram;
+  }
+  
+  var loadShader = function(gl, type, source){
+    const shader = gl.createShader(type);
+    
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    
+    if(!gl.getShaderParameter(shader, gl.COMPILE_STATUS)){
+      console.warn('Could not compile shader. ' + gl.getShaderInfoLog(shader));
+      gl.deleteShader(shader);
+      return null;
+    }
+    
+    return shader;
+  }
+
+  var initImgBuffers = function(gl){
+    var position = gl.createBuffer();
+    var texcoord = gl.createBuffer();
+
+    var positionLocation = [
+      -1,  1,
+       1,  1,
+      -1, -1,
+      -1, -1,
+       1, -1,
+       1,  1,
+    ];
+    
+    var texcoordLocation = [
+       0,  1,
+       1,  1,
+       0,  0,
+       0,  0,
+       1,  0,
+       1,  1,
+    ];
+    
+    gl.bindBuffer(gl.ARRAY_BUFFER, position);
+    gl.bufferData(gl.ARRAY_BUFFER,
+                  new Float32Array(positionLocation),
+                  gl.STATIC_DRAW);
+                      
+                  
+    gl.bindBuffer(gl.ARRAY_BUFFER, texcoord);
+    gl.bufferData(gl.ARRAY_BUFFER,
+                  new Float32Array(texcoordLocation),
+                  gl.STATIC_DRAW);
+                  
+    return {
+      position: position,
+      texcoord: texcoord,
+    }
+  }    
+  
+  var glMakeTexture = function(gl, canvas){
+    //console.log('glMakeTexture');
+    
+    var tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+    
+    
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    
+    var textureInfo = {
+      width: canvas.width,
+      height: canvas.height,
+      texture: tex,
+    };
+    
+    return textureInfo;
+  }
+  
+  var glDrawImage = function(gl, programInfo, buffers, imgInfo, x, y, width, height, rot, originX, originY, effect, tColor){
+ 
+    var cWidth = gl.canvas.width;
+    var cHeight = gl.canvas.height;
+   
+    if(cWidth >= cHeight * 0.75)
+      var zoom = Math.max(cWidth, cHeight * 0.75);
+    else
+      var zoom = Math.max(cHeight * 1.25, cHeight);
+    
+    gl.viewport(0, cHeight - zoom * 0.875, zoom, zoom);
+    
+    gl.blendFunc(programInfo.blendSource, programInfo.blendDest);
+    gl.enable(gl.BLEND);
+    gl.disable(gl.DEPTH_TEST);   
+    
+    gl.bindTexture(gl.TEXTURE_2D, imgInfo.texture);
+    
+    gl.useProgram(programInfo.program);
+    
+    
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);   
+    gl.vertexAttribPointer(
+      programInfo.attribLocations.position,
+      2,
+      gl.FLOAT,
+      false,
+      0,
+      0);
+     
+    gl.enableVertexAttribArray(programInfo.attribLocations.position);
+    
+    
+    
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.texcoord); 
+    gl.vertexAttribPointer(
+      programInfo.attribLocations.texcoord,
+      2,
+      gl.FLOAT,
+      false,
+      0,
+      0);
+      
+    gl.enableVertexAttribArray(programInfo.attribLocations.texcoord);   
+
+    
+    var q = quat.create();
+    quat.fromEuler(q, 0, 0, rot);
+    
+    var v = vec3.fromValues(x / 240, y / 240, 0);
+    
+    var s = vec3.fromValues(1, 1, 1);
+    
+    var o = vec3.fromValues(originX / 240, originY / 240, 0);
+    
+    var matrix = mat4.create();
+    mat4.fromRotationTranslationScaleOrigin(matrix, q, v, s, o);
+    
+    mat4.scale(matrix, matrix, vec3.fromValues(width / 480, -height / 480, 0));
+    
+    gl.uniformMatrix4fv(programInfo.uniformLocations.matrix, false, matrix);
+    
+    if(tColor) gl.uniform4fv(programInfo.uniformLocations.tColor, tColor);
+    gl.uniform1i(programInfo.uniformLocations.texture, 0);
+    gl.uniform2f(programInfo.uniformLocations.texSize, imgInfo.width, imgInfo.height);
+    
+    //Effects:
+    //effect[0] = color
+    //effect[1] = fisheye
+    //effect[2] = whirl
+    //effect[3] = pixelate
+    //effect[4] = mosaic
+    //effect[5] = brightness
+    //effect[6] = ghost
+
+    if(!effect) effect = [0, 0, 0, 1, 1, 0, 1];
+      
+    var colorMatrix = mat4.create();
+    mat4.fromRotation(colorMatrix, effect[0], vec3.fromValues(1.0, 1.0, 1.0));  
+      
+    //ghost, brightness
+    gl.uniform2f(programInfo.uniformLocations.colorEffect, effect[5], effect[6]);
+    //color
+    gl.uniformMatrix4fv(programInfo.uniformLocations.colorMatrix, false, colorMatrix);
+    //texture
+    gl.uniform4f(programInfo.uniformLocations.texEffect, effect[1], effect[2], effect[3], effect[4]);
+    
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    
+    /*
+    var err
+    if(err = gl.getError()){
+      console.log('WebGL Error: ' + err);
+    }
+    */
+  }  
+  
   var Request = function() {
     this.loaded = 0;
   };
@@ -316,8 +510,8 @@ var P = (function() {
   };
 
   IO.loadScratchr2ProjectTitle = function(id, callback, self) {
-    var request = new CompositeRequest;
-
+    var request = new CompositeRequest;    
+    
     request.defer = true;
     request.add(P.IO.load('https://scratch.mit.edu/projects/' + id + '/').onLoad(function(data) {
       var m = /<title>\s*(.+?)(\s+on\s+Scratch)?\s*<\/title>/.exec(data);
@@ -679,7 +873,7 @@ var P = (function() {
       
       var info = document.createTextNode(embedText);
       style.appendChild(info);
-    }    
+    }
     
     if (element.nodeName === 'text') {
       
@@ -694,6 +888,11 @@ var P = (function() {
       if (!size) {
         element.setAttribute('font-size', size = 18);
       }
+			
+			
+			// Set default fill for svgs that the Scratch exporter forgets...
+			if(element.getAttribute('fill') === 'none')
+				element.setAttribute('fill', '#7F7F7F');
       
       
       //TODO: Find out what actual values have to be put here.
@@ -717,7 +916,10 @@ var P = (function() {
           tspan.setAttribute('y', y + size * i * lineHeight);
           element.appendChild(tspan);
         }
+        
       }
+      
+      
       
     } else if ((element.hasAttribute('x') || element.hasAttribute('y')) && element.hasAttribute('transform')) {
       element.setAttribute('x', 0);
@@ -765,16 +967,16 @@ var P = (function() {
  
     }
 	
-	if(element.nodeName === 'radialGradient'){
-		element.setAttribute('id', element.getAttribute('id') + svg.getAttribute('id'));
-		element.setAttribute('gradientUnits', 'objectBoundingBox');
-	}
+		if(element.nodeName === 'radialGradient'){
+			element.setAttribute('id', element.getAttribute('id') + svg.getAttribute('id'));
+			element.setAttribute('gradientUnits', 'objectBoundingBox');
+		}
     
     if (element.getAttribute('fill') ? element.getAttribute('fill').indexOf("url") > -1 : false){
       element.setAttribute('fill', element.getAttribute('fill').replace(/.$/, svg.getAttribute('id')));
     }
-		
-		if (element.getAttribute('stroke') ? element.getAttribute('stroke').indexOf("url") > -1 : false){
+    
+    if (element.getAttribute('stroke') ? element.getAttribute('stroke').indexOf("url") > -1 : false){
       element.setAttribute('stroke', element.getAttribute('stroke').replace(/.$/, svg.getAttribute('id')));
     }
     
@@ -803,7 +1005,12 @@ var P = (function() {
         //div.innerHTML = source.replace(/(<\/?)svg:/g, '$1');
         //var svg = div.firstElementChild;		
 				
-        var svg = new DOMParser().parseFromString(source, 'image/svg+xml').firstElementChild;
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(source, 'image/svg+xml');
+        var svg = doc.documentElement;
+        doc = parser.parseFromString('<body>' + source, 'text/html');
+        svg = doc.querySelector('svg');
+        
         svg.id = 'svg' + md5.split('.')[0];
         if(svg.getAttribute('width') === '0' || svg.getAttribute('height') === '0'){
           svg = document.createElementNS('https://www.w3.org/2000/svg', svg.localName);
@@ -859,9 +1066,10 @@ var P = (function() {
 				//serialize the svg code to a single compact string
         var newSource = (new XMLSerializer()).serializeToString(svg)
 				//convert the svg to a base-64 string
-        image.src = 'data:image/svg+xml;base64,' + btoa(newSource); 
+        image.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(newSource))); 
         
-        svg.style.display = 'none';
+        //svg.style.display = 'none';
+        document.body.removeChild(svg);
         
         image.onload = function() {
           if (callback) callback(image);
@@ -869,7 +1077,7 @@ var P = (function() {
         };
         image.onerror = function(e) {
           //console.error(e, image);
-          //console.log(image.src);
+          console.log(image.src);
           console.error(md5, image.src);
           request.error(new Error());
         };
@@ -1064,7 +1272,7 @@ var P = (function() {
      if(!isNaN(parseInt(costume))){
 	
 	
-		var i = (Math.floor(parseInt(costume)) - 1) % this.costumes.length;
+		var i = (Math.round(Number(costume)) - 1) % this.costumes.length;
 		if (i < 0) i += this.costumes.length;
 		this.currentCostumeIndex = i;
 		if (this.isStage) this.updateBackdrop();
@@ -1178,9 +1386,9 @@ var P = (function() {
     this.tempoBPM = 60;
     this.videoAlpha = 1;
     this.zoomX = 1;
-	this.zoomY = 1;
+	  this.zoomY = 1;
     this.maxZoomX = SCALE;
-	this.maxZoomY = SCALE;
+	  this.maxZoomY = SCALE;
     this.baseNow = 0;
     this.baseTime = 0;
     this.timerStart = 0;
@@ -1205,37 +1413,229 @@ var P = (function() {
     this.root.style.MSUserSelect =
     this.root.style.WebkitUserSelect = 'none';
 
+    /********************   BACKDROP Canvas   ********************/
+    
     this.backdropCanvas = document.createElement('canvas');
     this.root.appendChild(this.backdropCanvas);
     this.backdropCanvas.width = SCALE * 480;
     this.backdropCanvas.height = SCALE * 360;
-    this.backdropContext = this.backdropCanvas.getContext('2d');
-
+    this.backdropCanvas.setAttribute('id', 'backdropCanvas');
+    //this.backdropContext = this.backdropCanvas.getContext('2d');
+    this.backdropContext = this.backdropCanvas.getContext('webgl') ||
+                           this.backdropCanvas.getContext('experimental-webgl');
+    
+    if(!this.backdropContext) P.showWebGLError('backdropContext could not be initialized.');
+    
+    this.backdropContext.imgShader = initShaderProgram(this.backdropContext, Shader.imgVert, Shader.imgFrag);
+    
+    this.backdropContext.imgShaderInfo = {
+      program: this.backdropContext.imgShader,
+      attribLocations: {
+        position: this.backdropContext.getAttribLocation(this.backdropContext.imgShader, 'position'),
+        texcoord: this.backdropContext.getAttribLocation(this.backdropContext.imgShader, 'texcoord'),
+      },
+      uniformLocations: {
+        matrix:      this.backdropContext.getUniformLocation(this.backdropContext.imgShader, 'u_matrix'),
+        texture:     this.backdropContext.getUniformLocation(this.backdropContext.imgShader, 'u_texture'),
+        texSize:     this.backdropContext.getUniformLocation(this.backdropContext.imgShader, 'texSize'),
+        colorEffect: this.backdropContext.getUniformLocation(this.backdropContext.imgShader, 'colorEffect'),
+        colorMatrix: this.backdropContext.getUniformLocation(this.backdropContext.imgShader, 'colorMatrix'),
+        texEffect:   this.backdropContext.getUniformLocation(this.backdropContext.imgShader, 'texEffect'),        
+      },
+      blendSource: this.backdropContext.SRC_ALPHA,
+      blendDest: this.backdropContext.ONE_MINUS_SRC_ALPHA,      
+    }
+    this.backdropContext.imgBuffers = initImgBuffers(this.backdropContext);
+    
+    /********************   PEN Canvas   ********************/
+    
     this.penCanvas = document.createElement('canvas');
     this.root.appendChild(this.penCanvas);
     this.penCanvas.width = SCALE * 480;
     this.penCanvas.height = SCALE * 360;
-    this.penContext = this.penCanvas.getContext('2d');
-    this.penContext.lineCap = 'round';
-    this.penContext.scale(SCALE, SCALE);
+    this.penCanvas.setAttribute('id', 'penCanvas');
+    //this.penCanvas.setAttribute('style', 'display: none');
+    //this.penContext = this.penCanvas.getContext('2d');
+    //this.penContext.lineCap = 'butt';
+    //this.penContext.scale(SCALE, SCALE);
+    this.penContext = this.penCanvas.getContext('webgl', {preserveDrawingBuffer: true}) ||
+                      this.penCanvas.getContext('experimental-webgl', {preserveDrawingBuffer: true});
+    
+    if(!this.penContext) P.showWebGLError('penContext could not be initialized.');
+    
+		// Scene is automatically redrawn when arrays are full.
+		// Thus, we don't need to call new float32Array() when creating the VBOs,
+		// which would cause stutter due to garbage collection.
+		//
+		// Possibly tweak values for optimal performance.
+    this.penCoords = new Float32Array(65536);
+    this.penLines  = new Float32Array(32768);
+    this.penColors = new Float32Array(65536);
+    this.penCoordIndex = 0;
+    this.penLineIndex  = 0;
+    this.penColorIndex = 0;
+    
+    // Load and compile shaders
+    this.penContext.penShader = initShaderProgram(this.penContext, Shader.penVert, Shader.penFrag);
+    
+    this.penContext.penShaderInfo = {
+      program: this.penContext.penShader,
+      attribLocations: {
+        vertexData:       this.penContext.getAttribLocation(this.penContext.penShader, 'vertexData'),
+        lineData:         this.penContext.getAttribLocation(this.penContext.penShader, 'lineData'),
+        colorData:        this.penContext.getAttribLocation(this.penContext.penShader, 'colorData'),
+      },
+      uniformLocations: {
+        projectionMatrix: this.penContext.getUniformLocation(this.penContext.penShader, 'uProjectionMatrix'),
+        modelViewMatrix:  this.penContext.getUniformLocation(this.penContext.penShader, 'uModelViewMatrix'),
+      },     
+    };  
+    this.penContext.penBuffers = {
+      position: this.penContext.createBuffer(),
+      line: this.penContext.createBuffer(),
+      color: this.penContext.createBuffer(), 
+    };
+    
+    
+    this.penContext.imgShader = initShaderProgram(this.penContext, Shader.imgVert, Shader.imgFrag);
+    
+    this.penContext.imgShaderInfo = {
+      program: this.penContext.imgShader,
+      attribLocations: {
+        position: this.penContext.getAttribLocation(this.penContext.imgShader, 'position'),
+        texcoord: this.penContext.getAttribLocation(this.penContext.imgShader, 'texcoord'),
+      },
+      uniformLocations: {
+        matrix:      this.penContext.getUniformLocation(this.penContext.imgShader, 'u_matrix'),
+        texture:     this.penContext.getUniformLocation(this.penContext.imgShader, 'u_texture'),
+        texSize:     this.penContext.getUniformLocation(this.penContext.imgShader, 'texSize'),
+        colorEffect: this.penContext.getUniformLocation(this.penContext.imgShader, 'colorEffect'),
+        colorMatrix: this.penContext.getUniformLocation(this.penContext.imgShader, 'colorMatrix'),
+        texEffect:   this.penContext.getUniformLocation(this.penContext.imgShader, 'texEffect'),             
+      },
+      blendSource: this.penContext.SRC_ALPHA,
+      blendDest: this.penContext.ONE_MINUS_SRC_ALPHA,      
+    }
+    this.penContext.imgBuffers = initImgBuffers(this.penContext);
+    
+    /********************   COSTUME Canvas   ********************/
     
     this.canvas = document.createElement('canvas');
     this.root.appendChild(this.canvas);
     this.canvas.width = SCALE * 480;
     this.canvas.height = SCALE * 360;
-    this.context = this.canvas.getContext('2d');
+    this.canvas.setAttribute('id', 'canvas');
+    //this.context = this.canvas.getContext('2d');
+    this.context = this.canvas.getContext('webgl') ||
+                   this.canvas.getContext('experimental-webgl');
+    
+    if(!this.context) P.showWebGLError('context could not be initialized.');
+    
+    this.context.imgShader = initShaderProgram(this.context, Shader.imgVert, Shader.imgFrag);
+    
+    this.context.imgShaderInfo = {
+      program: this.context.imgShader,
+      attribLocations: {
+        position:    this.context.getAttribLocation(this.context.imgShader, 'position'),
+        texcoord:    this.context.getAttribLocation(this.context.imgShader, 'texcoord'),
+      },
+      uniformLocations: {
+        matrix:      this.context.getUniformLocation(this.context.imgShader, 'u_matrix'),
+        texture:     this.context.getUniformLocation(this.context.imgShader, 'u_texture'),
+        texSize:     this.context.getUniformLocation(this.context.imgShader, 'texSize'),
+        colorEffect: this.context.getUniformLocation(this.context.imgShader, 'colorEffect'),
+        colorMatrix: this.context.getUniformLocation(this.context.imgShader, 'colorMatrix'),
+        texEffect:   this.context.getUniformLocation(this.context.imgShader, 'texEffect'),
+      },
+      blendSource: this.context.SRC_ALPHA,
+      blendDest: this.context.ONE_MINUS_SRC_ALPHA,      
+    }
+    this.context.imgBuffers = initImgBuffers(this.context);
+    
+    /********************   COLLISION Canvas   ********************/
+    
+    this.glCollisionCanvas = document.createElement('canvas');
+    this.root.appendChild(this.glCollisionCanvas);
+    this.glCollisionCanvas.width = 480;
+    this.glCollisionCanvas.height = 360;
+    this.glCollisionCanvas.setAttribute('id', 'glCollisionCanvas');
+    this.glCollisionCanvas.setAttribute('style', 'display: none;');
+    this.glCollisionContext = this.glCollisionCanvas.getContext('webgl', {preserveDrawingBuffer: true}) ||
+                              this.glCollisionCanvas.getContext('experimental-webgl', {preserveDrawingBuffer: true});
+    
+    if(!this.glCollisionContext) P.showWebGLError('glCollisionContext could not be initialized.');
 
+    //Scissor test for faster collision detection.
+    this.stage.glCollisionContext.enable(this.stage.glCollisionContext.SCISSOR_TEST);    
+    this.stage.glCollisionContext.scissor(0, 0, 480, 360);
+ 
+    this.glCollisionContext.imgShader = initShaderProgram(this.glCollisionContext, Shader.imgVert, Shader.imgFrag);
+    
+    this.glCollisionContext.imgShaderInfo = {
+      program: this.glCollisionContext.imgShader,
+      attribLocations: {
+        position:    this.glCollisionContext.getAttribLocation(this.glCollisionContext.imgShader, 'position'),
+        texcoord:    this.glCollisionContext.getAttribLocation(this.glCollisionContext.imgShader, 'texcoord'),
+      },
+      uniformLocations: {
+        matrix:      this.glCollisionContext.getUniformLocation(this.glCollisionContext.imgShader, 'u_matrix'),
+        texture:     this.glCollisionContext.getUniformLocation(this.glCollisionContext.imgShader, 'u_texture'),
+        texSize:     this.glCollisionContext.getUniformLocation(this.glCollisionContext.imgShader, 'texSize'),
+        colorEffect: this.glCollisionContext.getUniformLocation(this.glCollisionContext.imgShader, 'colorEffect'),
+        colorMatrix: this.glCollisionContext.getUniformLocation(this.glCollisionContext.imgShader, 'colorMatrix'),
+        texEffect:   this.glCollisionContext.getUniformLocation(this.glCollisionContext.imgShader, 'texEffect'),
+      },  
+      blendSource: this.glCollisionContext.SRC_ALPHA,
+      blendDest: this.glCollisionContext.ONE_MINUS_SRC_ALPHA,
+    }
+    this.glCollisionContext.imgBuffers = initImgBuffers(this.glCollisionContext);    
+    
+    
+    
+    this.glCollisionContext.touchingShader = initShaderProgram(this.glCollisionContext, Shader.touchingVert, Shader.touchingFrag);
+    
+    this.glCollisionContext.touchingShaderInfo = {
+      program: this.glCollisionContext.touchingShader,
+      attribLocations: {
+        position:    this.glCollisionContext.getAttribLocation(this.glCollisionContext.touchingShader, 'position'),
+        texcoord:    this.glCollisionContext.getAttribLocation(this.glCollisionContext.touchingShader, 'texcoord'),        
+      },
+      uniformLocations: {
+        matrix:      this.glCollisionContext.getUniformLocation(this.glCollisionContext.touchingShader, 'u_matrix'),
+        texture:     this.glCollisionContext.getUniformLocation(this.glCollisionContext.touchingShader, 'u_texture'),
+        tColor:      this.glCollisionContext.getUniformLocation(this.glCollisionContext.touchingShader, 'tColor'),
+        texSize:     this.glCollisionContext.getUniformLocation(this.glCollisionContext.touchingShader, 'texSize'),
+        colorEffect: this.glCollisionContext.getUniformLocation(this.glCollisionContext.touchingShader, 'colorEffect'),
+        colorMatrix: this.glCollisionContext.getUniformLocation(this.glCollisionContext.touchingShader, 'colorMatrix'),
+        texEffect:   this.glCollisionContext.getUniformLocation(this.glCollisionContext.touchingShader, 'texEffect'),   
+      },
+      blendSource: this.glCollisionContext.DST_ALPHA,
+      blendDest: this.glCollisionContext.ZERO,      
+    }
+    
+    
     this.canvas.tabIndex = 0;
     this.canvas.style.outline = 'none';
     this.backdropCanvas.style.position =
     this.penCanvas.style.position =
-    this.canvas.style.position = 'absolute';
-    this.backdropCanvas.style.width = '480px';
-    this.penCanvas.style.width = '480px';
-    this.canvas.style.width = '480px';
-    this.backdropCanvas.style.height = '360px';
-    this.penCanvas.style.height = '360px';
-    this.canvas.style.height = '360px';
+    this.canvas.style.position =
+    this.glCollisionCanvas.style.position = 'absolute';
+    this.backdropCanvas.style.width =
+    this.penCanvas.style.width =
+    this.canvas.style.width =
+    this.glCollisionCanvas.style.width = '480px';
+    this.backdropCanvas.style.height =
+    this.penCanvas.style.height =
+    this.canvas.style.height =
+    this.glCollisionCanvas.style.height = '360px';
+    
+    //this.glCollisionCanvas.style.width = '240px';
+    //this.glCollisionCanvas.style.height = '180px';
+    
+    this.backdropContext.clearColor(0.0, 0.0, 0.0, 0.0);
+    this.penContext.clearColor(0.0, 0.0, 0.0, 0.0);
+    this.context.clearColor(0.0, 0.0, 0.0, 0.0);
+    this.glCollisionContext.clearColor(0.0, 0.0, 0.0, 0.0);
 
     // hardware acceleration
     this.root.style.WebkitTransform = 'translateZ(0)';
@@ -1266,7 +1666,7 @@ var P = (function() {
            }
 	 
        } else {
-	// TODO: as before (not needed)      
+	     // TODO: as before (not needed)      
        }	       
     }.bind(this));
 
@@ -1277,7 +1677,7 @@ var P = (function() {
             return; // PF allow e.ctrlKey || 
           }
           var key = e.keyCode;
-	  //console.log(key); // debug only
+	        //console.log(key); // debug only
           e.stopPropagation();
           if (e.target === this.canvas && !this.keys[key] && "16.17.37.38.39.40".match(key.toString())) { // 
 	    if (key == 16) key = 128; // (Shift key hack) was 0
@@ -1404,8 +1804,8 @@ var P = (function() {
 
     this.prompter = document.createElement('div');
     this.root.appendChild(this.prompter);
-		this.prompter.style.zIndex = '1';
-		this.prompter.style.pointerEvents = 'auto';
+    this.prompter.style.zIndex = '1';
+    this.prompter.style.pointerEvents = 'auto';
     this.prompter.style.position = 'absolute';
     this.prompter.style.left =
     this.prompter.style.right = '1.4em';
@@ -1513,11 +1913,30 @@ var P = (function() {
     this.backdropCanvas.width = this.zoomX * SCALE * 480;
     this.backdropCanvas.height = this.zoomY * SCALE * 360;
     var costume = this.costumes[this.currentCostumeIndex];
+    
+    /*
     this.backdropContext.save();
     var s = Math.max(this.zoomX * SCALE * costume.scale, this.zoomY * SCALE * costume.scale);
     this.backdropContext.scale(s, s);    
     this.backdropContext.drawImage(costume.image, 0, 0, costume.image.width/costume.resScale, costume.image.height/costume.resScale);    
     this.backdropContext.restore();
+    */
+    
+    var imgInfo = costume.image.imgInfo;
+    
+    glDrawImage(
+      this.backdropContext,
+      this.backdropContext.imgShaderInfo,
+      this.backdropContext.imgBuffers,
+      imgInfo,
+      //(imgInfo.width / costume.resScale / 2 - costume.rotationCenterX / 480 * imgInfo.width / costume.resScale) * costume.scale,
+      (imgInfo.width / costume.resScale * costume.scale - 480) / 2,
+      -(imgInfo.height / costume.resScale * costume.scale - 360) / 2,
+      imgInfo.width / costume.resScale * costume.scale,
+      imgInfo.height / costume.resScale * costume.scale,
+      0,
+      0,
+      0);
   };
 	
   Stage.prototype.updateFilters = function() {
@@ -1527,31 +1946,63 @@ var P = (function() {
 
   Stage.prototype.setZoom = function(zoomX, zoomY) {
     if ((this.zoomX === zoomX) && (this.zoomY === zoomY)) return;
-	var ps = Math.max(zoomX, zoomY);
+	  var ps = Math.max(zoomX, zoomY);
     if ((this.maxZoomX < zoomX * SCALE) || (this.maxZoomY < zoomY * SCALE)) {
       this.maxZoomX = zoomX * SCALE;
-	  this.maxZoomY = zoomY * SCALE;
-      var canvas = document.createElement('canvas');
-      canvas.width = this.penCanvas.width;
-      canvas.height = this.penCanvas.height;
-      canvas.getContext('2d').drawImage(this.penCanvas, 0, 0);
+	    this.maxZoomY = zoomY * SCALE;
+      //var canvas = document.createElement('canvas');
+      //canvas.width = this.penCanvas.width;
+      //canvas.height = this.penCanvas.height;
+      //canvas.getContext('2d').drawImage(this.penCanvas, 0, 0);
+      
+      var imgInfo = glMakeTexture(this.penContext, this.penCanvas);
+
       this.penCanvas.width = 480 * ps * SCALE;
       this.penCanvas.height = 360 * ps * SCALE;
-      this.penContext.drawImage(canvas, 0, 0, 480 * ps * SCALE, 360 * ps * SCALE);
-      this.penContext.scale(this.maxZoomX, this.maxZoomY);
-      this.penContext.lineCap = 'round';	
+      
+      glDrawImage(
+        this.penContext,
+        this.penContext.imgShaderInfo,
+        this.penContext.imgBuffers,
+        imgInfo,
+        0,
+        0,
+        480,
+        360,
+        0,
+        0,
+        0);
+      
+      this.penContext.deleteTexture(imgInfo.texture);
+      imgInfo = null;
+      
+      //this.penContext.drawImage(canvas, 0, 0, 480 * ps * SCALE, 360 * ps * SCALE);
+      //this.penContext.scale(this.maxZoomX, this.maxZoomY);
+      //this.penContext.lineCap = 'butt';	
     }
+    
+    
+    this.canvas.width = 
+    this.backdropCanvas.width =
+    this.glCollisionContext.width = (480 * zoomX | 0);
+    this.canvas.height = 
+    this.backdropCanvas.height =
+    this.glCollisionContext.height = (360 * zoomY | 0);
+    
+    
     this.root.style.width =
     this.canvas.style.width =
-    this.backdropCanvas.style.width = (480 * zoomX | 0) + 'px';
+    this.backdropCanvas.style.width =
+    this.glCollisionCanvas.style.width = (480 * zoomX | 0) + 'px';
     this.penCanvas.style.width = (480 * ps | 0) + 'px';
     this.root.style.height =
     this.canvas.style.height =
-    this.backdropCanvas.style.height = (360 * zoomY | 0) + 'px';
+    this.backdropCanvas.style.height =
+    this.glCollisionCanvas.style.height = (360 * zoomY | 0) + 'px';
     this.penCanvas.style.height = (360 * ps | 0) + 'px';
     this.root.style.fontSize = ps * 10 + 'px';
     this.zoomX = zoomX;
-	this.zoomY = zoomY;
+	  this.zoomY = zoomY;
     this.updateBackdrop();
   };
 
@@ -1624,23 +2075,32 @@ var P = (function() {
   Stage.prototype.draw = function() {
     var context = this.context;
 	
-    this.canvas.width = 480 * this.zoomX * SCALE; // clear
-    this.canvas.height = 360 * this.zoomY * SCALE;
+    //this.canvas.width = 480 * this.zoomX * SCALE; // clear
+    //this.canvas.height = 360 * this.zoomY * SCALE;
     
-	var s = Math.max(this.zoomX * SCALE, this.zoomY * SCALE);
-    context.scale(s, s);
+    context.clear(context.COLOR_BUFFER_BIT);
+    
+	  var s = Math.max(this.zoomX * SCALE, this.zoomY * SCALE);
+    //context.scale(s, s);
     this.drawOn(context);
-
+    
     if (this.hidePrompt) {
       this.hidePrompt = false;
       this.prompter.style.display = 'none';
       this.canvas.focus();
     }
+    
+		if(this.penCoordIndex){
+      this.renderPen(this.penContext, this.penContext.penShaderInfo, this.penContext.penBuffers);
+      this.penCoordIndex = 0;
+      this.penLineIndex  = 0;
+      this.penColorIndex = 0;
+		}
   };
 
   Stage.prototype.drawOn = function(context, except) {
     for (var i = 0; i < this.children.length; i++) {
-      if (this.children[i].visible && this.children[i] !== except) {
+      if (this.children[i].visible && this.children[i] !== except ){
         this.children[i].draw(context);
       }
     }
@@ -1648,19 +2108,72 @@ var P = (function() {
 
   Stage.prototype.drawAllOn = function(context, except) {
     var costume = this.costumes[this.currentCostumeIndex];
+    
+    /*
     context.save();
     context.scale(costume.scale, costume.scale);
     context.globalAlpha = Math.max(0, Math.min(1, 1 - this.filters.ghost / 100));    
     context.drawImage(costume.image, 0, 0, costume.image.width/costume.resScale, costume.image.height/costume.resScale);
     context.restore();
+    */
+ 
+    var tempTest = performance.now();
+ 
+    glDrawImage(
+      context,
+      context.imgShaderInfo,
+      context.imgBuffers,
+      costume.image.collisionImgInfo,
+      0,
+      0,
+      480,
+      360,
+      0,
+      0,
+      0);
 
+
+      
+    /*
     context.save();
-	var s = Math.max(this.maxZoomX, this.maxZoomY);
+	  var s = Math.max(this.maxZoomX, this.maxZoomY);
     context.scale(1 / s, 1 / s);
     context.drawImage(this.penCanvas, 0, 0);
     context.restore();
+    */
+    
 
-    this.drawOn(context, except);
+    
+    var imgInfo = glMakeTexture(context, this.penCanvas);
+    
+    glDrawImage(
+      context,
+      context.imgShaderInfo,
+      context.imgBuffers,
+      imgInfo,
+      0,
+      0,
+      480,
+      360,
+      0,
+      0,
+      0);
+      
+    context.deleteTexture(imgInfo.texture);
+    imgInfo = null;
+
+    
+    //console.log(performance.now() - tempTest);
+    
+    //this.drawOn(context, except);
+    
+
+    
+    for (var i = 0; i < this.children.length; i++) {
+      if (this.children[i].visible && this.children[i] !== except && !(this.children[i] instanceof Watcher)) {
+        this.children[i].draw(context);
+      }
+    }    
   };
 
   Stage.prototype.moveTo = function() {};
@@ -1674,11 +2187,71 @@ var P = (function() {
       }
     }
   };
+  
+  Stage.prototype.renderPen = function(gl, programInfo, buffers){       
+    gl.viewport(0, 0, this.penCanvas.width, this.penCanvas.height);
+    
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.enable(gl.BLEND);
+    gl.disable(gl.DEPTH_TEST);
+		
+    //set up position buffer for coordinates
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
+    gl.bufferData(gl.ARRAY_BUFFER,
+                  this.penCoords,
+                  gl.STREAM_DRAW);
+    gl.vertexAttribPointer(
+      programInfo.attribLocations.vertexData,
+      4,
+      gl.FLOAT,
+      false,
+      0,
+      0);
+    gl.enableVertexAttribArray(programInfo.attribLocations.vertexData);
 
+    //set up line description buffer
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.line);
+    gl.bufferData(gl.ARRAY_BUFFER,
+                  this.penLines,
+                  gl.STREAM_DRAW);
+    gl.vertexAttribPointer(
+      programInfo.attribLocations.lineData,
+      2,
+      gl.FLOAT,
+      false,
+      0,
+      0);
+    gl.enableVertexAttribArray(programInfo.attribLocations.lineData);
+    
+    //set up color buffer
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
+    gl.bufferData(gl.ARRAY_BUFFER,
+                  this.penColors,
+                  gl.STREAM_DRAW);
+    gl.vertexAttribPointer(
+      programInfo.attribLocations.colorData,
+      4,
+      gl.FLOAT,
+      false,
+      0,
+      0);
+    gl.enableVertexAttribArray(programInfo.attribLocations.colorData);
+		
+    //draw pen lines as triangles.
+    gl.useProgram(programInfo.program);
+    gl.drawArrays(gl.TRIANGLES, 0, (this.penCoordIndex + 1) / 4);    
+    
+    /*
+    var err
+    if(err = gl.getError())
+      console.log('WebGL Error: ' + err);
+    */
+  }
+  
   var KEY_CODES = {
     'space': 32,
-	'ctrl': 17,
-	'shift': 16,
+	  'ctrl': 17,
+	  'shift': 16,
     'left arrow': 37,
     'up arrow': 38,
     'right arrow': 39,
@@ -1688,9 +2261,9 @@ var P = (function() {
   };
 
   var getKeyCode = function(keyName) {
-	if(typeof keyName !== 'string')return keyName = "" + keyName;
+	  if(typeof keyName !== 'string') keyName = "" + keyName;
 	
-	return KEY_CODES[keyName.toLowerCase()] || keyName.toUpperCase().charCodeAt(0);
+  	return KEY_CODES[keyName.toLowerCase()] || keyName.toUpperCase().charCodeAt(0);
   };
 
   var Sprite = function(stage) {
@@ -1788,10 +2361,19 @@ var P = (function() {
     c.scratchY = this.scratchY;
     c.visible = this.visible;
     c.penColor = this.penColor;
-    c.penCSS = this.penCSS;
+    
+    // Pen color in RGB mode?
+    c.penRGBA = this.penRGBA;
+    // Pen color in RGBA
+    c.penRed = this.penRed;
+    c.penGreen = this.penGreen;
+    c.penBlue = this.penBlue;
+    c.penAlpha = this.penAlpha;
+    //Pen color in HSL
     c.penHue = this.penHue;
     c.penSaturation = this.penSaturation;
     c.penLightness = this.penLightness;
+    
     c.penSize = this.penSize;
     c.isPenDown = this.isPenDown;
 
@@ -1833,12 +2415,323 @@ var P = (function() {
         y -= .5;
       }
 
-      context.strokeStyle = this.penCSS || 'hsl(' + this.penHue + ',' + this.penSaturation + '%,' + (this.penLightness > 100 ? 200 - this.penLightness : this.penLightness) + '%)';
+      /*
+      context.strokeStyle = this.penRGBA || 'hsl(' + this.penHue + ',' + this.penSaturation + '%,' + (this.penLightness > 100 ? 200 - this.penLightness : this.penLightness) + '%)';
+      
+      if(this.penSize > 2 * 480 / this.stage.penCanvas.width)
+        this.dotPen();
+      
       context.lineWidth = this.penSize;
       context.beginPath();
       context.moveTo(240 + ox, 180 - oy);
       context.lineTo(240 + x, 180 - y);
       context.stroke();    
+      */			
+      
+      //calculate color for vertices
+      var r, g, b, a;
+      if(this.penRGBA){
+        r = this.penRed;
+        g = this.penGreen;
+        b = this.penBlue;
+        a = this.penAlpha;
+      }
+      else{
+        var rgb = this.hsl2rgb(this.penHue, this.penSaturation, (this.penLightness > 100 ? 200 - this.penLightness : this.penLightness));
+        r = rgb[0];
+        g = rgb[1];
+        b = rgb[2];
+        a = 1;
+      }
+      
+      /*
+      console.log(this.penRGBA);
+      console.log(this.penHue);
+      console.log(this.penSaturation);
+      console.log(this.penLightness);
+      console.log(this.hsl2rgb(this.penHue, this.penSaturation, (this.penLightness > 100 ? 200 - this.penLightness : this.penLightness)));
+      */
+ 
+      var circleRes = Math.max(Math.ceil(this.penSize * Math.max(this.stage.zoomX, this.stage.zoomY)), 3);
+ 
+			// Redraw when array is full.
+			if(this.stage.penCoordIndex + 24 * (circleRes+1) > this.stage.penCoords.length){
+				this.stage.renderPen(this.stage.penContext, this.stage.penContext.penShaderInfo, this.stage.penContext.penBuffers);
+				this.stage.penCoordIndex = 0;
+				this.stage.penLineIndex  = 0;
+				this.stage.penColorIndex = 0;
+			}
+			
+      // draw line
+      {
+      // first triangle
+      // first coordinates
+      this.stage.penCoords[this.stage.penCoordIndex] = ox;
+      this.stage.penCoordIndex++;
+      this.stage.penCoords[this.stage.penCoordIndex] = oy;
+      this.stage.penCoordIndex++;
+
+      // first coordinates supplement
+      this.stage.penCoords[this.stage.penCoordIndex] = x;
+      this.stage.penCoordIndex++;
+      this.stage.penCoords[this.stage.penCoordIndex] = y;
+      this.stage.penCoordIndex++;
+      
+      //first vertex description
+      this.stage.penLines[this.stage.penLineIndex] = -Math.PI/2;
+      this.stage.penLineIndex++;
+      this.stage.penLines[this.stage.penLineIndex] = this.penSize/2;
+      this.stage.penLineIndex++;
+      
+			
+			
+      // second coordinates
+      this.stage.penCoords[this.stage.penCoordIndex] = x;
+      this.stage.penCoordIndex++;
+      this.stage.penCoords[this.stage.penCoordIndex] = y;
+      this.stage.penCoordIndex++;
+
+      // second coordinates supplement
+      this.stage.penCoords[this.stage.penCoordIndex] = ox;
+      this.stage.penCoordIndex++;
+      this.stage.penCoords[this.stage.penCoordIndex] = oy;
+      this.stage.penCoordIndex++;
+      
+      //second vertex description
+      this.stage.penLines[this.stage.penLineIndex] = Math.PI/2;
+      this.stage.penLineIndex++;
+      this.stage.penLines[this.stage.penLineIndex] = this.penSize/2;
+      this.stage.penLineIndex++;      
+      
+			
+			
+      // third coordinates
+      this.stage.penCoords[this.stage.penCoordIndex] = ox;
+      this.stage.penCoordIndex++;
+      this.stage.penCoords[this.stage.penCoordIndex] = oy;
+      this.stage.penCoordIndex++;
+
+      // third coordinates supplement
+      this.stage.penCoords[this.stage.penCoordIndex] = x;
+      this.stage.penCoordIndex++;
+      this.stage.penCoords[this.stage.penCoordIndex] = y;
+      this.stage.penCoordIndex++;
+
+      //second vertex description
+      this.stage.penLines[this.stage.penLineIndex] = Math.PI/2;
+      this.stage.penLineIndex++;
+      this.stage.penLines[this.stage.penLineIndex] = this.penSize/2;
+      this.stage.penLineIndex++;
+      
+      
+      
+      
+      
+      // second triangle
+      // first coordinates
+      this.stage.penCoords[this.stage.penCoordIndex] = ox;
+      this.stage.penCoordIndex++;
+      this.stage.penCoords[this.stage.penCoordIndex] = oy;
+      this.stage.penCoordIndex++;
+
+      // first coordinates supplement
+      this.stage.penCoords[this.stage.penCoordIndex] = x;
+      this.stage.penCoordIndex++;
+      this.stage.penCoords[this.stage.penCoordIndex] = y;
+      this.stage.penCoordIndex++;
+      
+      //first vertex description
+      this.stage.penLines[this.stage.penLineIndex] = Math.PI/2;
+      this.stage.penLineIndex++;
+      this.stage.penLines[this.stage.penLineIndex] = this.penSize/2;
+      this.stage.penLineIndex++;
+      
+			
+			
+      // second coordinates
+      this.stage.penCoords[this.stage.penCoordIndex] = x;
+      this.stage.penCoordIndex++;
+      this.stage.penCoords[this.stage.penCoordIndex] = y;
+      this.stage.penCoordIndex++;
+
+      // second coordinates supplement
+      this.stage.penCoords[this.stage.penCoordIndex] = ox;
+      this.stage.penCoordIndex++;
+      this.stage.penCoords[this.stage.penCoordIndex] = oy;
+      this.stage.penCoordIndex++;
+      
+      //second vertex description
+      this.stage.penLines[this.stage.penLineIndex] = -Math.PI/2;
+      this.stage.penLineIndex++;
+      this.stage.penLines[this.stage.penLineIndex] = this.penSize/2;
+      this.stage.penLineIndex++;      
+      
+			
+			
+      // third coordinates
+      this.stage.penCoords[this.stage.penCoordIndex] = x;
+      this.stage.penCoordIndex++;
+      this.stage.penCoords[this.stage.penCoordIndex] = y;
+      this.stage.penCoordIndex++;
+
+      // third coordinates supplement
+      this.stage.penCoords[this.stage.penCoordIndex] = ox;
+      this.stage.penCoordIndex++;
+      this.stage.penCoords[this.stage.penCoordIndex] = oy;
+      this.stage.penCoordIndex++;
+
+      //second vertex description
+      this.stage.penLines[this.stage.penLineIndex] = Math.PI/2;
+      this.stage.penLineIndex++;
+      this.stage.penLines[this.stage.penLineIndex] = this.penSize/2;
+      this.stage.penLineIndex++;      
+      }
+      
+     
+
+      
+      for(var i = 0; i < circleRes; i++){
+        
+        
+        // first endcap
+        // first coordinates
+        this.stage.penCoords[this.stage.penCoordIndex] = x;
+        this.stage.penCoordIndex++;
+        this.stage.penCoords[this.stage.penCoordIndex] = y;
+        this.stage.penCoordIndex++;
+
+        // first coordinates supplement
+        this.stage.penCoords[this.stage.penCoordIndex] = ox;
+        this.stage.penCoordIndex++;
+        this.stage.penCoords[this.stage.penCoordIndex] = oy;
+        this.stage.penCoordIndex++;      
+
+        // first vertex description
+        this.stage.penLines[this.stage.penLineIndex] = 0;
+        this.stage.penLineIndex++;
+        this.stage.penLines[this.stage.penLineIndex] = 0;
+        this.stage.penLineIndex++;       
+
+        
+        
+         // second coordinates
+        this.stage.penCoords[this.stage.penCoordIndex] = x;
+        this.stage.penCoordIndex++;
+        this.stage.penCoords[this.stage.penCoordIndex] = y;
+        this.stage.penCoordIndex++;
+
+        // second coordinates supplement
+        this.stage.penCoords[this.stage.penCoordIndex] = ox;
+        this.stage.penCoordIndex++;
+        this.stage.penCoords[this.stage.penCoordIndex] = oy;
+        this.stage.penCoordIndex++;      
+
+        // second vertex description
+        this.stage.penLines[this.stage.penLineIndex] = Math.PI/2 + i / circleRes * Math.PI;
+        this.stage.penLineIndex++;
+        this.stage.penLines[this.stage.penLineIndex] = this.penSize/2;
+        this.stage.penLineIndex++; 
+        
+        
+        
+         // third coordinates
+        this.stage.penCoords[this.stage.penCoordIndex] = x;
+        this.stage.penCoordIndex++;
+        this.stage.penCoords[this.stage.penCoordIndex] = y;
+        this.stage.penCoordIndex++;
+
+        // third coordinates supplement
+        this.stage.penCoords[this.stage.penCoordIndex] = ox;
+        this.stage.penCoordIndex++;
+        this.stage.penCoords[this.stage.penCoordIndex] = oy;
+        this.stage.penCoordIndex++;      
+
+        // third vertex description
+        this.stage.penLines[this.stage.penLineIndex] = Math.PI/2 + (i+1) / circleRes * Math.PI;
+        this.stage.penLineIndex++;
+        this.stage.penLines[this.stage.penLineIndex] = this.penSize/2;
+        this.stage.penLineIndex++;     
+        
+        
+        
+        
+        // second endcap
+        // first coordinates
+        this.stage.penCoords[this.stage.penCoordIndex] = ox;
+        this.stage.penCoordIndex++;
+        this.stage.penCoords[this.stage.penCoordIndex] = oy;
+        this.stage.penCoordIndex++;
+
+        // first coordinates supplement
+        this.stage.penCoords[this.stage.penCoordIndex] = x;
+        this.stage.penCoordIndex++;
+        this.stage.penCoords[this.stage.penCoordIndex] = y;
+        this.stage.penCoordIndex++;      
+
+        // first vertex description
+        this.stage.penLines[this.stage.penLineIndex] = 0;
+        this.stage.penLineIndex++;
+        this.stage.penLines[this.stage.penLineIndex] = 0;
+        this.stage.penLineIndex++;       
+
+        
+        
+         // second coordinates
+        this.stage.penCoords[this.stage.penCoordIndex] = ox;
+        this.stage.penCoordIndex++;
+        this.stage.penCoords[this.stage.penCoordIndex] = oy;
+        this.stage.penCoordIndex++;
+
+        // second coordinates supplement
+        this.stage.penCoords[this.stage.penCoordIndex] = x;
+        this.stage.penCoordIndex++;
+        this.stage.penCoords[this.stage.penCoordIndex] = y;
+        this.stage.penCoordIndex++;      
+
+        // second vertex description
+        this.stage.penLines[this.stage.penLineIndex] = Math.PI/2 + i / circleRes * Math.PI;
+        this.stage.penLineIndex++;
+        this.stage.penLines[this.stage.penLineIndex] = this.penSize/2;
+        this.stage.penLineIndex++; 
+        
+        
+        
+         // third coordinates
+        this.stage.penCoords[this.stage.penCoordIndex] = ox;
+        this.stage.penCoordIndex++;
+        this.stage.penCoords[this.stage.penCoordIndex] = oy;
+        this.stage.penCoordIndex++;
+
+        // third coordinates supplement
+        this.stage.penCoords[this.stage.penCoordIndex] = x;
+        this.stage.penCoordIndex++;
+        this.stage.penCoords[this.stage.penCoordIndex] = y;
+        this.stage.penCoordIndex++;      
+
+        // third vertex description
+        this.stage.penLines[this.stage.penLineIndex] = Math.PI/2 + (i+1) / circleRes * Math.PI;
+        this.stage.penLineIndex++;
+        this.stage.penLines[this.stage.penLineIndex] = this.penSize/2;
+        this.stage.penLineIndex++;         
+      }
+     
+     
+     
+      
+      // set color of vertices
+      for(var i = 0; i < circleRes * 6 + 6; i++){
+        this.stage.penColors[this.stage.penColorIndex] = r;
+        this.stage.penColorIndex++;
+        this.stage.penColors[this.stage.penColorIndex] = g;
+        this.stage.penColorIndex++;
+        this.stage.penColors[this.stage.penColorIndex] = b;
+        this.stage.penColorIndex++;
+        this.stage.penColors[this.stage.penColorIndex] = a;
+        this.stage.penColorIndex++;
+      }
+      
+      
+      this.penState = true;
     }
     if (this.saying) {
       this.updateBubble();
@@ -1849,147 +2742,225 @@ var P = (function() {
     var context = this.stage.penContext;
     var x = this.scratchX;
     var y = this.scratchY;
-    context.fillStyle = this.penCSS || 'hsl(' + this.penHue + ',' + this.penSaturation + '%,' + (this.penLightness > 100 ? 200 - this.penLightness : this.penLightness) + '%)';
+    /*
+    context.fillStyle = this.penRGBA || 'hsl(' + this.penHue + ',' + this.penSaturation + '%,' + (this.penLightness > 100 ? 200 - this.penLightness : this.penLightness) + '%)';
 
-	if(this.penSize <= 2 * 480 / this.stage.penCanvas.width){
-	  context.fillRect(240 + x - this.penSize, 180 - y, this.penSize, this.penSize);
-	}
-	else{
-	context.beginPath();
-    context.arc(240 + x, 180 - y, Math.floor(this.penSize / 2), 0, 2 * Math.PI, false);
-    context.fill();
-	}
+    if(this.penSize <= 2 * 480 / this.stage.penCanvas.width){
+      context.fillRect(240 + x - this.penSize, 180 - y, this.penSize, this.penSize);
+    }
+    else{
+    context.beginPath();
+      context.arc(240 + x, 180 - y, Math.floor(this.penSize / 2), 0, 2 * Math.PI, false);
+      context.fill();
+    }
+    */
+ 
+    //if(this.penSize > 2 * 480 / this.stage.penCanvas.width){
+     
+      //calculate color for vertices
+      var r, g, b, a;
+      if(this.penRGBA){
+        r = this.penRed;
+        g = this.penGreen;
+        b = this.penBlue;
+        a = this.penAlpha;
+      }
+      else{
+        var rgb = this.hsl2rgb(this.penHue, this.penSaturation, (this.penLightness > 100 ? 200 - this.penLightness : this.penLightness));
+        r = rgb[0];
+        g = rgb[1];
+        b = rgb[2];
+        a = 1;
+      }
+   
+      var circleRes = Math.max(Math.ceil(this.penSize * Math.max(this.stage.zoomX, this.stage.zoomY)), 3);
+      
+			// Redraw when array is full.
+			if(this.stage.penCoordIndex + 12 * circleRes > this.stage.penCoords.length){
+				this.stage.renderPen(this.stage.penContext, this.stage.penContext.penShaderInfo, this.stage.penContext.penBuffers);
+				this.stage.penCoordIndex = 0;
+				this.stage.penLineIndex  = 0;
+				this.stage.penColorIndex = 0;
+			}
+			
+      for(var i = 0; i < circleRes; i++){
+        // first endcap
+        // first coordinates
+        this.stage.penCoords[this.stage.penCoordIndex] = x;
+        this.stage.penCoordIndex++;
+        this.stage.penCoords[this.stage.penCoordIndex] = y;
+        this.stage.penCoordIndex++;
+
+        // first coordinates supplement
+        this.stage.penCoords[this.stage.penCoordIndex] = x;
+        this.stage.penCoordIndex++;
+        this.stage.penCoords[this.stage.penCoordIndex] = x;
+        this.stage.penCoordIndex++;      
+
+        // first vertex description
+        this.stage.penLines[this.stage.penLineIndex] = 0;
+        this.stage.penLineIndex++;
+        this.stage.penLines[this.stage.penLineIndex] = 0;
+        this.stage.penLineIndex++;       
+
+        
+        
+         // second coordinates
+        this.stage.penCoords[this.stage.penCoordIndex] = x;
+        this.stage.penCoordIndex++;
+        this.stage.penCoords[this.stage.penCoordIndex] = y;
+        this.stage.penCoordIndex++;
+
+        // second coordinates supplement
+        this.stage.penCoords[this.stage.penCoordIndex] = x+1;
+        this.stage.penCoordIndex++;
+        this.stage.penCoords[this.stage.penCoordIndex] = y+1;
+        this.stage.penCoordIndex++;      
+
+        // second vertex description
+        this.stage.penLines[this.stage.penLineIndex] = Math.PI/2 + i / circleRes * 2 * Math.PI;
+        this.stage.penLineIndex++;
+        this.stage.penLines[this.stage.penLineIndex] = this.penSize/2;
+        this.stage.penLineIndex++; 
+        
+        
+        
+         // third coordinates
+        this.stage.penCoords[this.stage.penCoordIndex] = x;
+        this.stage.penCoordIndex++;
+        this.stage.penCoords[this.stage.penCoordIndex] = y;
+        this.stage.penCoordIndex++;
+
+        // third coordinates supplement
+        this.stage.penCoords[this.stage.penCoordIndex] = x+1;
+        this.stage.penCoordIndex++;
+        this.stage.penCoords[this.stage.penCoordIndex] = y+1;
+        this.stage.penCoordIndex++;      
+
+        // third vertex description
+        this.stage.penLines[this.stage.penLineIndex] = Math.PI/2 + (i+1) / circleRes * 2 * Math.PI;
+        this.stage.penLineIndex++;
+        this.stage.penLines[this.stage.penLineIndex] = this.penSize/2;
+        this.stage.penLineIndex++;           
+      }    
+      
+      // set color of vertices
+      for(var i = 0; i < circleRes * 3; i++){
+        this.stage.penColors[this.stage.penColorIndex] = r;
+        this.stage.penColorIndex++;
+        this.stage.penColors[this.stage.penColorIndex] = g;
+        this.stage.penColorIndex++;
+        this.stage.penColors[this.stage.penColorIndex] = b;
+        this.stage.penColorIndex++;
+        this.stage.penColors[this.stage.penColorIndex] = a;
+        this.stage.penColorIndex++;
+      }
+    
+    //}
   };
+  
+  Sprite.prototype.hsl2rgb = function(h, s, l){
+    var r, g, b;
+    
+    h = (h % 360) / 360;
+    s = s / 100;
+    l = (l - 10) / 100;
+    
+    if(s == 0){
+        r = g = b = l; // achromatic
+    }else{
+        var hue2rgb = function hue2rgb(p, q, t){
+            if(t < 0) t += 1;
+            if(t > 1) t -= 1;
+            if(t < 1/6) return p + (q - p) * 6 * t;
+            if(t < 1/2) return q;
+            if(t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+            return p;
+        }
+
+        var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        var p = 2 * l - q;
+        r = hue2rgb(p, q, h + 1/3);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h - 1/3);
+    }
+    return [Math.min(Math.floor(r * 256), 255), Math.min(Math.floor(g * 256), 255), Math.min(Math.floor(b * 256), 255)];
+  }
 
   Sprite.prototype.draw = function(context, noEffects) {
-	  
+    
+		if(this.stage.penCoordIndex){
+      this.stage.renderPen(this.stage.penContext, this.stage.penContext.penShaderInfo, this.stage.penContext.penBuffers);
+      this.stage.penCoordIndex = 0;
+      this.stage.penLineIndex  = 0;
+      this.stage.penColorIndex = 0;
+		}		
+		
     var costume = this.costumes[this.currentCostumeIndex];
     
     if (this.isDragging) {
       this.moveTo(this.dragOffsetX + this.stage.mouseX, this.dragOffsetY + this.stage.mouseY);
     }
+    
+    
+    if (costume && costume.image.imgInfo) {
 
-    if (costume) {
-     
-		context.save();
-
-		var z = Math.max(this.stage.zoomX * SCALE, this.stage.zoomY * SCALE);
-		context.translate(((this.scratchX + 240) * z | 0) / z, ((180 - this.scratchY) * z | 0) / z);
-		if (this.rotationStyle === 'normal') {
-			context.rotate((this.direction - 90) * Math.PI / 180);
-		} else if (this.rotationStyle === 'leftRight' && this.direction < 0) {
-		context.scale(-1, 1);
-		}	
-		context.scale(this.scale, this.scale);
-		context.scale(costume.scale, costume.scale);
-		context.translate(-costume.rotationCenterX, -costume.rotationCenterY);
-	
-		if (!noEffects) context.globalAlpha = Math.max(0, Math.min(1, 1 - this.filters.ghost / 100));    
+      var z = Math.max(this.stage.zoomX, this.stage.zoomY);
       
-		//TODO: General Optimization
-		if(this.filters.color !== 0 || this.filters.pixelate !== 0 || this.filters.mosaic !== 0  || this.filters.brightness !== 0 || this.filters.fisheye !== 0){
-		
-		var ciw = (true) ? 480 : costume.image.width;
-	var cih = (true) ? 360 : costume.image.height;
-		
-        var effectsCanvas = document.createElement('canvas');
-        effectsCanvas.width = costume.image.width;
-        effectsCanvas.height = costume.image.height;
-        var effectsContext = effectsCanvas.getContext('2d');
-        document.body.appendChild(effectsCanvas);      
-		effectsContext.drawImage(costume.image, 0, 0, effectsCanvas.width, effectsCanvas.height);       
-     
-		if (this.filters.color !== 0) {
-	
-			effectsCanvas.width = costume.image.width;
-			effectsCanvas.height = costume.image.height;		
-			effectsContext.drawImage(costume.image, 0, 0, costume.image.width, costume.image.height);
-			var effect = effectsContext.getImageData(0, 0, costume.image.width, costume.image.height);
-        
-			for (var i = 0; i < effect.data.length; i += 4) {
-				
-				var colorOld = rgbToHsv(effect.data[i + 0],effect.data[i + 1],effect.data[i + 2]);
-				var colorNew = hsvToRgb(colorOld.h+this.filters.color/200,Math.round(colorOld.s),Math.round(colorOld.v));
-		
-				effect.data[i + 0] = (colorNew.r) & 0xff;	// red
-				effect.data[i + 1] = (colorNew.g) & 0xff;	//green
-				effect.data[i + 2] = (colorNew.b) & 0xff;	//blue
-				effect.data[i + 3] = effect.data[i + 3];	// alpha
-			}
+      var tempTest
 			
-			effectsContext.putImageData(effect, 0, 0);
-			
-		}
-        
-        if(this.filters.mosaic !== 0){
-			
-			var costumeCanvas = document.createElement('canvas');
-			costumeCanvas.width = effectsCanvas.width;
-			costumeCanvas.height = effectsCanvas.height;
-			var costumeContext = costumeCanvas.getContext('2d');
-			document.body.appendChild(costumeCanvas);     
-        
-			var mosaicVal = Math.floor((Math.abs(this.filters.mosaic)+5)/10)+1;
-			
-			var lineCanvas = document.createElement('canvas');
-			lineCanvas.width = effectsCanvas.width/mosaicVal;
-			lineCanvas.height = effectsCanvas.height;
-			var lineContext = lineCanvas.getContext('2d');
-			document.body.appendChild(lineCanvas);        
-                
-			for(var i = 0; i < mosaicVal; i++){
-				lineContext.drawImage(effectsCanvas, 0, i*costumeCanvas.height/mosaicVal, costumeCanvas.width/mosaicVal, costumeCanvas.height/mosaicVal);
-			}           
-                
-			for(var i = 0; i < mosaicVal; i++){
-				costumeContext.drawImage(lineCanvas, i*costumeCanvas.width/mosaicVal, 0, costumeCanvas.width/mosaicVal, costumeCanvas.height);
-			}
-        
-			effectsContext.clearRect(0, 0, effectsCanvas.width, effectsCanvas.height);
-			effectsContext.drawImage(costumeCanvas, 0, 0);
-        
-			costumeCanvas.parentNode.removeChild(costumeCanvas);
-			lineCanvas.parentNode.removeChild(lineCanvas);
-		}
-       
-      if (this.filters.brightness !== 0) {
-		  var brightness = this.filters.brightness;
-	  if (brightness > 0) brightness = brightness *1;
-	  var brightnessVal = (brightness / 100 * 255);
-		
-	  effectsCanvas.width = ciw;
-	  effectsCanvas.height = cih;		
-	  effectsContext.drawImage(costume.image, 0, 0, ciw, cih);
-	  var effect = effectsContext.getImageData(0, 0, ciw, cih);
-          // PF: TODO improve
-          for (var i = 0; i < effect.data.length; i += 4) {
-            effect.data[i + 0] = (effect.data[i + 0] + brightnessVal);
-            effect.data[i + 1] = (effect.data[i + 1] + brightnessVal);
-            effect.data[i + 2] = (effect.data[i + 2] + brightnessVal);
-            effect.data[i + 3] = effect.data[i + 3] ; // alpha
-	  }
-	  effectsContext.putImageData(effect, 0, 0);  
+      if(costume.resScale < Math.min(this.scale * SCALE * z, 8) && costume.isSvg){
+        if(costume.image.imgInfo){
+          this.stage.context.deleteTexture(costume.image.imgInfo.texture);
+          costume.image.imgInfo = null;
         }
-        
-		if (this.filters.pixelate !== 0) {
-          effectsCanvas.width = 10 * ciw / (this.filters.pixelate + ciw / 10);
-          effectsCanvas.height = 10 * cih / (this.filters.pixelate + cih / 10);
-    	  effectsContext.imageSmoothingEnabled = false; // PF
-    	  effectsContext.msImageSmoothingEnabled = false;
-          // draw the original image at a fraction of the final size
-          effectsContext.drawImage(costume.image, 0, 0, effectsCanvas.width, effectsCanvas.height);
-          // ready to enlarge the minimized image to full size - see * below
+        if(costume.image.penImgInfo){
+          this.stage.penContext.deleteTexture(costume.image.penImgInfo.texture);
+          costume.image.penImgInfo = null;
         }
-	    
-		 
-		
-        context.drawImage(effectsCanvas, 0, 0, costume.image.width/costume.resScale, costume.image.height/costume.resScale);
+        if(costume.image.collisionImgInfo){
+          this.stage.glCollisionContext.deleteTexture(costume.image.collisionImgInfo.texture);
+          costume.image.collisionImgInfo = null;
+        }        
         
-        effectsCanvas.parentNode.removeChild(effectsCanvas);
+        costume.resScale = Math.min(Math.ceil(this.scale * SCALE * z), 8);
+        
+        console.log('scaling: ' + costume.resScale);
+        
+        costume.render();
       }
-      else context.drawImage(costume.image, 0, 0, costume.image.width/costume.resScale, costume.image.height/costume.resScale);
-
-      context.restore();
+      
+      
+      var imgInfo;      
+      if(context.canvas.id === 'canvas')
+        imgInfo = costume.image.imgInfo;
+      else if(context.canvas.id === 'penCanvas')
+        imgInfo = costume.image.penImgInfo;
+      else
+        imgInfo = costume.image.collisionImgInfo;
+      
+      var color = -this.filters.color / 100 * Math.PI;
+      var fisheye = this.filters.fisheye < -100 ? 0 : -this.filters.fisheye / 100 - 1;
+      var whirl = -this.filters.whirl / 100 * Math.PI;
+      var pixelate = Math.pow(Math.abs(this.filters.pixelate * costume.scale * this.scale), 0.6) + 1;
+      var mosaic = Math.floor(Math.abs((this.filters.mosaic + 5) / 10)) + 1;
+      var brightness = this.filters.brightness / 100;
+      var ghost = noEffects ? 1 : Math.max(0, Math.min(1, 1 - this.filters.ghost / 100));
+      
+      glDrawImage(
+        context,
+        context.useTouchingShader ? context.touchingShaderInfo : context.imgShaderInfo,
+        context.imgBuffers,
+        imgInfo,
+        this.scratchX + (imgInfo.width / costume.resScale / 2 - costume.rotationCenterX) * this.scale * costume.scale * (this.rotationStyle === 'leftRight' && this.direction < 0 ? -1 : 1),
+        this.scratchY + (-imgInfo.height / costume.resScale / 2 + costume.rotationCenterY) * this.scale * costume.scale,
+        imgInfo.width/costume.resScale * costume.scale * this.scale * (this.rotationStyle === 'leftRight' && this.direction < 0 ? -1 : 1),
+        imgInfo.height/costume.resScale * costume.scale * this.scale,
+        this.rotationStyle === 'normal' ? - this.direction + 90 : 0,
+        (-imgInfo.width / costume.resScale / 2 + costume.rotationCenterX) * this.scale * costume.scale * (this.rotationStyle === 'leftRight' && this.direction < 0 ? -1 : 1),
+        (imgInfo.height / costume.resScale / 2 - costume.rotationCenterY) * this.scale * costume.scale,
+        [color, fisheye, whirl, pixelate, mosaic, brightness, ghost],
+        this.stage.tColor);
     }
 	
 	
@@ -2015,7 +2986,7 @@ var P = (function() {
   }
 
   return {r: r * 255,g: g * 255,b: b * 255 };
-}
+  }
 
 	function rgbToHsv(r, g, b) {
   r /= 255, g /= 255, b /= 255;
@@ -2041,7 +3012,7 @@ var P = (function() {
   return {	 h: h,
 			s: s,
 			v: v };
-}
+  }
 	
   Sprite.prototype.setDirection = function(degrees) {
     var d = degrees % 360;
@@ -2051,10 +3022,12 @@ var P = (function() {
     if (this.saying) this.updateBubble();
   };
 
+  
+  //Context for collision math
   var collisionCanvas = document.createElement('canvas');
   var collisionContext = collisionCanvas.getContext('2d');
-
-  Sprite.prototype.touching = function(thing) {
+  
+  Sprite.prototype.touching = function(thing) {    
     var costume = this.costumes[this.currentCostumeIndex];
 
     if (thing === '_mouse_') {
@@ -2075,7 +3048,29 @@ var P = (function() {
       } else if (this.rotationStyle === 'leftRight' && this.direction < 0) {
         cx = -cx
       }
-      var d = costume.context.getImageData(cx * costume.resScale * costume.bitmapResolution + costume.rotationCenterX * costume.resScale, cy * costume.resScale * costume.bitmapResolution + costume.rotationCenterY * costume.resScale, 1, 1).data;
+      
+      //var d = costume.context.getImageData(cx * costume.resScale * costume.bitmapResolution + costume.rotationCenterX * costume.resScale, cy * costume.resScale * costume.bitmapResolution + costume.rotationCenterY * costume.resScale, 1, 1).data;
+      
+      this.stage.glCollisionContext.scissor(this.stage.rawMouseX + 240, this.stage.rawMouseY + 179, 1, 1);
+      
+      this.stage.glCollisionContext.clear(this.stage.glCollisionContext.COLOR_BUFFER_BIT);
+      this.stage.glCollisionContext.useTouchingShader = false;
+      this.draw(this.stage.glCollisionContext, true);
+      
+      var d = new Uint8Array(4);
+      
+      
+      this.stage.glCollisionContext.readPixels(
+        this.stage.rawMouseX + 240,
+        this.stage.rawMouseY + 179,
+        1,
+        1,
+        this.stage.glCollisionContext.RGBA,
+        this.stage.glCollisionContext.UNSIGNED_BYTE,
+        d);
+        
+      this.stage.glCollisionContext.scissor(0, 0, 480, 360);
+      
       return d[3] !== 0;
     } else if (thing === '_edge_') {
       var bounds = this.rotatedBounds();
@@ -2093,7 +3088,7 @@ var P = (function() {
         if (mb.bottom >= ob.top || ob.bottom >= mb.top || mb.left >= ob.right || ob.left >= mb.right) {
           continue;
         }
-
+        
         var left = Math.max(mb.left, ob.left);
         var top = Math.min(mb.top, ob.top);
         var right = Math.min(mb.right, ob.right);
@@ -2105,15 +3100,41 @@ var P = (function() {
         collisionContext.save();
         collisionContext.translate(-(left + 240), -(180 - top));
 
-        this.draw(collisionContext, true);
-        collisionContext.globalCompositeOperation = 'source-in';
-        sprite.draw(collisionContext, true);
+        //this.draw(collisionContext, true);
+        //collisionContext.globalCompositeOperation = 'source-in';
+        //sprite.draw(collisionContext, true);      
+        
+        this.stage.glCollisionContext.scissor(240 + left, 180 + bottom, Math.max(right - left, 1), Math.max(top - bottom, 1));
+        
+        this.stage.glCollisionContext.clear(this.stage.glCollisionContext.COLOR_BUFFER_BIT);
+        this.stage.glCollisionContext.useTouchingShader = false;
+        this.draw(this.stage.glCollisionContext, true);
+        
+        this.stage.glCollisionContext.touchingShaderInfo.blendSource = this.stage.glCollisionContext.DST_ALPHA;
+        this.stage.glCollisionContext.touchingShaderInfo.blendDest = this.stage.glCollisionContext.ZERO;    
+        this.stage.tColor = [0.0, 0.0, 0.0, 0.0]     
+        this.stage.glCollisionContext.useTouchingShader = true;
+        sprite.draw(this.stage.glCollisionContext, true);
+        
+        //collisionContext.restore();
 
-        collisionContext.restore();
+        //var data = collisionContext.getImageData(0, 0, Math.max(right - left, 1), Math.max(top - bottom, 1)).data;
 
-        var data = collisionContext.getImageData(0, 0, Math.max(right - left, 1), Math.max(top - bottom, 1)).data;
-
-        var length = (right - left) * (top - bottom) * 4;
+        costume = sprite.costumes[sprite.currentCostumeIndex];
+        
+        var data = new Uint8Array(Math.max(right - left, 1) * Math.max(top - bottom, 1) * 4);
+        this.stage.glCollisionContext.readPixels(
+          240 + left,
+          180 + bottom,
+          Math.max(right - left, 1),
+          Math.max(top - bottom, 1),
+          this.stage.glCollisionContext.RGBA,
+          this.stage.glCollisionContext.UNSIGNED_BYTE,
+          data);
+       
+       this.stage.glCollisionContext.scissor(0, 0, 480, 360);
+       
+        var length = data.length;
         for (var j = 0; j < length; j += 4) {
           if (data[j + 3]) {
             return true;
@@ -2124,41 +3145,139 @@ var P = (function() {
     }
   };
 
-  Sprite.prototype.touchingColor = function(rgb) {
+  Sprite.prototype.touchingColor = function(rgb) {    
     var b = this.rotatedBounds();
-    collisionCanvas.width = b.right - b.left;
-    collisionCanvas.height = b.top - b.bottom;
+    //collisionCanvas.width = Math.ceil(b.right - b.left);
+    //collisionCanvas.height = Math.ceil(b.top - b.bottom);
 
-    collisionContext.save();
-    collisionContext.translate(-(240 + b.left), -(180 - b.top));
-
+    //collisionContext.save();
+    //collisionContext.translate(-(240 + b.left), -(180 - b.top));
+    
+    /*
     this.stage.drawAllOn(collisionContext, this);
     collisionContext.globalCompositeOperation = 'destination-in';
     this.draw(collisionContext, true);
+    */    
+    
 
-    collisionContext.restore();
+    
+    //set context to size of sprite:
+    //this.stage.glCollisionCanvas.width = Math.ceil(b.right - b.left);
+    //this.stage.glCollisionCanvas.height = Math.ceil(b.top - b.bottom);
+    //this.stage.glCollisionCanvas.collisionMode = b;
+    
+    this.stage.glCollisionContext.scissor(240 + b.left, 180 + b.bottom, Math.ceil(b.right) - Math.floor(b.left), Math.ceil(b.top) - Math.floor(b.bottom));
+    
+    this.stage.glCollisionContext.clear(this.stage.glCollisionContext.COLOR_BUFFER_BIT);
+    this.stage.glCollisionContext.useTouchingShader = false;
+    this.stage.drawAllOn(this.stage.glCollisionContext, this);
 
-	var width = collisionCanvas.width;
-	var height= collisionCanvas.height;
-	if(width <= 0){
-		width=1;
-	}
-	if(height <= 0){
-		height=1;
-	}
-	
-    var data = collisionContext.getImageData(0, 0, width, height).data;
+    
+    this.stage.glCollisionContext.touchingShaderInfo.blendSource = this.stage.glCollisionContext.ZERO;
+    this.stage.glCollisionContext.touchingShaderInfo.blendDest = this.stage.glCollisionContext.SRC_COLOR;
+    this.stage.tColor = [0.0, 0.0, 0.0, 0.0]    
+    this.stage.glCollisionContext.useTouchingShader = true;
+    this.draw(this.stage.glCollisionContext, true);
+ 
 
-    rgb = rgb & 0xffffff;
-    var length = (b.right - b.left) * (b.top - b.bottom) * 4;
+
+
+ 
+    //collisionContext.restore();
+
+    /*
+    var width  = collisionCanvas.width;
+    var height = collisionCanvas.height;
+    
+    if(width <= 0){
+      width=1;
+    }
+    if(height <= 0){
+      height=1;
+    }
+	  */
+  
+    //var data = collisionContext.getImageData(0, 0, width, height).data;
+    
+    //b.right = Math.min(b.right, 240);
+
+    var tempTest = performance.now(); 
+ 
+    var data = new Uint8Array((Math.ceil(b.right) - Math.floor(b.left)) * (Math.ceil(b.top) - Math.floor(b.bottom)) * 4);
+    
+    this.stage.glCollisionContext.finish();
+    this.stage.glCollisionContext.readPixels(
+      240 + b.left,
+      180 + b.bottom,
+      Math.ceil(b.right) - Math.floor(b.left),
+      Math.ceil(b.top) - Math.floor(b.bottom),
+      this.stage.glCollisionContext.RGBA,
+      this.stage.glCollisionContext.UNSIGNED_BYTE,
+      data);
+      
+    this.stage.glCollisionContext.scissor(0, 0, 480, 360);
+ 
+    //console.log(performance.now() - tempTest);  
+    
+    //rgb = rgb & 0xffffff;
+    var length = data.length;//Math.ceil(b.right - b.left) * Math.ceil(b.top - b.bottom) * 4;   
     for (var i = 0; i < length; i += 4) {
-      if ((data[i] << 16 | data[i + 1] << 8 | data[i + 2]) === rgb && data[i + 3]) {
+      if(((data[i] << 16 | data[i + 1] << 8 | data[i + 2]) & 0xf8f8f0) === (rgb & 0xf8f8f0) && (data[i + 3] === 0xff)){
         return true;
       }
     }
-
     return false;
   };
+  
+  Sprite.prototype.colorTouchingColor = function(rgb1, rgb2, first) {
+    var b = this.rotatedBounds();
+ 
+     this.stage.glCollisionContext.scissor(240 + b.left, 180 + b.bottom, Math.ceil(b.right) - Math.floor(b.left), Math.ceil(b.top) - Math.floor(b.bottom));
+ 
+    this.stage.glCollisionContext.clear(this.stage.glCollisionContext.COLOR_BUFFER_BIT);
+    this.stage.glCollisionContext.useTouchingShader = false;
+    this.stage.drawAllOn(this.stage.glCollisionContext, this);  
+    
+    this.stage.glCollisionContext.touchingShaderInfo.blendSource = this.stage.glCollisionContext.ZERO;
+    this.stage.glCollisionContext.touchingShaderInfo.blendDest = this.stage.glCollisionContext.SRC_COLOR;
+    this.stage.tColor = [((rgb1 & 0xff0000) >> 16) / 255, ((rgb1 & 0x00ff00) >> 8) / 255, (rgb1 & 0x0000ff) / 255, 1.0];   
+    this.stage.glCollisionContext.useTouchingShader = true;
+    this.draw(this.stage.glCollisionContext, true);
+    
+    b.right = Math.min(b.right, 240);
+    
+    var data = new Uint8Array(Math.ceil(b.right - b.left) * Math.ceil(b.top - b.bottom) * 4);
+    this.stage.glCollisionContext.finish();    
+    this.stage.glCollisionContext.readPixels(
+      240 + b.left,
+      180 + b.bottom,
+      b.right - b.left,
+      b.top - b.bottom,
+      this.stage.glCollisionContext.RGBA,
+      this.stage.glCollisionContext.UNSIGNED_BYTE,
+      data);
+ 
+    this.stage.glCollisionContext.scissor(0, 0, 480, 360);
+ 
+    //rgb = rgb & 0xffffff;
+    var length = Math.ceil(b.right - b.left) * Math.ceil(b.top - b.bottom) * 4;   
+    for (var i = 0; i < length; i += 4) {
+      //if(Math.abs(data[i    ] - data[i + 1]) <= 4 &&
+      //   Math.abs(data[i    ] - data[i + 2]) <= 4 &&
+      //   Math.abs(data[i + 1] - data[i + 2]) <= 4){
+      //  if(data[i + 2] === (rgb2 & 0x0000ff) && data[i + 3]){
+      //    return true;
+      //  }
+      //}
+      //else{
+        if(((data[i] << 16 | data[i + 1] << 8 | data[i + 2]) & 0xf8f8f0) === (rgb2 & 0xf8f8f0) && data[i + 3]){
+          return true;
+        }
+      //}
+    }
+    
+    return false;    
+  }
 
   Sprite.prototype.bounceOffEdge = function() {
     var b = this.rotatedBounds();
@@ -2409,12 +3528,14 @@ var P = (function() {
     this.rotationCenterX = data.rotationCenterX;
     this.rotationCenterY = data.rotationCenterY;
     this.textLayer = data.$text;
-		//emulates scratch behaviour unless size is set to more than 400%. This saves RAM
-		//Scratch allows scaling up to 1.5 * canvas size.
-    this.resScale = Math.min((P.resolution || 960) * 1.5 / this.baseLayer.width, 4);
+    //Increases dynamically as needed.
+    this.resScale = 1;
+		
+		//Is this an svg, i.e. does it need to be rescaled for good resolution?
+		this.isSvg = this.baseLayerMD5.split('.')[1] === 'svg';
     
-    this.image = document.createElement('canvas');
-    this.context = this.image.getContext('2d');
+    //this.image = document.createElement('canvas');
+    //this.context = this.image.getContext('2d');
 
     this.render();
     this.baseLayer.onload = function() {
@@ -2427,27 +3548,42 @@ var P = (function() {
   addEvents(Costume, 'load');
 
   Costume.prototype.render = function() {
+    this.image = document.createElement('canvas');
+    this.context = this.image.getContext('2d');
+    
     if (!this.baseLayer.width || this.textLayer && !this.textLayer.width) {
       return;
     }
     this.image.width = this.baseLayer.width*this.resScale;
     this.image.height = this.baseLayer.height*this.resScale;
     
-    this.context.mozImageSmoothingEnabled = false;
     this.context.imageSmoothingEnabled = false;
     this.context.msImageSmoothingEnabled = false;
-    this.context.webkitImageSmoothingEnabled = false;
     
     this.context.drawImage(this.baseLayer, 0, 0, this.image.width, this.image.height);
     if (this.textLayer) {
 		
       this.context.drawImage(this.textLayer, 0, 0, this.image.width, this.image.height);
     }
-    if (this.base.isStage && this.index == this.base.currentCostumeIndex) {
+    if (this.base.isStage && this.index == this.base.currentCostumeIndex) {      
       setTimeout(function() {
         this.base.updateBackdrop();
       }.bind(this));
     }
+    
+    //console.log('making texture');
+    if(this.base.isStage){
+      this.image.imgInfo = glMakeTexture(this.base.stage.backdropContext, this.image);
+    }
+    else{
+      this.image.imgInfo = glMakeTexture(this.base.stage.context, this.image);
+      this.image.penImgInfo = glMakeTexture(this.base.stage.penContext, this.image);
+    }
+    this.image.collisionImgInfo = glMakeTexture(this.base.stage.glCollisionContext, this.image);    
+    
+    //destroy context and canvas after rendering.
+    this.context = null;
+    this.image.remove();
   };
 
   var Sound = function(data) {
@@ -2533,7 +3669,20 @@ var P = (function() {
     return WATCHER_LABELS[this.cmd] || '';
   };
 
-  Watcher.prototype.draw = function(context) {
+  Watcher.prototype.draw = function(destContext) {    
+    var canvas = document.createElement('canvas');
+    var context = canvas.getContext('2d');
+    
+    var z = Math.min(this.stage.zoomX, this.stage.zoomY);
+    
+    canvas.width = 480 * z;
+    canvas.height = 360 * z;
+    
+    context.scale(z, z);
+    
+    context.imageSmoothingEnabled = false;
+    context.msImageSmoothingEnabled = false;  
+    
     var value = 0;
     if (!this.target) return;
     switch (this.cmd) {
@@ -2606,7 +3755,9 @@ var P = (function() {
     context.translate(this.x, this.y);
 	
 	//drawing variables in here?
+    
     if (this.mode === 1 || this.mode === 3) {
+      
       context.font = 'bold 11px sans-serif';
 
       var dw = Math.max(41, 5 + context.measureText(value).width + 5);
@@ -2709,8 +3860,31 @@ var P = (function() {
       context.textAlign = 'center';
       context.fillText(value, dw / 2, dh - 5);
     }
+    
 
     context.restore();
+
+    var imgInfo = glMakeTexture(destContext, canvas);
+    
+
+    
+    glDrawImage(
+      destContext,
+      destContext.imgShaderInfo,
+      destContext.imgBuffers,
+      imgInfo,
+      0,
+      0,
+      480,
+      360,
+      0,
+      0,
+      0);
+      
+    destContext.deleteTexture(imgInfo.texture);
+    imgInfo = null;
+    
+    canvas.remove();
   };
 
   var AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -2728,7 +3902,7 @@ var P = (function() {
     Watcher: Watcher
   };
 
-  }());
+}());
 
 P.compile = (function() {
   'use strict';
@@ -2962,7 +4136,7 @@ P.compile = (function() {
         return '(self.currentCostumeIndex + 1)';
 
       } else if (e[0] === 'scale') {
-
+        
         return '(S.scale * 100)';
 
       } else if (e[0] === 'volume') { /* Sound */
@@ -3112,10 +4286,12 @@ P.compile = (function() {
         return 'S.touching(' + val(e[1]) + ')';
 
       } else if (e[0] === 'touchingColor:') {
-
+        
         return 'S.touchingColor(' + val(e[1]) + ')';
 
-      // } else if (e[0] === 'color:sees:') {
+      } else if (e[0] === 'color:sees:') {
+        
+        return 'S.colorTouchingColor(' + val(e[1]) + ', ' + val(e[2]) + ')';
 
       } else if (e[0] === 'keyPressed:') {
 
@@ -3183,12 +4359,12 @@ P.compile = (function() {
     };
 
     var noRGB = '';
-    noRGB += 'if (S.penCSS) {\n';
+    noRGB += 'if (S.penRGBA) {\n';
     noRGB += '  var hsl = rgb2hsl(S.penColor & 0xffffff);\n';
     noRGB += '  S.penHue = hsl[0];\n';
     noRGB += '  S.penSaturation = hsl[1];\n';
     noRGB += '  S.penLightness = hsl[2];\n';
-    noRGB += '  S.penCSS = null;';
+    noRGB += '  S.penRGBA = false;';
     noRGB += '}\n';
 
     var compile = function(block) {
@@ -3267,9 +4443,10 @@ P.compile = (function() {
 
       } else if (block[0] === 'showBackground:' ||
                  block[0] === 'startScene') {
-
+		
+		source += 'var bgname = self.getCostumeName();\n';
         source += 'self.setCostume(' + val(block[1]) + ');\n';
-        source += 'var threads = sceneChange();\n';
+        source += 'var threads = (self.getCostumeName()!= bgname)? sceneChange(): "";\n';
         source += 'if (threads.indexOf(BASE) !== -1) return;\n';
 
       } else if (block[0] === 'nextBackground' ||
@@ -3348,12 +4525,12 @@ P.compile = (function() {
       } else if (block[0] === 'changeSizeBy:') {
 
         source += 'S.scale += ' + num(block[1]) + ' / 100;\n';
-		source += 'if (S.scale < 0) S.scale = 0;\n';
+		    source += 'if (S.scale < 0) S.scale = 0;\n';
 		
       } else if (block[0] === 'setSizeTo:') {
 
         source += 'S.scale = ' + num(block[1]) + ' / 100;\n';
-		source += 'if (S.scale < 0) S.scale = 0;\n';
+		    source += 'if (S.scale < 0) S.scale = 0;\n';
 
       } else if (block[0] === 'show') {
 
@@ -3456,47 +4633,57 @@ P.compile = (function() {
 
       } else if (block[0] === 'clearPenTrails') { /* Pen */
 
-        source += 'self.penCanvas.width = 480 * self.maxZoomX;\n';
-		source += 'self.penCanvas.height = 360 * self.maxZoomY;\n';
-        source += 'self.penContext.scale(self.maxZoomX, self.maxZoomY);\n';
-        source += 'self.penContext.lineCap = "round";\n'
+        //source += 'self.penCanvas.width = 480 * self.maxZoomX;\n';
+		    //source += 'self.penCanvas.height = 360 * self.maxZoomY;\n';
+        //source += 'self.penContext.scale(self.maxZoomX, self.maxZoomY);\n';
+        //source += 'self.penContext.lineCap = "butt";\n'
+        source += 'self.penContext.clear(self.penContext.COLOR_BUFFER_BIT);\n';
 
       } else if (block[0] === 'putPenDown') {
 
         source += 'S.isPenDown = true;\n';
+        //source += 'S.penState = false;\n';
         source += 'S.dotPen();\n';
 
       } else if (block[0] === 'putPenUp') {
 
         source += 'S.isPenDown = false;\n';
-        source += 'S.dotPen();\n';
-        source += 'S.penState = null;\n';
+        //source += 'if(!S.penState)\n';
+        //source += 'S.dotPen();\n';
+        //source += 'S.penState = null;\n';
 
       } else if (block[0] === 'penColor:') {
 
         source += 'var c = ' + num(block[1]) + ';\n';
         source += 'S.penColor = c;\n';
         source += 'var a = (c >> 24 & 0xff) / 0xff;\n';
-        source += 'S.penCSS = "rgba(" + (c >> 16 & 0xff) + "," + (c >> 8 & 0xff) + "," + (c & 0xff) + ", " + (a || 1) + ")";\n';
+        source += 'S.penRGBA = true;\n';
+        source += 'S.penRed = c >> 16 & 0xff;\n';
+        source += 'S.penGreen = c >> 8 & 0xff;\n';
+        source += 'S.penBlue = c & 0xff;\n';
+        source += 'S.penAlpha = a || 1;\n';
 
       } else if (block[0] === 'setPenHueTo:') {
 
         source += noRGB;
         source += 'S.penHue = ' + num(block[1]) + ' * 360 / 200;\n';
         source += 'S.penSaturation = 100;\n';
+        source += 'S.penRGBA = false;\n';
 
       } else if (block[0] === 'changePenHueBy:') {
         
         source += noRGB;
         source += 'S.penHue += ' + num(block[1]) + ' * 360 / 200;\n';
         source += 'S.penSaturation = 100;\n';
-
+        source += 'S.penRGBA = false;\n';
+        
       } else if (block[0] === 'setPenShadeTo:') {
 
         source += noRGB;
         source += 'S.penLightness = ' + num(block[1]) + ' % 200;\n';
         source += 'if (S.penLightness < 0) S.penLightness += 200;\n';
         source += 'S.penSaturation = 100;\n';
+        source += 'S.penRGBA = false;\n';
 
       } else if (block[0] === 'changePenShadeBy:') {
 
@@ -3504,6 +4691,7 @@ P.compile = (function() {
         source += 'S.penLightness = (S.penLightness + ' + num(block[1]) + ') % 200;\n';
         source += 'if (S.penLightness < 0) S.penLightness += 200;\n';
         source += 'S.penSaturation = 100;\n';
+        source += 'S.penRGBA = false;\n';
 
       } else if (block[0] === 'penSize:') {
 
@@ -3518,7 +4706,7 @@ P.compile = (function() {
       } else if (block[0] === 'stampCostume') {
 
         source += 'S.draw(self.penContext);\n';
-
+ 
       } else if (block[0] === 'setVar:to:') { /* Data */
 
         source += varRef(block[1]) + ' = ' + val(block[2]) + ';\n';
@@ -3563,9 +4751,14 @@ P.compile = (function() {
         source += 'if (threads.indexOf(BASE) !== -1) return;\n';
 
       } else if (block[0] === 'call') {
-
-        if (DEBUG && block[1] === 'phosphorus: debug') {
+        
+        if (DEBUG && block[1] === 'sulf.debug') {
           source += 'debugger;\n';
+        } else if (block[1] === 'sulf.executeJavaScript %s'){
+          //console.log('**********   Found embedded JavaScript:   **********');
+          //console.log(String(block[2].replace(';', ';\n')));
+          //console.log('**********    End embedded JavaScript.    **********');
+          //source += block[2];
         } else {
           source += 'call(' + val(block[1]) + ', ' + nextLabel() + ', [';
           for (var i = 2; i < block.length; i++) {
@@ -4523,7 +5716,7 @@ P.runtime = (function() {
     P.Stage.prototype.handleError = function(e) {
       console.error(e.stack);
     };
-
+    
   }());
 
   /*
