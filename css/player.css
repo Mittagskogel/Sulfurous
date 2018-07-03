@@ -87,6 +87,16 @@
   color: rgba(128, 0, 0, .8);
 }
 
+.webgl-error {
+  color: rgba(128, 0, 0, .6);
+  font: 500 12px Helvetica Neue, Helvetica, Arial, sans-serif;
+  padding: 8px;
+  display: none;
+}
+.webgl-error a {
+  color: rgba(128, 0, 0, .8);
+}
+
 .fs {
   background: #000;
   width: 100%;

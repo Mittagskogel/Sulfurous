@@ -10,6 +10,9 @@ body {
   margin: 16px 0 0;
   position: relative;
 }
+.featured-image{
+	display: none;
+}
 .version {
   padding-left: 2%;
   font-size: 20%;

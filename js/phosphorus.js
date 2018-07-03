@@ -3123,16 +3123,16 @@ var P = (function() {
         costume = sprite.costumes[sprite.currentCostumeIndex];
         
         var data = new Uint8Array(Math.max(right - left, 1) * Math.max(top - bottom, 1) * 4);
-        this.stage.glCollisionContext.readPixels(
+        this.sprite.glCollisionContext.readPixels(
           240 + left,
           180 + bottom,
           Math.max(right - left, 1),
           Math.max(top - bottom, 1),
-          this.stage.glCollisionContext.RGBA,
-          this.stage.glCollisionContext.UNSIGNED_BYTE,
+          this.sprite.glCollisionContext.RGBA,
+          this.sprite.glCollisionContext.UNSIGNED_BYTE,
           data);
        
-       this.stage.glCollisionContext.scissor(0, 0, 480, 360);
+       this.sprite.glCollisionContext.scissor(0, 0, 480, 360);
        
         var length = data.length;
         for (var j = 0; j < length; j += 4) {

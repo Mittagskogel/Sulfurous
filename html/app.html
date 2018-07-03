@@ -11,6 +11,7 @@
 <div>
   <h1>sulfurous</h1>
   <div class=progress><div class=progress-bar></div></div>
+	<p id='fullscreenWarning'></p>
 </div>
 </div>
 <div class=error>
@@ -19,9 +20,17 @@
   <p>An error has occurred. <a id=bug-link href=https://github.com/mittagskogel/sulfurous/issues/new>Click here</a> to file a bug report on GitHub.</p>
 </div>
 </div>
+<div class=webgl-error>
+<div>
+  <h1>sulfurous</h1>
+  <p>It looks like your device doesn't support WebGL. You can try viewing this project in the legacy player <a id=legacy-link href=https://sulfurous.aau.at/legacy>here</a>.</p>
+</div>
+</div>
 <script src=../js/fonts.js></script>
 <script src=//cdnjs.cloudflare.com/ajax/libs/jszip/2.4.0/jszip.js></script>
+<script src=../js/gl-matrix-min.js></script>
 <script src=../js/phosphorus.js></script>
+<script src=../js/shaders.js></script>
 <script src=../fonts/fonts.js></script>
 <script>
 
@@ -83,6 +92,8 @@
   var progressBar = document.querySelector('.progress-bar');
   var error = document.querySelector('.error');
   var bugLink = document.querySelector('#bug-link');
+  var webGLError = document.querySelector('.webgl-error');
+  var legacyLink = document.querySelector('#legacy-link');
   var player = document.querySelector('.player');
 
   var stage;
@@ -139,7 +150,10 @@
 	
 	
 	if(P.hasTouchEvents){
-	  document.addEventListener('load', alert('Use two finger tap in portrait orientation and turn to landscape orientation for full screen.'));
+	  window.addEventListener('load', function() {
+		  document.getElementById('fullscreenWarning').textContent = 'On mobile browsers, use two finger tap in portrait orientation and turn to landscape orientation for full screen.';
+		});
+	
 		document.addEventListener('touchstart', function(e) {
 	 	if(e.targetTouches.length >= 2)
 	    mobileFullScreen(e);
@@ -152,6 +166,13 @@
     console.error(e.stack);
   }
 
+  function showWebGLError(e) {
+    webGLError.style.display = 'table';
+    legacyLink.href = location;
+    legacyLink.href = legacyLink.href.replace('html', 'legacy/html');
+    console.error(e);    
+  }
+  
   window.addEventListener('resize', layout);
 
   if (P.hasTouchEvents) {
@@ -184,6 +205,8 @@
   P.IO.loadScratchr2ProjectTitle(projectId, function(title) {
     document.title = projectTitle = title;
   });
+  
+  P.showWebGLError = showWebGLError;
   
 }());
 

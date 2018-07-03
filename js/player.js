@@ -25,6 +25,9 @@ P.player = (function() {
   var error = document.querySelector('.internal-error');
   var errorBugLink = document.querySelector('#error-bug-link');
 
+  var webGLError = document.querySelector('.webgl-error');
+  var legacyLink = document.querySelector('#legacy-link');
+  
   var flagTouchTimeout;
 
   function setResolution(resX, resY){
@@ -174,7 +177,7 @@ P.player = (function() {
     });	
   }
   
-	flag.addEventListener('click', flagClick);
+  flag.addEventListener('click', flagClick);
   pause.addEventListener('click', pauseClick);
   stop.addEventListener('click', stopClick);
   fullScreen.addEventListener('click', fullScreenClick);
@@ -190,10 +193,10 @@ P.player = (function() {
     if (isFullScreen !== document.webkitIsFullScreen) fullScreenClick();
   });
 
-  function load(id, cb, titleCallback) {
+  function load(id, cb, titleCallback) {    
     P.player.projectId = id;
     P.player.projectURL = id ? 'https://scratch.mit.edu/projects/' + id + '/' : '';
-	
+  
     if (stage) {
       stage.stopAll();
       stage.pause();
@@ -201,6 +204,7 @@ P.player = (function() {
     while (player.firstChild) player.removeChild(player.lastChild);
     turbo.style.display = 'none';
     error.style.display = 'none';
+    webGLError.style.display = 'none';
     pause.className = 'pause';
     progressBar.style.display = 'none';
 
@@ -219,7 +223,15 @@ P.player = (function() {
   function showError(e) {
     error.style.display = 'block';
     errorBugLink.href = 'https://github.com/nathan/phosphorus/issues/new?title=' + encodeURIComponent(P.player.projectTitle || P.player.projectURL) + '&body=' + encodeURIComponent('\n\n\n' + P.player.projectURL + '\nhttps://phosphorus.github.io/#' + P.player.projectId + '\n' + navigator.userAgent + (e.stack ? '\n\n```\n' + e.stack + '\n```' : ''));
-    console.error(e.stack);
+    console.error(e);
+  }
+  
+  function showWebGLError(e) {
+    webGLError.style.display = 'block';
+    if(document.querySelector('#player-area'))
+      document.querySelector('#player-area').style.height = 'auto';
+    legacyLink.href = 'https://sulfurous.aau.at/legacy/#' + P.player.projectId;
+    console.error(e);
   }
 
   function showProgress(request, loadCallback) {
@@ -267,11 +279,13 @@ P.player = (function() {
       progressBar.style.width = (10 + e.loaded / e.total * 90) + '%';
     };
   }
+  
+  P.showWebGLError = showWebGLError;
 
   return {
     load: load,
     showProgress: showProgress,
-    setResolution: setResolution
+    setResolution: setResolution,
   };
 
 }());
