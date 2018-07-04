@@ -2,7 +2,7 @@
 /*
  Sulfurous - an html5 player for Scratch projects
  
- Version: 0.87 July 03, 2018
+ Version: 0.88 July 04, 2018
 
  Sulfurous was created by Mittagskogel and further developed by FRALEX
  as part of their work at the Alpen-Adria-University Klagenfurt.
@@ -260,6 +260,12 @@ var P = (function() {
 
     if(!effect) effect = [0, 0, 0, 1, 1, 0, 1];
       
+	  
+	  if(effect[5] > 0){
+		  effect[5] = effect[5] / 200 * 50;
+	  }
+	  
+	  
     var colorMatrix = mat4.create();
     mat4.fromRotation(colorMatrix, effect[0], vec3.fromValues(1.0, 1.0, 1.0));  
       
@@ -455,16 +461,21 @@ var P = (function() {
   IO.loadImage = function(url, callback, self) {
     var request = new Request;
     var image = new Image;
+	  var bForcedBlank = false;
     image.crossOrigin = 'anonymous';
     image.src = url;
     image.onload = function() {
       request.load(image);
     };
     image.onerror = function() {
-      request.error(new Error('Failed to load image: ' + url));
+     // request.error(new Error('Failed to load image: ' + url));
+	  console.log('Failed to load image (forcing blank): ' + url);
+      bForcedBlank = true;
+      image.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAABBJREFUeNpi+P//PwNAgAEACPwC/tuiTRYAAAAASUVORK5CYII=";
+  
     };
     if (callback) request.onLoad(callback.bind(self));
-    return request;
+     return (bForcedBlank) ? request : request;
   };
 
   IO.loadScratchr2Project = function(id, callback, self) {
@@ -804,9 +815,11 @@ var P = (function() {
 
   IO.fixSVG = function(svg, element) {
 	  
+	  
+	  
     if (element.nodeType !== 1) return element;
     if (element.nodeName.slice(0, 4).toLowerCase() === 'svg:') {
-      /*
+     /*
       var newElement = document.createElementNS('https://www.w3.org/2000/svg', element.localName);
       var attributes = element.attributes;
       var newAttributes = newElement.attributes;
@@ -817,7 +830,7 @@ var P = (function() {
         newElement.appendChild(element.firstChild);
       }
       element = newElement;
-      */
+     */
     }
     
     //Embed fonts in svg:
@@ -3081,10 +3094,12 @@ var P = (function() {
       for (var i = sprites.length; i--;) {
         var sprite = sprites[i];
         if (!sprite.visible) continue;
-
+		
+		
+		
         var mb = this.rotatedBounds();
         var ob = sprite.rotatedBounds();
-
+		//console.log(sprite);
         if (mb.bottom >= ob.top || ob.bottom >= mb.top || mb.left >= ob.right || ob.left >= mb.right) {
           continue;
         }
@@ -3123,20 +3138,21 @@ var P = (function() {
         costume = sprite.costumes[sprite.currentCostumeIndex];
         
         var data = new Uint8Array(Math.max(right - left, 1) * Math.max(top - bottom, 1) * 4);
-        this.sprite.glCollisionContext.readPixels(
+        this.stage.glCollisionContext.readPixels(
           240 + left,
           180 + bottom,
           Math.max(right - left, 1),
           Math.max(top - bottom, 1),
-          this.sprite.glCollisionContext.RGBA,
-          this.sprite.glCollisionContext.UNSIGNED_BYTE,
+          this.stage.glCollisionContext.RGBA,
+          this.stage.glCollisionContext.UNSIGNED_BYTE,
           data);
        
-       this.sprite.glCollisionContext.scissor(0, 0, 480, 360);
+       this.stage.glCollisionContext.scissor(0, 0, 480, 360);
        
         var length = data.length;
         for (var j = 0; j < length; j += 4) {
           if (data[j + 3]) {
+			 
             return true;
           }
         }
@@ -4055,7 +4071,7 @@ P.compile = (function() {
           case 'sulf.time':
             return 'Date.now()';
           case 'sulf.version':
-            return '0.86';
+            return '0.88';
           case 'sulf.resolutionX':
             return 'self.canvas.width';
           case 'sulf.resolutionY':
@@ -4065,14 +4081,7 @@ P.compile = (function() {
           default:
             return varRef(e[1]);
         }
-		  
-        /*
-				if(e[1]==='sulf.time') return 'Date.now()';
-				
-				if(e[1]==='sulf.version') return '0.86';
-				if(e[1]==='sulf.resolutionX') return 'self.canvas.width';
-				if(e[1]==='sulf.resolutionY') return 'self.canvas.height';
-        */
+		  l
 
       } else if (e[0] === 'contentsOfList:') {
 
