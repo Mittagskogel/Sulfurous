@@ -19,8 +19,12 @@
  We got help from: https://github.com/htmlgames
 */
 var ASCII = false;
-
+var ProjectID;
 var P = (function() {
+	
+	
+	
+	
   'use strict';
 
   var SCALE = window.devicePixelRatio || 1;
@@ -260,12 +264,14 @@ var P = (function() {
 
     if(!effect) effect = [0, 0, 0, 1, 1, 0, 1];
       
-	  
+	
+	 ;
 	  if(effect[5] > 0){
-		  effect[5] = effect[5] / 200 * 50;
+		 effect[5] = effect[5] /100 * 30 ;
+		 effect[0] = effect[0] + effect[5]*1.8;
 	  }
 	  
-	  
+	
     var colorMatrix = mat4.create();
     mat4.fromRotation(colorMatrix, effect[0], vec3.fromValues(1.0, 1.0, 1.0));  
       
@@ -394,7 +400,7 @@ var P = (function() {
 
   IO.PROJECT_URL = 'https://projects.scratch.mit.edu/internalapi/project/';
   IO.ASSET_URL = 'https://cdn.assets.scratch.mit.edu/internalapi/asset/';
-  IO.SOUNDBANK_URL = 'https://cdn.rawgit.com/LLK/scratch-flash/v448/src/soundbank/';
+  IO.SOUNDBANK_URL = 'soundbank/';
 
    IO.FONTS = {
     '': 'Helvetica',
@@ -435,27 +441,35 @@ var P = (function() {
 
 
   IO.load = function(url, callback, self, type) {
-    var request = new Request;
+  
+   var request = new Request;
     var xhr = new XMLHttpRequest;
     xhr.open('GET', url, true);
+	
+	 
     xhr.onprogress = function(e) {
+		
+		
       request.progress(e.loaded, e.total, e.lengthComputable);
     };
     xhr.onload = function() {
       if (xhr.status === 200) {
         request.load(xhr.response);
       } else {
+		  
         request.error(new Error('HTTP ' + xhr.status + ': ' + xhr.statusText));
       }
     };
     xhr.onerror = function() {
-      request.error(new Error('XHR Error'));
+     request.error(new Error('XHR Error'));
     };
     xhr.responseType = type || '';
     setTimeout(xhr.send.bind(xhr));
 
     if (callback) request.onLoad(callback.bind(self));
+	
     return request;
+	
   };
 
   IO.loadImage = function(url, callback, self) {
@@ -477,14 +491,21 @@ var P = (function() {
     if (callback) request.onLoad(callback.bind(self));
      return (bForcedBlank) ? request : request;
   };
-
+		
   IO.loadScratchr2Project = function(id, callback, self) {
     var request = new CompositeRequest;
     IO.init(request);
-
+	
+	ProjectID = id;
+	
     request.defer = true;
     var url = IO.PROJECT_URL + id + '/get/';
-    request.add(IO.load(url).onLoad(function(contents) {
+    
+	console.log(url);
+	
+	request.add(IO.load(url).onLoad(function(contents) {
+		
+		
       try {
         var json = IO.parseJSONish(contents);
       } catch (e) {
@@ -492,6 +513,7 @@ var P = (function() {
           var request2 = new Request;
           request.add(request2);
           request.add(IO.loadSB2Project(ab, function(stage) {
+			
             request.getResult = function() {
               return stage;
             };
@@ -531,6 +553,7 @@ var P = (function() {
         var d = document.createElement('div');
         d.innerHTML = m[1];
         request.load(d.innerText);
+	
       } else {
         request.error(new Error('No title'));
       }
@@ -656,6 +679,9 @@ var P = (function() {
   
   IO.loadWavBuffer = function(name) {
     var request = new Request;
+	
+
+		
     IO.load(IO.SOUNDBANK_URL + wavFiles[name], function(ab) {
       
       //Code for exporting soundbank to text file.
@@ -1413,6 +1439,9 @@ var P = (function() {
     this.mouseX = 0;
     this.mouseY = 0;
     this.mousePressed = false;
+			this.alpha = 0;
+			this.beta = 1;
+			this.gamma = 2;
 
     this.root = document.createElement('div');
     this.root.style.position = 'absolute';
@@ -1815,6 +1844,8 @@ var P = (function() {
       }.bind(this));
     //}
 
+	
+	
     this.prompter = document.createElement('div');
     this.root.appendChild(this.prompter);
     this.prompter.style.zIndex = '1';
@@ -1909,7 +1940,7 @@ var P = (function() {
 
   Stage.prototype.updateMouse = function(e) {
     var bb = this.canvas.getBoundingClientRect();
-	var z = Math.max(this.zoomX, this.zoomY);
+	 var z = Math.max(this.zoomX, this.zoomY);
     var x = (e.clientX - bb.left) / z - 240;
     var y = 180 - (e.clientY - bb.top) / z;
     this.rawMouseX = x;
@@ -1922,6 +1953,13 @@ var P = (function() {
     this.mouseY = y;
   };
 
+  Stage.prototype.updateOrientation = function(data) {
+			self.stage.alpha = data.do.alpha;
+			self.stage.beta = data.do.beta;
+			self.stage.gamma = data.do.gamma;
+	}
+  
+  
   Stage.prototype.updateBackdrop = function() {
     this.backdropCanvas.width = this.zoomX * SCALE * 480;
     this.backdropCanvas.height = this.zoomY * SCALE * 360;
@@ -2957,9 +2995,16 @@ var P = (function() {
       var whirl = -this.filters.whirl / 100 * Math.PI;
       var pixelate = Math.pow(Math.abs(this.filters.pixelate * costume.scale * this.scale), 0.6) + 1;
       var mosaic = Math.floor(Math.abs((this.filters.mosaic + 5) / 10)) + 1;
+	  
+	  if(this.filters.brightness > 100){
+		  
+		  this.filters.brightness = 100;
+	  }
+	  
       var brightness = this.filters.brightness / 100;
+	  
       var ghost = noEffects ? 1 : Math.max(0, Math.min(1, 1 - this.filters.ghost / 100));
-      
+		
       glDrawImage(
         context,
         context.useTouchingShader ? context.touchingShaderInfo : context.imgShaderInfo,
@@ -3684,6 +3729,9 @@ var P = (function() {
     }
     return WATCHER_LABELS[this.cmd] || '';
   };
+  
+  
+ 
 
   Watcher.prototype.draw = function(destContext) {    
     var canvas = document.createElement('canvas');
@@ -3920,6 +3968,38 @@ var P = (function() {
 
 }());
 
+
+ 
+var loadCookie = function(varName){
+	
+	
+	var name = ProjectID+varName + "=";
+    var decodedCookie = decodeURIComponent(document.cookie);
+    var ca = decodedCookie.split(';');
+    for(var i = 0; i <ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+        }
+    }
+    return "";
+	
+};
+
+function setCookie(cname, cvalue) {
+	
+	
+	
+	cname = cname.substring(cname.indexOf(".")+3,cname.length)
+    var d = new Date();
+    d.setTime(d.getTime() + (10000*24*60*60*1000));
+    var expires = "expires="+ d.toUTCString();
+    document.cookie = ProjectID+cname + "=" + cvalue + ";" + expires + ";path=/";
+}
+
 P.compile = (function() {
   'use strict';
   
@@ -3986,6 +4066,9 @@ P.compile = (function() {
     };
 
     var varRef = function(name) {
+		
+		
+		
       if (typeof name !== 'string') {
         return 'getVars(' + val(name) + ')[' + val(name) + ']';
       }
@@ -4067,7 +4150,15 @@ P.compile = (function() {
 
       } else if (e[0] === 'readVariable') {
 		    
+			
+			
+			if(e[1].substring(e[1].indexOf(".")+1,e[1].indexOf(".")+2) == 'p' ){
+				
+				return 'loadCookie("'+e[1].substring(e[1].indexOf(".")+3,e[1].length)+'")';
+			}
+			
         switch(e[1]){
+			
           case 'sulf.time':
             return 'Date.now()';
           case 'sulf.version':
@@ -4077,11 +4168,16 @@ P.compile = (function() {
           case 'sulf.resolutionY':
             return 'self.canvas.height';
           case 'sulf.hasTouchEvents':
-            return 'P.hasTouchEvents';
+            return 'P.hasTouchEvents';		
+		  case 'sulf.orientationAlpha':
+			return 'self.stage.alpha';
+		  case 'sulf.orientationBeta':
+			return 'self.stage.beta';
+		  case 'sulf.orientationGamma':
+			return 'self.stage.gamma';
           default:
             return varRef(e[1]);
         }
-		  l
 
       } else if (e[0] === 'contentsOfList:') {
 
@@ -4291,7 +4387,7 @@ P.compile = (function() {
         return 'self.mousePressed';
 
       } else if (e[0] === 'touching:') {
-
+				
         return 'S.touching(' + val(e[1]) + ')';
 
       } else if (e[0] === 'touchingColor:') {
@@ -4717,12 +4813,14 @@ P.compile = (function() {
         source += 'S.draw(self.penContext);\n';
  
       } else if (block[0] === 'setVar:to:') { /* Data */
-
+				
+		source += 'setCookie("'+block[1]+'","'+block[2]+'");\n'
         source += varRef(block[1]) + ' = ' + val(block[2]) + ';\n';
 
       } else if (block[0] === 'changeVar:by:') {
 
         var ref = varRef(block[1]);
+		
         source += ref + ' = (+' + ref + ' || 0) + ' + num(block[2]) + ';\n';
 
       } else if (block[0] === 'append:toList:') {
@@ -4964,6 +5062,9 @@ P.compile = (function() {
         warn('Undefined command: ' + block[0]);
 
       }
+	  
+	 
+	 
     };
 
     var source = '';
