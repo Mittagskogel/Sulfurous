@@ -80,6 +80,9 @@ P.player = (function() {
   }
 
   function stopClick(e) {
+	  
+	  console.log('stop');
+	  
     if (!stage) return;
     stage.start();
     pause.className = 'pause';

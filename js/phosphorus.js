@@ -2,7 +2,7 @@
 /*
  Sulfurous - an html5 player for Scratch projects
  
- Version: 0.92 July 05, 2018
+ Version: 0.93 July 09, 2018
 
  Sulfurous was created by Mittagskogel and further developed by FRALEX
  as part of their work at the Alpen-Adria-University Klagenfurt.
@@ -400,6 +400,9 @@ var P = (function() {
 
   IO.PROJECT_URL = 'https://projects.scratch.mit.edu/internalapi/project/';
   IO.ASSET_URL = 'https://cdn.assets.scratch.mit.edu/internalapi/asset/';
+  
+	//https://sulfurous.aau.at/
+	
   IO.SOUNDBANK_URL = 'soundbank/';
 
    IO.FONTS = {
@@ -1227,11 +1230,34 @@ var P = (function() {
   };
 
   Base.prototype.addVariables = function(variables) {
+	
+
+
+  	loadCookie();
+	
+	
+	
     for (var i = 0; i < variables.length; i++) {
-      if (variables[i].isPeristent) {
-        throw new Error('Cloud variables are not supported');
-      }
-      this.vars[variables[i].name] = variables[i].value;
+      
+	
+		
+		
+	 
+	  
+	  	if(variables[i].name.substring(variables[i].name.indexOf(".")+1,variables[i].name.indexOf(".")+3) == 'p.' ){
+				
+				if(sulfCookieSaved[variables[i].name] == null){
+					
+					sulfCookieSaved[variables[i].name] = " ";
+					
+				}
+				
+				this.vars[variables[i].name] = sulfCookieSaved[variables[i].name];
+				
+			}else{
+				this.vars[variables[i].name] = variables[i].value;
+			}
+      
     }
   };
 
@@ -3968,13 +3994,17 @@ var P = (function() {
 
 }());
 
+var sulfCookieVars;
 
- 
-var loadCookie = function(varName){
+var sulfCookieSaved;
+
+var loadCookie = function(){
 	
+
 	
-	var name = ProjectID+varName + "=";
+	var name = ProjectID + "=";
     var decodedCookie = decodeURIComponent(document.cookie);
+	
     var ca = decodedCookie.split(';');
     for(var i = 0; i <ca.length; i++) {
         var c = ca[i];
@@ -3982,25 +4012,102 @@ var loadCookie = function(varName){
             c = c.substring(1);
         }
         if (c.indexOf(name) == 0) {
-            return c.substring(name.length, c.length);
+			
+			
+          sulfCookieSaved = JSON.parse(lzw_decode(c.substring(name.length, c.length)));
+		 
+		  
         }
     }
-    return "";
+
 	
 };
 
-function setCookie(cname, cvalue) {
+window.onbeforeunload = WindowCloseHanlder;
+function WindowCloseHanlder(){	
+
+	stage.stopAll();
+
+	setCookie();
+	
+	 
+}
+
+
+function setCookie() {
+	
+	if(sulfCookieVars == null){
+	
+		console.log('sulfCookieVars undefined');
+		return;
+	
+	}
 	
 	
+	cvalue = lzw_encode(JSON.stringify(sulfCookieVars));
 	
-	cname = cname.substring(cname.indexOf(".")+3,cname.length)
     var d = new Date();
     d.setTime(d.getTime() + (10000*24*60*60*1000));
     var expires = "expires="+ d.toUTCString();
-    document.cookie = ProjectID+cname + "=" + cvalue + ";" + expires + ";path=/";
+    document.cookie = ProjectID + "=" + cvalue + ";" + expires + ";path=/";
+}
+
+function lzw_encode(s) {
+    var dict = {};
+    var data = (s + "").split("");
+    var out = [];
+    var currChar;
+    var phrase = data[0];
+    var code = 256;
+    for (var i=1; i<data.length; i++) {
+        currChar=data[i];
+        if (dict[phrase + currChar] != null) {
+            phrase += currChar;
+        }
+        else {
+            out.push(phrase.length > 1 ? dict[phrase] : phrase.charCodeAt(0));
+            dict[phrase + currChar] = code;
+            code++;
+            phrase=currChar;
+        }
+    }
+    out.push(phrase.length > 1 ? dict[phrase] : phrase.charCodeAt(0));
+    for (var i=0; i<out.length; i++) {
+        out[i] = String.fromCharCode(out[i]);
+    }
+    return out.join("");
+}
+
+// Decompress an LZW-encoded string
+function lzw_decode(s) {
+    var dict = {};
+    var data = (s + "").split("");
+    var currChar = data[0];
+    var oldPhrase = currChar;
+    var out = [currChar];
+    var code = 256;
+    var phrase;
+    for (var i=1; i<data.length; i++) {
+        var currCode = data[i].charCodeAt(0);
+        if (currCode < 256) {
+            phrase = data[i];
+        }
+        else {
+           phrase = dict[currCode] ? dict[currCode] : (oldPhrase + currChar);
+        }
+        out.push(phrase);
+        currChar = phrase.charAt(0);
+        dict[code] = oldPhrase + currChar;
+        code++;
+        oldPhrase = phrase;
+    }
+    return out.join("");
 }
 
 P.compile = (function() {
+	
+	
+	
   'use strict';
   
   var LOG_PRIMITIVES;
@@ -4151,30 +4258,18 @@ P.compile = (function() {
       } else if (e[0] === 'readVariable') {
 		    
 			
-			
-			if(e[1].substring(e[1].indexOf(".")+1,e[1].indexOf(".")+2) == 'p' ){
-				
-				return 'loadCookie("'+e[1].substring(e[1].indexOf(".")+3,e[1].length)+'")';
-			}
-			
         switch(e[1]){
 			
           case 'sulf.time':
             return 'Date.now()';
           case 'sulf.version':
-            return '0.88';
+            return '0.93';
           case 'sulf.resolutionX':
             return 'self.canvas.width';
           case 'sulf.resolutionY':
             return 'self.canvas.height';
           case 'sulf.hasTouchEvents':
             return 'P.hasTouchEvents';		
-		  case 'sulf.orientationAlpha':
-			return 'self.stage.alpha';
-		  case 'sulf.orientationBeta':
-			return 'self.stage.beta';
-		  case 'sulf.orientationGamma':
-			return 'self.stage.gamma';
           default:
             return varRef(e[1]);
         }
@@ -4196,7 +4291,9 @@ P.compile = (function() {
         return '(("" + ' + val(e[2]) + ')[(' + num(e[1]) + ' | 0) - 1] || "")';
 
       } else if (e[0] === 'answer') { /* Sensing */
-
+			
+			
+			
         return 'self.answer';
 
       } else if (e[0] === 'getAttribute:of:') {
@@ -4812,9 +4909,8 @@ P.compile = (function() {
 
         source += 'S.draw(self.penContext);\n';
  
-      } else if (block[0] === 'setVar:to:') { /* Data */
-				
-		source += 'setCookie("'+block[1]+'","'+block[2]+'");\n'
+      } else if (block[0] === 'setVar:to:') { /* Data */	
+					
         source += varRef(block[1]) + ' = ' + val(block[2]) + ';\n';
 
       } else if (block[0] === 'changeVar:by:') {
@@ -4846,6 +4942,11 @@ P.compile = (function() {
           throw new Error('Dynamic variables are not supported');
         }
         var o = object.vars[block[1]] !== undefined ? 'S' : 'self';
+			
+		
+		
+		
+		
         source += o + '.showVariable(' + val(block[1]) + ', ' + isShow + ');\n';
 
       // } else if (block[0] === 'showList:') {
@@ -5038,7 +5139,7 @@ P.compile = (function() {
         source += '}\n';
 
       } else if (block[0] === 'doAsk') { /* Sensing */
-
+				
         source += 'R.id = self.nextPromptId++;\n';
 
         var id = label();
@@ -5047,7 +5148,7 @@ P.compile = (function() {
         source += '}\n';
 
         source += 'S.ask(' + val(block[1]) + ');\n';
-
+		 
         var id = label();
         source += 'if (self.promptId === R.id) {\n';
         forceQueue(id);
@@ -5063,7 +5164,7 @@ P.compile = (function() {
 
       }
 	  
-	 
+	// console.log(source);
 	 
     };
 
@@ -5205,11 +5306,17 @@ P.compile = (function() {
     }
   };
 
+	
+  
 }());
 
 P.runtime = (function() {
   'use strict';
 
+	
+	
+  
+  
   var self, S, R, STACK, C, WARP, CALLS, BASE, THREAD, IMMEDIATE, VISUAL;
 
   var bool = function(v) {
@@ -5349,7 +5456,9 @@ P.runtime = (function() {
   };
 
   var getVars = function(name) {
+	  
     return self.vars[name] !== undefined ? self.vars : S.vars;
+	
   };
 
   var getLists = function(name) {
@@ -5651,6 +5760,7 @@ P.runtime = (function() {
   };
 
   var running = function(bases) {
+	  
     for (var j = 0; j < self.queue.length; j++) {
       if (self.queue[j] && bases.indexOf(self.queue[j].base) !== -1) return true;
     }
@@ -5746,6 +5856,7 @@ P.runtime = (function() {
       addEventListener('error', this.onError);
       this.baseTime = Date.now();
       this.interval = setInterval(this.step.bind(this), 1000 / this.framerate);
+	  
     };
 
     P.Stage.prototype.pause = function() {
@@ -5777,6 +5888,9 @@ P.runtime = (function() {
           c.stopSounds();
         }
       }
+	  
+	   sulfCookieVars = self.vars;
+	  
     };
 
     P.Stage.prototype.now = function() {
@@ -5786,6 +5900,9 @@ P.runtime = (function() {
     P.Stage.prototype.step = function() {
 
 	 self = this;
+	 
+		
+	 
       VISUAL = false;
       var start = Date.now();
       do {
