@@ -7,11 +7,11 @@
 <link rel=stylesheet href=css/index.css>
 
 
-<script type="text/javascript" src="js/jquery.min.js"></script>
 <script type="text/javascript" src="js/qrcode.min.js"></script>
+<script src="js/socket.io.js"></script>
 
 <div class=area id=title-area>
-<h1 class=title>sulfurous<span class=version>WebGL v 0.93</span></h1>
+<h1 class=title>sulfurous<span class=version>WebGL v 0.94</span></h1>
 <p>Sulfurous, just like Phosphorus, runs your Scratch projects really fast by compiling them to JavaScript. Try it out by pasting a URL or project ID into the field below or <a class=dropdown>choosing an example<select id=examples>
   <option value>
   <option value=11397100>3D Remix by DadOfMrLog
@@ -23,6 +23,7 @@
   <option value=34791164>gb.sb2 [Mario Land 2] by DCPU-16
   <option value=21554369>Epic Ninja by griffpatch
   <option value=15832807>Pretty by blob8108
+  
 </select></a>. You can also drag a local .sb2 project onto this page.</p>
 </div>
 
@@ -116,7 +117,7 @@
 <br />
 <div id="qrcode"></div>
 </section>
-<img class="featured-image" alt="Sulfurous screenshot" src="img/featured-image">
+<img class="featured-image" alt="Sulfurous screenshot" src="img/featured_image">
 
 <script src=js/fonts.js></script>
 <script src=https://cdnjs.cloudflare.com/ajax/libs/jszip/2.4.0/jszip.js></script>
@@ -125,6 +126,8 @@
 <script src=js/player.js></script>
 <script src=js/shaders.js></script>
 <script src=fonts/fonts.js></script>
+<script src=js/socket.io.js></script>
+
 <script>
 
 (function() {

@@ -2,7 +2,7 @@
 /*
  Sulfurous - an html5 player for Scratch projects
  
- Version: 0.93 July 09, 2018
+ Version: 0.94 July 19, 2018
 
  Sulfurous was created by Mittagskogel and further developed by FRALEX
  as part of their work at the Alpen-Adria-University Klagenfurt.
@@ -19,7 +19,8 @@
  We got help from: https://github.com/htmlgames
 */
 var ASCII = false;
-var ProjectID;
+var projectID;
+var firstRunSulfVars = true;
 var P = (function() {
 	
 	
@@ -267,8 +268,8 @@ var P = (function() {
 	
 	 ;
 	  if(effect[5] > 0){
-		 effect[5] = effect[5] /100 * 30 ;
-		 effect[0] = effect[0] + effect[5]*1.8;
+		 effect[5] = effect[5] /90 * 30 ;
+		 effect[0] = effect[0] + effect[5];
 	  }
 	  
 	
@@ -298,7 +299,10 @@ var P = (function() {
   addEvents(Request, 'load', 'progress', 'error');
 
   Request.prototype.progress = function(loaded, total, lengthComputable) {
-    this.loaded = loaded;
+
+	
+
+  this.loaded = loaded;
     this.total = total;
     this.lengthComputable = lengthComputable;
     this.dispatchProgress({
@@ -344,6 +348,9 @@ var P = (function() {
   };
 
   CompositeRequest.prototype.update = function() {
+	  
+	  
+	  
     if (this.isError) return;
     var requests = this.requests;
     var i = requests.length;
@@ -401,9 +408,8 @@ var P = (function() {
   IO.PROJECT_URL = 'https://projects.scratch.mit.edu/internalapi/project/';
   IO.ASSET_URL = 'https://cdn.assets.scratch.mit.edu/internalapi/asset/';
   
-	//https://sulfurous.aau.at/
-	
-  IO.SOUNDBANK_URL = 'soundbank/';
+
+  IO.SOUNDBANK_URL = window.location + 'soundbank/';
 
    IO.FONTS = {
     '': 'Helvetica',
@@ -499,7 +505,7 @@ var P = (function() {
     var request = new CompositeRequest;
     IO.init(request);
 	
-	ProjectID = id;
+	projectID = id;
 	
     request.defer = true;
     var url = IO.PROJECT_URL + id + '/get/';
@@ -808,6 +814,19 @@ var P = (function() {
     data.sounds = IO.loadArray(data.sounds, IO.loadSound);
     data.variables = data.variables || [];
     data.lists = data.lists || [];
+	
+	console.log(data.lists);		
+		 //pf temp (dirty) hack for ASCII hack lists...		
+	    if (data && data.lists && data.lists.length) {		
+	        for (var ha = data.lists.length; ha--;)		
+		{		
+		    if (data.lists[ha].listName == "ASCII" && data.lists[ha].contents.length != 133) { // 2nd part ugh (skips GB ROM) !!!		
+		        ASCII = true;		
+			console.log("ASCII hack detected.");		
+		    }		
+		}		
+	    } 
+	
   };
 
 	//process an array of several inputs (such as costumes, sounds, ...)
@@ -1179,7 +1198,8 @@ var P = (function() {
     this.vars = Object.create(null);
     this.watchers = Object.create(null);
     this.lists = Object.create(null);
-
+	this.listsInfo = Object.create(null);
+	
     this.procedures = {};
     this.listeners = {
       whenClicked: [],
@@ -1208,6 +1228,7 @@ var P = (function() {
   };
 
   Base.prototype.fromJSON = function(data) {
+	  
     this.objName = data.objName;
     this.scripts = data.scripts;
     this.currentCostumeIndex = data.currentCostumeIndex || 0;
@@ -1216,6 +1237,10 @@ var P = (function() {
     }, this);
     this.addSounds(data.sounds);
     this.addLists(data.lists);
+	
+	
+	cloudManager(data.variables);
+	
     this.addVariables(data.variables);
 
     return this;
@@ -1228,31 +1253,51 @@ var P = (function() {
       this.soundRefs[s.name] = s;
     }
   };
+  
+  
+  
+	
+	
 
   Base.prototype.addVariables = function(variables) {
-	
-
-
-  	loadCookie();
-	
-	
-	
+				if(firstRunSulfVars == true){
+					 loadCookie();
+					firstRunSulfVars = false;
+				}
+  
+ 
     for (var i = 0; i < variables.length; i++) {
       
-	
 		
 		
-	 
 	  
 	  	if(variables[i].name.substring(variables[i].name.indexOf(".")+1,variables[i].name.indexOf(".")+3) == 'p.' ){
 				
-				if(sulfCookieSaved[variables[i].name] == null){
-					
-					sulfCookieSaved[variables[i].name] = " ";
-					
-				}
+						try{
+							
+							this.vars[variables[i].name] = sulfCookieSaved[variables[i].name];
+							
+						}catch{
+							
+							this.vars[variables[i].name] = variables[i].value;
+							
+						}
+						
 				
-				this.vars[variables[i].name] = sulfCookieSaved[variables[i].name];
+			
+				
+			}else if(variables[i].name.substring(variables[i].name.indexOf(".")+1,variables[i].name.indexOf(".")+3) == 'c.' ||variables[i].name.charAt(0) == '☁' ){
+				
+						console.log(variables[i].name);
+						if(typeof sulfCloudVars[variables[i].name] == 'undefined'){
+							this.vars[variables[i].name] = variables[i].value;
+						}else{
+							this.vars[variables[i].name] = sulfCloudVars[variables[i].name];
+						}
+						
+				
+			
+			
 				
 			}else{
 				this.vars[variables[i].name] = variables[i].value;
@@ -1268,6 +1313,11 @@ var P = (function() {
       }
       this.lists[lists[i].listName] = lists[i].contents;
       // TODO list watchers
+	  
+	  this.listsInfo[lists[i].listName] = lists[i].x + "," + lists[i].y + "," + lists[i].width + "," + lists[i].height+ "," + lists[i].visible;		
+	   
+	  
+	  
     }
   };
 
@@ -1939,6 +1989,203 @@ var P = (function() {
 
   Stage.prototype.isStage = true;
 
+  
+  Stage.prototype.initLists = function () {
+    var show = false; // init show / hide of all stage and childrens lists
+    var name = false;
+    var o_list = this.lists;
+    var o_listInfo = this.listsInfo; // may need to loop this?
+  
+    if (o_list && o_listInfo) {
+      for (var key in o_listInfo) {
+        var obj = o_listInfo[key];
+	for (var prop in obj) {
+	 // skip loop if the property is from prototype //console.log(prop + " = " + obj[prop]);
+	  if (!obj.hasOwnProperty(prop)) {
+	    continue;
+	  }
+	  if (obj[prop].toString() == "t") {
+	    console.log("List: " + key + " = true");
+	    
+		this.showList(key);
+	    break;
+	  }
+	}
+      }	     
+    }
+  	  
+    var oc_list;
+    var oc_listInfo;
+    // loop around children
+    for (var oc = 0; oc < this.children.length; oc++) {
+      oc_listInfo = this.children[oc].listsInfo;
+      if (oc_listInfo) {	     
+	for (var key in o_listInfo) {
+	  var obj = oc_listInfo[key];
+	  for (var prop in obj) {
+          // skip loop if the property is from prototype //console.log(prop + " = " + obj[prop]);
+	    if (!obj.hasOwnProperty(prop)) {
+	      continue;
+	    }
+	    if (obj[prop].toString() == "t") {
+	      console.log("List: " + key + " = true");
+	      this.showList(key);
+	      break;
+	    }
+	  }
+	}
+      }
+    }
+  };
+  
+  Stage.prototype.updateList = function (name) {
+    // this function is a potential performance killer, so only invoke if 'name' list is showing...
+    if (document.getElementById(name)) {
+      var show = false; // init show / hide of all stage and childrens lists
+      //var name = false;
+      var o_list = this.lists;
+      var o_listInfo = this.listsInfo; // may need to loop this?
+  
+      if (o_list && o_listInfo) {
+        for (var key in o_listInfo) {
+          var obj = o_listInfo[key];
+	  for (var prop in obj) {
+	   // skip loop if the property is from prototype //console.log(prop + " = " + obj[prop]);
+	    if (!obj.hasOwnProperty(prop)) {
+	      continue;
+	    }
+	    if (obj[prop].toString() == "t") {
+	      console.log("List: " + key + " = true");
+	      if (key == name) {
+	        this.showList(key);
+	        break;	      
+              }
+            }
+          }
+        }	     
+      }
+    }
+  };
+
+  // pf new way - works with scaling via em's (was px)
+  Stage.prototype.showList = function(name) {
+    console.log("Show List:" + name + " isTurbo:" + this.isTurbo); // if turbo mode then only draw list every 4 ticks?
+
+    var o_div_test = document.getElementById(name);
+    if (this.isTurbo && o_div_test && (Date.now()%1024) <= 1000) return; //console.log("### RENDER ###");
+
+    if (o_div_test) {
+      console.log("List already rendered. DOM");
+      this.stage.root.removeChild(o_div_test);
+    }
+	
+    var o_list = (this.lists[name]) ? this.lists[name] : this.lists[name];
+    var o_listInfo = (this.listsInfo[name]) ? this.listsInfo[name] : this.listsInfo[name];	  
+    if (o_list && o_listInfo) {
+     /* for (var ol = 0; ol < o_list.length; ol++) {
+       * console.log((ol+1) + " : " + o_list[ol]+"\n");
+      }*/
+      console.log(o_listInfo+"\n");
+	  
+    } else {
+      for (var oc = 0; oc < this.children.length; oc++) {
+        if (this.children[oc].lists && this.children[oc].lists[name]) { // pf ###
+          o_list = this.children[oc].lists[name];
+	  o_listInfo = this.children[oc].listsInfo[name];
+          break;
+	}
+      }
+      if (o_list) {
+        for (var ol = 0; ol < o_list.length; ol++) {
+          console.log((ol+1) + " :: " + o_list[ol]+"\n");
+        }
+	console.log(o_listInfo+"\n");
+      } 
+    }
+	  
+    if (o_list && o_listInfo) {
+	// display list using divs. Thanks to Dogtopius for the CSS colours!
+	var info = o_listInfo.split(",");    
+	var show = !!(o_listInfo.match("true"));
+	var divContainer = document.createElement('div');
+	var overflow = (2 + parseInt(info[0], 10) + parseInt(info[2], 10)) - 480; // border + left + width needs to be - 480px
+	divContainer.id = name;
+	divContainer.style.border = "solid #949191 2px"; // 
+	divContainer.style.margin = "5px";
+	divContainer.style.padding = "0";
+	divContainer.style.borderRadius = "7px";
+        divContainer.style.backgroundColor = "#c1c4c7";
+	divContainer.style.position = 'absolute';
+	divContainer.style.overflow = 'hidden';
+	divContainer.style.left = (info[0] - 7) + 'px'; // border + margin
+	divContainer.style.top = (info[1] - 7) + 'px'; // border + margin 
+	if (overflow > 0) { // disable?
+		divContainer.style.width = (info[2] - overflow-20) + 'px'; // if left + width > 480 then adjust to be < 480	    
+			
+	
+	} else {
+		divContainer.style.width = info[2]-20 + 'px';
+	}
+	if (o_list.length) divContainer.style.height = info[3] + 'px';
+	divContainer.innerHTML = "<div style='margin: 2px'><span style='font-size: 12px; text-align: center; font-weight: bold;'><center>" + name + "</center></span></div>";
+	    
+	var divHolder = this.stage.root.appendChild(divContainer); // or this.stage.canvas.parentNode;
+	var divInner = document.createElement('div');
+	divInner.style.position = 'relative';
+	divInner.style.overflow = 'auto';
+	divInner.style.height = '86%'; // as before (magic number!)
+
+	var divItem;
+	var replaced;
+	
+	for (var i = 0; i < o_list.length; i++) { // test
+	  divItem = document.createElement('div');
+	  divItem.style.backgroundColor = "#c1c4c7";
+	  try {replaced = o_list[i].replace(/'/g, "&#39;");} catch(e) {replaced = o_list[i];} // pf fix replace
+	  //if (typeof o_list[i] == "undefined") {replaced = o_list[i];} else {replaced = o_list[i].replace(/'/g, "&#39;");} // pf fix replace !worky
+	  divItem.innerHTML = "<input readonly value=' " + (i + 1) + "' style='color: #000; border: 0; background-color: #c1c4c7; width: 10%; font-size: 11px; margin: 1px'/> <input readonly value='" + replaced + "' style='font-size: 12px; background-color: #cc5b22; color: white; width: 75%; height: 10px; border: 1px solid #fff; border-radius: 3px; padding: 3px; margin: 0px;' />"; // TODO: rid 75% width and calc instead!
+	  divInner.appendChild(divItem);	
+	}
+	    
+	var divItem2 = document.createElement('div');
+	//divItem2.style.position = 'relative';
+	if (o_list.length) {
+	  if ( o_list.length > (parseInt(info[3],10) / 22) ) { // magic number! 'calc text px size as ~ number of elements'    
+		console.log("Long List!"); 
+		divInner.style.height = (parseInt(info[3],10) - 40) + "px"; // magic number! 'px gap to remove to stop clash'
+	  }
+	  divItem2.innerHTML = "<div style='font-size: 11px; text-align: center; bottom: 2px; position: absolute; width: 100%;'>" +  "length: " + o_list.length + "</div>";
+	} else {
+	  var hem = info[3] > 270 ? 93 : 89; // help! (more magic tomfoolery)
+	  var pem = ( (info[3] / 100) * hem ) + 0; // qtest 
+	  console.log("HEIGHT=" + info[3] + " pem=" + pem);
+	  if (parseInt(info[1], 10) + parseInt(info[3], 10) < 360) { // !offscreen
+	    divItem = document.createElement('div');
+	    divItem.style.height = pem + 'px';
+	    divItem.innerHTML = "<div style='padding-top: " + (pem / 2.4) + "px'><div style='font-size: 11px; text-align: center;'>(empty)</div></div>"; // 
+	    divInner.appendChild(divItem);
+	    divItem2.innerHTML = "<div style='font-size: 11px; text-align: center; bottom: 2px; position: absolute; width: 100%;'>length: 0</div>";
+	  } else {
+	    // old way...	
+	    divItem2.innerHTML = "<div style='font-size: 11px; text-align: center;'><br><br>(empty)</div><div style='font-size: 11px; text-align: center; padding-bottom: 0.1px'><br><br>length: 0</div>"; 
+	  }
+	}
+	divHolder.appendChild(divInner);
+        divHolder.appendChild(divItem2);
+    }
+	if (this.saying) this.updateBubble();	  
+  };
+	
+  Stage.prototype.hideList = function(name) {
+     console.log("Hide List:" + name);
+     var o_div = document.getElementById(name);
+     if (o_div) this.stage.root.removeChild(o_div);
+  };	
+	
+  
+  
+  
+  
   Stage.prototype.fromJSON = function(data) {
     Stage.parent.prototype.fromJSON.call(this, data);
 
@@ -1952,7 +2199,7 @@ var P = (function() {
     }, this);
 
     P.compile(this);
-
+	
     return this;
   };
 
@@ -3107,6 +3354,96 @@ var P = (function() {
   };
 
   
+  //folgender code ist nur provisorisch hier		
+	 Sprite.prototype.sayOLD = function(text, thinking) {		
+	    text = '' + text;		
+	    if (!text) {		
+	      this.saying = false;		
+	      if (!this.bubble) return;		
+	      this.bubble.style.display = 'none';		
+	      return ++this.sayId;		
+	    }		
+	    this.saying = true;		
+	    this.thinking = thinking;		
+	    if (!this.bubble) {		
+	      this.bubble = document.createElement('div');		
+	      this.bubble.style.zIndex = '1'; // pf say over lists fix		
+	      this.bubble.style.maxWidth = ''+(127/14)+'em';		
+	      this.bubble.style.minWidth = ''+(48/14)+'em';		
+	      this.bubble.style.padding = ''+(8/14)+'em '+(10/14)+'em';		
+	      this.bubble.style.border = ''+(3/14)+'em solid rgb(160, 160, 160)';		
+	      this.bubble.style.borderRadius = ''+(10/14)+'em';		
+	      this.bubble.style.background = '#fff';		
+	      this.bubble.style.position = 'absolute';		
+	      this.bubble.style.font = 'bold 14em sans-serif';		
+	      this.bubble.style.whiteSpace = 'pre-wrap';		
+	      this.bubble.style.wordWrap = 'break-word';		
+		  this.bubble.style.textAlign = 'center';		
+		  this.bubble.style.cursor = 'default';		
+	      this.bubble.appendChild(this.bubbleText = document.createTextNode(''));		
+	      this.bubble.appendChild(this.bubblePointer = document.createElement('div'));		
+	      this.bubblePointer.style.position = 'absolute';		
+	      this.bubblePointer.style.height = ''+(21/14)+'em';		
+	      this.bubblePointer.style.width = ''+(44/14)+'em';		
+	      this.bubblePointer.style.background = 'url(icons.svg) '+(-195/14)+'em '+(-4/14)+'em';		
+	      this.bubblePointer.style.backgroundSize = ''+(320/14)+'em '+(96/14)+'em';		
+	      this.stage.root.appendChild(this.bubble);		
+	    } else { // tjvr		
+	      this.stage.root.removeChild(this.bubble); 		
+	      this.stage.root.appendChild(this.bubble);		
+	    }		
+	    this.bubblePointer.style.backgroundPositionX = ((thinking ? -259 : -195)/14)+'em';		
+	    this.bubble.style.display = 'block';		
+	    this.bubbleText.nodeValue = text;		
+	    this.updateBubble();		
+	    return ++this.sayId;		
+	  };		
+			
+	  Base.prototype.say = function(text, thinking) { // moved to base	3117.	  
+	    text = '' + text;		
+	    if (!text) {		
+	      this.saying = false;		
+	      if (!this.bubble) return;		
+	      this.bubble.style.display = 'none';		
+	      return ++this.sayId;		
+	    }this.saying = true;		
+	    this.thinking = thinking;		
+	    if (!this.bubble) {		
+	      this.bubble = document.createElement('div');		
+	      this.bubble.style.zIndex = '1'; // pf say over lists fix		
+	      this.bubble.style.maxWidth = ''+(127/14)+'em';		
+	      this.bubble.style.minWidth = ''+(48/14)+'em';		
+	      this.bubble.style.padding = ''+(8/14)+'em '+(10/14)+'em';		
+	      this.bubble.style.border = ''+(3/14)+'em solid rgb(160, 160, 160)';		
+	      this.bubble.style.borderRadius = ''+(10/14)+'em';		
+	      this.bubble.style.background = '#fff';		
+	      this.bubble.style.position = 'absolute';		
+	      this.bubble.style.font = 'bold 14em sans-serif';		
+	      this.bubble.style.whiteSpace = 'pre-wrap';		
+	      this.bubble.style.wordWrap = 'break-word';		
+	      this.bubble.style.textAlign = 'center';		
+	      this.bubble.style.cursor = 'default';		
+	      this.bubble.appendChild(this.bubbleText = document.createTextNode(''));		
+	      this.bubble.appendChild(this.bubblePointer = document.createElement('div'));		
+	      this.bubblePointer.style.position = 'absolute';		
+	      this.bubblePointer.style.height = ''+(21/14)+'em';		
+	      this.bubblePointer.style.width = ''+(44/14)+'em';		
+	      this.bubblePointer.style.background = 'url(icons.svg) '+(-195/14)+'em '+(-4/14)+'em';		
+	      this.bubblePointer.style.backgroundSize = ''+(320/14)+'em '+(96/14)+'em';		
+	      this.stage.root.appendChild(this.bubble);		
+	    } else { // tjvr		
+	      this.stage.root.removeChild(this.bubble); 		
+	      this.stage.root.appendChild(this.bubble);		
+	    }		
+	    this.bubblePointer.style.backgroundPositionX = ((thinking ? -259 : -195)/14)+'em';		
+	    this.bubble.style.display = 'block';		
+	    this.bubbleText.nodeValue = text;		
+	    this.updateBubble();		
+	    return ++this.sayId;		
+	  };		
+  
+  
+  
   //Context for collision math
   var collisionCanvas = document.createElement('canvas');
   var collisionContext = collisionCanvas.getContext('2d');
@@ -3994,15 +4331,66 @@ var P = (function() {
 
 }());
 
-var sulfCookieVars;
+ var socket = io.connect(window.location.hostname+':8082');
+ 
+ var sulfCloudVars = [];
+ var sulfCloudVarsChanged = {};
+ var sulfVarsload;
+ var firstRunSulfCloudVars = true;
+ 
+ var cloudManager = function (vars){
+	 
+	if(firstRunSulfCloudVars){
+		
+		  sulfVarsload = vars;
+	 
+		 firstRunSulfCloudVars = false;
+		 
+	 }else{
+		 return;
+	 }
+	 
+	 var j = 0;
+	for (var i = 0;i < vars.length;i++){
+		
+		if(sulfVarsload[i].name.substring(sulfVarsload[i].name.indexOf(".")+1,sulfVarsload[i].name.indexOf(".")+3) == 'c.' ||sulfVarsload[i].name.charAt(0) == '☁'){
+			sulfCloudVars[j] = sulfVarsload[i];
+			j++;
+		}
+		
+	}
+	 
+	 if(typeof sulfCloudVars[0] != 'undefined' ){
+		 
+		setInterval(function(){
+	
+		socket.emit('getReq', {"projectID": projectID ,sulfCloudVarsChanged} );	
+		sulfCloudVarsChanged = {};
+	
+	}, 1000);
+	 
+	 }
+	 
+	socket.on('getRes',  ( function (data) {
+		
+		console.log(data);
+		
+		sulfCloudVars = data;
+	}));
+	
+	}
+	
+	
 
-var sulfCookieSaved;
+var sulfCookieVars = {};
+var sulfUsername;
+var sulfCookieSaved = {};
 
 var loadCookie = function(){
 	
-
+	console.log("loadCookie");
 	
-	var name = ProjectID + "=";
+	var name = projectID + "=";
     var decodedCookie = decodeURIComponent(document.cookie);
 	
     var ca = decodedCookie.split(';');
@@ -4021,11 +4409,31 @@ var loadCookie = function(){
     }
 
 	
+	
+		
+		
+		
+		if(typeof sulfCookieSaved["sulf.p.username"] == 'undefined'){
+		
+		sulfUsername = "Player"+Math.floor((Math.random() * 999999) + 1);
+		sulfCookieVars["sulf.p.username"] = sulfUsername;
+		console.log(sulfUsername);
+	}else{
+		
+		sulfUsername = sulfCookieSaved["sulf.p.username"];
+	console.log("username:"+sulfUsername);
+		
+	}
+	
+	
+	
 };
 
 window.onbeforeunload = WindowCloseHanlder;
 function WindowCloseHanlder(){	
-
+	
+	 sulfVarsload = 'undefined';
+	
 	stage.stopAll();
 
 	setCookie();
@@ -4035,8 +4443,11 @@ function WindowCloseHanlder(){
 
 
 function setCookie() {
-	
-	if(sulfCookieVars == null){
+		console.log(firstRunSulfVars);
+	 if(firstRunSulfVars == true){
+		console.log('no Sulfurous Variables used');
+		return;
+	}else if(sulfCookieVars == null){
 	
 		console.log('sulfCookieVars undefined');
 		return;
@@ -4049,7 +4460,7 @@ function setCookie() {
     var d = new Date();
     d.setTime(d.getTime() + (10000*24*60*60*1000));
     var expires = "expires="+ d.toUTCString();
-    document.cookie = ProjectID + "=" + cvalue + ";" + expires + ";path=/";
+    document.cookie =projectID + "=" + cvalue + ";" + expires + ";path=/";
 }
 
 function lzw_encode(s) {
@@ -4224,13 +4635,19 @@ P.compile = (function() {
     };
 
     var val = function(e, usenum, usebool) {
+		
+	
+		
       var v;
       if (typeof e === 'number' || typeof e === 'boolean') {
 
         return '' + e;
 
       } else if (typeof e === 'string') {
-
+		
+		
+		
+		
         return '"' + e
           .replace(/\\/g, '\\\\')
           .replace(/\n/g, '\\n')
@@ -4257,6 +4674,13 @@ P.compile = (function() {
 
       } else if (e[0] === 'readVariable') {
 		    
+		if(e[1].substring(e[1].indexOf(".")+1,e[1].indexOf(".")+3) == 'c.' ||e[1].charAt(0) == '☁'  ){
+			
+				
+				return 'sulfCloudVars["'+e[1]+'"]';
+				
+		}
+			
 			
         switch(e[1]){
 			
@@ -4306,7 +4730,7 @@ P.compile = (function() {
 
       } else if (e[0] === 'getUserName') {
 
-        return '""';
+        return 'sulfUsername';
 
       } else {
 
@@ -4573,12 +4997,14 @@ P.compile = (function() {
       if (LOG_PRIMITIVES) {
         source += 'console.log(' + val(block[0]) + ');\n';
       }
-
+		
+	
+		
       if (['turnRight:', 'turnLeft:', 'heading:', 'pointTowards:', 'setRotationStyle', 'lookLike:', 'nextCostume', 'say:duration:elapsed:from:', 'say:', 'think:duration:elapsed:from:', 'think:', 'changeGraphicEffect:by:', 'setGraphicEffect:to:', 'filterReset', 'changeSizeBy:', 'setSizeTo:', 'comeToFront', 'goBackByLayers:'].indexOf(block[0]) !== -1) {
         source += 'if (S.visible) VISUAL = true;\n';
       } else if (['forward:', 'gotoX:y:', 'gotoSpriteOrMouse:', 'changeXposBy:', 'xpos:', 'changeYposBy:', 'ypos:', 'bounceOffEdge', 'glideSecs:toX:y:elapsed:from:'].indexOf(block[0]) !== -1) {
         source += 'if (S.visible || S.isPenDown) VISUAL = true;\n';
-      } else if (['showBackground:', 'startScene', 'nextBackground', 'nextScene', 'startSceneAndWait', 'show', 'hide', 'putPenDown', 'stampCostume', 'showVariable:', 'hideVariable:', 'doAsk', 'setVolumeTo:', 'changeVolumeBy:', 'setTempoTo:', 'changeTempoBy:'].indexOf(block[0]) !== -1) {
+      } else if (['showBackground:', 'startScene', 'nextBackground', 'nextScene', 'startSceneAndWait', 'show', 'hide', 'putPenDown', 'stampCostume', 'showVariable:', 'hideVariable:','showList','hideList', 'doAsk', 'setVolumeTo:', 'changeVolumeBy:', 'setTempoTo:', 'changeTempoBy:'].indexOf(block[0]) !== -1) {
         source += 'VISUAL = true;\n';
       }
 
@@ -4910,31 +5336,72 @@ P.compile = (function() {
         source += 'S.draw(self.penContext);\n';
  
       } else if (block[0] === 'setVar:to:') { /* Data */	
+				
+			
+			try{
+				
+			if(block[1].substring(block[1].indexOf(".")+1,block[1].indexOf(".")+3) == 'c.' ||block[1].charAt(0) == '☁' ){
+			console.log("cloud "+ block[1]);
+			source +=	'console.log('+val(block[1])+");\n";	
+				source +=	'sulfCloudVarsChanged['+val(block[1])+']='+val(block[2])+';\n';	
+				
+			}
+			}catch{
+				console.log(block[1]);
+				for(var i = 0;i< block[1].length;i++){
 					
-        source += varRef(block[1]) + ' = ' + val(block[2]) + ';\n';
+					if(block[1][i].substring(block[1][i].indexOf(".")+1,block[1][i].indexOf(".")+3) == 'c.' ||block[1][i].charAt(0) == '☁' ){
+			console.log("cloud "+ block[1]);
+			source +=	'console.log('+val(block[1])+");\n";	
+				source +=	'sulfCloudVarsChanged['+val(block[1])+']='+val(block[2])+';\n';	
+				break;
+			}
+				}
+				
+				source +=	'console.log('+val(block[1])+");\n";
+				
+			}
+       
+
+	   source += varRef(block[1]) + ' = ' + val(block[2]) + ';\n';
 
       } else if (block[0] === 'changeVar:by:') {
-
+		  
+		 
+				
         var ref = varRef(block[1]);
 		
+		
+		//source +=	'console.log('+varRef(block[1])+");\n";	
         source += ref + ' = (+' + ref + ' || 0) + ' + num(block[2]) + ';\n';
+			if(block[1].substring(block[1].indexOf(".")+1,block[1].indexOf(".")+3) == 'c.' ||block[1].charAt(0) == '☁' ){
+				
+				source +=	'sulfCloudVarsChanged['+val(block[1])+']='+varRef(block[1])+';\n';	
+				
+			}
+		
+		
 
       } else if (block[0] === 'append:toList:') {
 
         source += 'appendToList(' + listRef(block[2]) + ', ' + val(block[1]) + ');\n';
-
+		source += 'self.updateList(' + val(block[2]) + ');\n';
+		
       } else if (block[0] === 'deleteLine:ofList:') {
 
         source += 'deleteLineOfList(' + listRef(block[2]) + ', ' + val(block[1]) + ');\n';
+		source += 'self.updateList(' + val(block[2]) + ');\n';
 
       } else if (block[0] === 'insert:at:ofList:') {
 
         source += 'insertInList(' + listRef(block[3]) + ', ' + val(block[2]) + ', '+ val(block[1]) + ');\n';
-
+		source += 'self.updateList(' + val(block[2]) + ');\n';
+		
       } else if (block[0] === 'setLine:ofList:to:') {
 
         source += 'setLineOfList(' + listRef(block[2]) + ', ' + val(block[1]) + ', '+ val(block[3]) + ');\n';
-
+		source += 'self.updateList(' + val(block[2]) + ');\n';
+		
       } else if (block[0] === 'showVariable:' || block[0] === 'hideVariable:') {
 
         var isShow = block[0] === 'showVariable:';
@@ -4949,10 +5416,10 @@ P.compile = (function() {
 		
         source += o + '.showVariable(' + val(block[1]) + ', ' + isShow + ');\n';
 
-      // } else if (block[0] === 'showList:') {
-
-      // } else if (block[0] === 'hideList:') {
-
+       } else if (block[0] === 'showList:') {
+				source += 'self.showList(' + val(block[1]) + ');\n';
+       } else if (block[0] === 'hideList:') {
+				 source += 'self.hideList(' + val(block[1]) + ');\n';
       } else if (block[0] === 'broadcast:') { /* Control */
 
         source += 'var threads = broadcast(' + val(block[1]) + ');\n';
@@ -4962,11 +5429,14 @@ P.compile = (function() {
         
         if (DEBUG && block[1] === 'sulf.debug') {
           source += 'debugger;\n';
-        } else if (block[1] === 'sulf.executeJavaScript %s'){
-          //console.log('**********   Found embedded JavaScript:   **********');
-          //console.log(String(block[2].replace(';', ';\n')));
-          //console.log('**********    End embedded JavaScript.    **********');
-          //source += block[2];
+        } else if (block[1] === 'sulf.script %s'){
+			
+			console.log(true)
+			
+          console.log('**********   Found embedded JavaScript:   **********');
+          console.log(String(block[2].replace(';', ';\n')));
+          console.log('**********    End embedded JavaScript.    **********');
+          source += block[2];
         } else {
           source += 'call(' + val(block[1]) + ', ' + nextLabel() + ', [';
           for (var i = 2; i < block.length; i++) {
@@ -5164,7 +5634,7 @@ P.compile = (function() {
 
       }
 	  
-	// console.log(source);
+	
 	 
     };
 
@@ -5188,7 +5658,7 @@ P.compile = (function() {
     for (var i = 1; i < script.length; i++) {
       compile(script[i]);
     }
-		//console.log(source);
+	
     if (script[0][0] === 'procDef') {
       source += 'endCall();\n';
       source += 'return;\n';
@@ -5888,8 +6358,18 @@ P.runtime = (function() {
           c.stopSounds();
         }
       }
-	  
-	   sulfCookieVars = self.vars;
+		
+		for(var i = 0;i < Object.keys(self.vars).length;i++){
+			if(Object.keys(self.vars)[i].substring(Object.keys(self.vars)[i].indexOf(".")+1,Object.keys(self.vars)[i].indexOf(".")+3) == 'p.' ){
+				
+				
+				 sulfCookieVars[Object.keys(self.vars)[i]] = self.vars[Object.keys(self.vars)[i]];
+			}
+			
+			
+		}
+	
+	   
 	  
     };
 
@@ -5900,9 +6380,11 @@ P.runtime = (function() {
     P.Stage.prototype.step = function() {
 
 	 self = this;
-	 
+		for(var i = 0;i < Object.keys(sulfCloudVars).length;i++){
+			this.vars[Object.keys(sulfCloudVars)[i]] = sulfCloudVars[Object.keys(sulfCloudVars)[i]];
+		}
 		
-	 
+		
       VISUAL = false;
       var start = Date.now();
       do {
