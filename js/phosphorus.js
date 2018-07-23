@@ -2,7 +2,7 @@
 /*
  Sulfurous - an html5 player for Scratch projects
  
- Version: 0.94 July 19, 2018
+ Version: 0.95 July 23, 2018
 
  Sulfurous was created by Mittagskogel and further developed by FRALEX
  as part of their work at the Alpen-Adria-University Klagenfurt.
@@ -2120,11 +2120,11 @@ var P = (function() {
 	divContainer.style.left = (info[0] - 7) + 'px'; // border + margin
 	divContainer.style.top = (info[1] - 7) + 'px'; // border + margin 
 	if (overflow > 0) { // disable?
-		divContainer.style.width = (info[2] - overflow-20) + 'px'; // if left + width > 480 then adjust to be < 480	    
+		divContainer.style.width = (info[2] - overflow) + 'px'; // if left + width > 480 then adjust to be < 480	    
 			
 	
 	} else {
-		divContainer.style.width = info[2]-20 + 'px';
+		divContainer.style.width = info[2] + 'px';
 	}
 	if (o_list.length) divContainer.style.height = info[3] + 'px';
 	divContainer.innerHTML = "<div style='margin: 2px'><span style='font-size: 12px; text-align: center; font-weight: bold;'><center>" + name + "</center></span></div>";
@@ -5430,10 +5430,7 @@ P.compile = (function() {
         if (DEBUG && block[1] === 'sulf.debug') {
           source += 'debugger;\n';
         } else if (block[1] === 'sulf.script %s'){
-			
-			console.log(true)
-			
-          console.log('**********   Found embedded JavaScript:   **********');
+        console.log('**********   Found embedded JavaScript:   **********');
           console.log(String(block[2].replace(';', ';\n')));
           console.log('**********    End embedded JavaScript.    **********');
           source += block[2];
