@@ -387,7 +387,7 @@ qrcode.makeCode(packageLink.href);
       location.hash = '#zip';
       show('zip');
       var ext = f.name.split('.').pop();
-      if (ext === 'sb2' || ext === 'zip') {
+      if (ext === 'sb2' || ext === 'sb3' || ext === 'zip') {
         var request = P.IO.loadSB2File(f);
       } else if (ext === 'json') {
         request = P.IO.loadJSONFile(f);

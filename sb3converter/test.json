@@ -1,0 +1,820 @@
+{
+    "objName": "Stage",
+    "variables": [
+        {
+            "name": "gravity",
+            "value": -8,
+            "isPersistent": false
+        }
+    ],
+    "sounds": [
+        {
+            "soundName": "pop",
+            "soundID": 0,
+            "md5": "83a9787d4cb6f3b7632b4ddfebf74367.wav",
+            "sampleCount": 1123,
+            "rate": 48000,
+            "format": ""
+        }
+    ],
+    "costumes": [
+        {
+            "costumeName": "backdrop1",
+            "baseLayerID": 0,
+            "baseLayerMD5": "402554622fa76ce3eac1785ac3a68955.png",
+            "rotationCenterX": 480,
+            "rotationCenterY": 360,
+            "bitmapResolution": 2
+        }
+    ],
+    "currentCostumeIndex": 0,
+    "penLayerMD5": "",
+    "penLayerID": "",
+    "tempoBPM": 60,
+    "videoAlpha": 0.5,
+    "children": [
+        {
+            "objName": "Cat1 Flying",
+            "scripts": [
+                [
+                    324,
+                    139,
+                    [
+                        [
+                            "whenGreenFlag"
+                        ],
+                        [
+                            "doForever",
+                            [
+                                "doUntil",
+                                [
+                                    ">",
+                                    [
+                                        "readVariable",
+                                        "gravity"
+                                    ],
+                                    "10"
+                                ],
+                                [
+                                    "changeVar:by:",
+                                    "gravity",
+                                    1
+                                ]
+                            ]
+                        ],
+                        [
+                            "doUntil",
+                            [
+                                ">",
+                                [
+                                    "readVariable",
+                                    "gravity"
+                                ],
+                                "10"
+                            ],
+                            [
+                                "changeVar:by:",
+                                "gravity",
+                                1
+                            ]
+                        ],
+                        [
+                            "doUntil",
+                            [
+                                "<",
+                                [
+                                    "readVariable",
+                                    "gravity"
+                                ],
+                                "-10"
+                            ],
+                            [
+                                "changeVar:by:",
+                                "gravity",
+                                -1
+                            ]
+                        ],
+                        [
+                            ">",
+                            [
+                                "readVariable",
+                                "gravity"
+                            ],
+                            "10"
+                        ],
+                        [
+                            "changeVar:by:",
+                            "gravity",
+                            1
+                        ],
+                        [
+                            "<",
+                            [
+                                "readVariable",
+                                "gravity"
+                            ],
+                            "-10"
+                        ],
+                        [
+                            "changeVar:by:",
+                            "gravity",
+                            -1
+                        ]
+                    ]
+                ],
+                [
+                    110,
+                    136,
+                    [
+                        [
+                            "whenGreenFlag"
+                        ],
+                        [
+                            "doForever",
+                            [
+                                "changeYposBy:",
+                                [
+                                    "readVariable",
+                                    "gravity"
+                                ]
+                            ]
+                        ],
+                        [
+                            "changeYposBy:",
+                            [
+                                "readVariable",
+                                "gravity"
+                            ]
+                        ]
+                    ]
+                ],
+                [
+                    103,
+                    286,
+                    [
+                        [
+                            "whenGreenFlag"
+                        ],
+                        [
+                            "doForever",
+                            [
+                                "doIf",
+                                [
+                                    "<",
+                                    [
+                                        "ypos"
+                                    ],
+                                    "-30"
+                                ],
+                                [
+                                    "changeYposBy:",
+                                    1
+                                ]
+                            ]
+                        ],
+                        [
+                            "doIf",
+                            [
+                                "<",
+                                [
+                                    "ypos"
+                                ],
+                                "-30"
+                            ],
+                            [
+                                "changeYposBy:",
+                                1
+                            ]
+                        ],
+                        [
+                            "<",
+                            [
+                                "ypos"
+                            ],
+                            "-30"
+                        ],
+                        [
+                            "changeYposBy:",
+                            1
+                        ],
+                        [
+                            "ypos"
+                        ]
+                    ]
+                ],
+                [
+                    106,
+                    456,
+                    [
+                        [
+                            "whenGreenFlag"
+                        ],
+                        [
+                            "doForever",
+                            [
+                                "createCloneOf",
+                                "_myself_"
+                            ]
+                        ],
+                        [
+                            "createCloneOf",
+                            "_myself_"
+                        ]
+                    ]
+                ],
+                [
+                    314,
+                    449,
+                    [
+                        [
+                            "whenCloned"
+                        ],
+                        [
+                            "goBackByLayers:",
+                            1
+                        ],
+                        [
+                            "lookLike:",
+                            "cat1 flying-a2"
+                        ],
+                        [
+                            "show"
+                        ],
+                        [
+                            "doUntil",
+                            [
+                                ">",
+                                "50",
+                                [
+                                    "xpos"
+                                ]
+                            ],
+                            [
+                                "lookLike:",
+                                "cat1 flying-a7"
+                            ]
+                        ],
+                        [
+                            "doUntil",
+                            [
+                                ">",
+                                "40",
+                                [
+                                    "xpos"
+                                ]
+                            ],
+                            [
+                                "lookLike:",
+                                "cat1 flying-a8"
+                            ]
+                        ],
+                        [
+                            "doUntil",
+                            [
+                                ">",
+                                "-2",
+                                [
+                                    "xpos"
+                                ]
+                            ],
+                            [
+                                "lookLike:",
+                                "cat1 flying-a4"
+                            ]
+                        ],
+                        [
+                            "doUntil",
+                            [
+                                ">",
+                                "-3",
+                                [
+                                    "xpos"
+                                ]
+                            ],
+                            [
+                                "lookLike:",
+                                "cat1 flying-a5"
+                            ]
+                        ],
+                        [
+                            "doUntil",
+                            [
+                                ">",
+                                "-60",
+                                [
+                                    "xpos"
+                                ]
+                            ],
+                            [
+                                "lookLike:",
+                                "cat1 flying-a3"
+                            ]
+                        ],
+                        [
+                            "doUntil",
+                            [
+                                ">",
+                                "-105",
+                                [
+                                    "xpos"
+                                ]
+                            ],
+                            [
+                                "lookLike:",
+                                "cat1 flying-a2"
+                            ]
+                        ],
+                        [
+                            "doUntil",
+                            [
+                                ">",
+                                "-120",
+                                [
+                                    "xpos"
+                                ]
+                            ],
+                            [
+                                "lookLike:",
+                                "cat1 flying-a9"
+                            ]
+                        ],
+                        [
+                            "deleteClone"
+                        ],
+                        [
+                            ">",
+                            "50",
+                            [
+                                "xpos"
+                            ]
+                        ],
+                        [
+                            "lookLike:",
+                            "cat1 flying-a7"
+                        ],
+                        [
+                            "gotoX:y:",
+                            [
+                                "+",
+                                [
+                                    "xpos"
+                                ],
+                                -10
+                            ],
+                            [
+                                "ypos"
+                            ]
+                        ],
+                        [
+                            ">",
+                            "40",
+                            [
+                                "xpos"
+                            ]
+                        ],
+                        [
+                            "lookLike:",
+                            "cat1 flying-a8"
+                        ],
+                        [
+                            "gotoX:y:",
+                            [
+                                "+",
+                                [
+                                    "xpos"
+                                ],
+                                -10
+                            ],
+                            [
+                                "ypos"
+                            ]
+                        ],
+                        [
+                            ">",
+                            "-2",
+                            [
+                                "xpos"
+                            ]
+                        ],
+                        [
+                            "lookLike:",
+                            "cat1 flying-a4"
+                        ],
+                        [
+                            "gotoX:y:",
+                            [
+                                "+",
+                                [
+                                    "xpos"
+                                ],
+                                -10
+                            ],
+                            [
+                                "ypos"
+                            ]
+                        ],
+                        [
+                            ">",
+                            "-3",
+                            [
+                                "xpos"
+                            ]
+                        ],
+                        [
+                            "lookLike:",
+                            "cat1 flying-a5"
+                        ],
+                        [
+                            "gotoX:y:",
+                            [
+                                "+",
+                                [
+                                    "xpos"
+                                ],
+                                -10
+                            ],
+                            [
+                                "ypos"
+                            ]
+                        ],
+                        [
+                            ">",
+                            "-60",
+                            [
+                                "xpos"
+                            ]
+                        ],
+                        [
+                            "lookLike:",
+                            "cat1 flying-a3"
+                        ],
+                        [
+                            "gotoX:y:",
+                            [
+                                "+",
+                                [
+                                    "xpos"
+                                ],
+                                -10
+                            ],
+                            [
+                                "ypos"
+                            ]
+                        ],
+                        [
+                            ">",
+                            "-105",
+                            [
+                                "xpos"
+                            ]
+                        ],
+                        [
+                            "lookLike:",
+                            "cat1 flying-a2"
+                        ],
+                        [
+                            "gotoX:y:",
+                            [
+                                "+",
+                                [
+                                    "xpos"
+                                ],
+                                -10
+                            ],
+                            [
+                                "ypos"
+                            ]
+                        ],
+                        [
+                            ">",
+                            "-120",
+                            [
+                                "xpos"
+                            ]
+                        ],
+                        [
+                            "lookLike:",
+                            "cat1 flying-a9"
+                        ],
+                        [
+                            "gotoX:y:",
+                            [
+                                "+",
+                                [
+                                    "xpos"
+                                ],
+                                -10
+                            ],
+                            [
+                                "ypos"
+                            ]
+                        ],
+                        [
+                            "xpos"
+                        ],
+                        [
+                            "+",
+                            [
+                                "xpos"
+                            ],
+                            -10
+                        ],
+                        [
+                            "ypos"
+                        ],
+                        [
+                            "xpos"
+                        ],
+                        [
+                            "+",
+                            [
+                                "xpos"
+                            ],
+                            -10
+                        ],
+                        [
+                            "ypos"
+                        ],
+                        [
+                            "xpos"
+                        ],
+                        [
+                            "+",
+                            [
+                                "xpos"
+                            ],
+                            -10
+                        ],
+                        [
+                            "ypos"
+                        ],
+                        [
+                            "xpos"
+                        ],
+                        [
+                            "+",
+                            [
+                                "xpos"
+                            ],
+                            -10
+                        ],
+                        [
+                            "ypos"
+                        ],
+                        [
+                            "xpos"
+                        ],
+                        [
+                            "+",
+                            [
+                                "xpos"
+                            ],
+                            -10
+                        ],
+                        [
+                            "ypos"
+                        ],
+                        [
+                            "xpos"
+                        ],
+                        [
+                            "+",
+                            [
+                                "xpos"
+                            ],
+                            -10
+                        ],
+                        [
+                            "ypos"
+                        ],
+                        [
+                            "xpos"
+                        ],
+                        [
+                            "+",
+                            [
+                                "xpos"
+                            ],
+                            -10
+                        ],
+                        [
+                            "ypos"
+                        ],
+                        [
+                            "xpos"
+                        ],
+                        [
+                            "xpos"
+                        ],
+                        [
+                            "xpos"
+                        ],
+                        [
+                            "xpos"
+                        ],
+                        [
+                            "xpos"
+                        ],
+                        [
+                            "xpos"
+                        ],
+                        [
+                            "xpos"
+                        ]
+                    ]
+                ],
+                [
+                    24,
+                    861,
+                    [
+                        [
+                            "doUntil",
+                            [
+                                ">",
+                                "-100",
+                                [
+                                    "xpos"
+                                ]
+                            ],
+                            [
+                                "lookLike:",
+                                "cat1 flying-a2"
+                            ]
+                        ],
+                        [
+                            "deleteClone"
+                        ],
+                        [
+                            ">",
+                            "-100",
+                            [
+                                "xpos"
+                            ]
+                        ],
+                        [
+                            "lookLike:",
+                            "cat1 flying-a2"
+                        ],
+                        [
+                            "gotoX:y:",
+                            [
+                                "+",
+                                [
+                                    "xpos"
+                                ],
+                                -10
+                            ],
+                            [
+                                "ypos"
+                            ]
+                        ],
+                        [
+                            "xpos"
+                        ],
+                        [
+                            "+",
+                            [
+                                "xpos"
+                            ],
+                            -10
+                        ],
+                        [
+                            "ypos"
+                        ],
+                        [
+                            "xpos"
+                        ]
+                    ]
+                ],
+                [
+                    61,
+                    31,
+                    [
+                        [
+                            "whenGreenFlag"
+                        ],
+                        [
+                            "doForever",
+                            [
+                                "lookLike:",
+                                "cat1 flying-a6"
+                            ]
+                        ],
+                        [
+                            "lookLike:",
+                            "cat1 flying-a6"
+                        ]
+                    ]
+                ]
+            ],
+            "sounds": [
+                {
+                    "soundName": "pop",
+                    "soundID": 0,
+                    "md5": "83a9787d4cb6f3b7632b4ddfebf74367.wav",
+                    "sampleCount": 1123,
+                    "rate": 48000,
+                    "format": ""
+                }
+            ],
+            "costumes": [
+                {
+                    "costumeName": "cat1 flying-a2",
+                    "baseLayerID": 2,
+                    "baseLayerMD5": "26e4ef52dc6cb4bf11dd25979e23e016.svg",
+                    "rotationCenterX": 50,
+                    "rotationCenterY": 17,
+                    "bitmapResolution": 1
+                },
+                {
+                    "costumeName": "cat1 flying-a3",
+                    "baseLayerID": 3,
+                    "baseLayerMD5": "2f31bc0fe462a11939701d224966a881.svg",
+                    "rotationCenterX": 121,
+                    "rotationCenterY": 51,
+                    "bitmapResolution": 1
+                },
+                {
+                    "costumeName": "cat1 flying-a4",
+                    "baseLayerID": 4,
+                    "baseLayerMD5": "21e0cac5db64840ff05bf5a0b7973d73.svg",
+                    "rotationCenterX": 55,
+                    "rotationCenterY": 16,
+                    "bitmapResolution": 1
+                },
+                {
+                    "costumeName": "cat1 flying-a5",
+                    "baseLayerID": 5,
+                    "baseLayerMD5": "2fdc0d3ae29f7af499287a27730f3ee8.svg",
+                    "rotationCenterX": 55,
+                    "rotationCenterY": 19,
+                    "bitmapResolution": 1
+                },
+                {
+                    "costumeName": "cat1 flying-a6",
+                    "baseLayerID": 6,
+                    "baseLayerMD5": "e395f4e817d296202f64acbd08769fdf.svg",
+                    "rotationCenterX": 39,
+                    "rotationCenterY": -13,
+                    "bitmapResolution": 1
+                },
+                {
+                    "costumeName": "cat1 flying-a7",
+                    "baseLayerID": 7,
+                    "baseLayerMD5": "0b8b12ea266f525836dd309975c64e6c.svg",
+                    "rotationCenterX": 39,
+                    "rotationCenterY": -17,
+                    "bitmapResolution": 1
+                },
+                {
+                    "costumeName": "cat1 flying-a8",
+                    "baseLayerID": 8,
+                    "baseLayerMD5": "f4915ee865f393a3484630c0b7dbf2f6.svg",
+                    "rotationCenterX": 54,
+                    "rotationCenterY": 15,
+                    "bitmapResolution": 1
+                },
+                {
+                    "costumeName": "cat1 flying-a9",
+                    "baseLayerID": 9,
+                    "baseLayerMD5": "a75993115a16d0f7b5ea9fabf2481953.svg",
+                    "rotationCenterX": 125,
+                    "rotationCenterY": 28,
+                    "bitmapResolution": 1
+                }
+            ],
+            "currentCostumeIndex": 4,
+            "scratchX": 116,
+            "scratchY": 45,
+            "scale": 1,
+            "direction": 90,
+            "rotationStyle": "normal",
+            "isDraggable": false,
+            "indexInLibrary": 1,
+            "visible": true,
+            "spriteInfo": {}
+        },
+        {
+            "target": "Stage",
+            "cmd": "getVar:",
+            "param": "gravity",
+            "color": 15629590,
+            "label": "gravity",
+            "mode": 1,
+            "sliderMin": 0,
+            "sliderMax": 100,
+            "isDiscrete": true,
+            "x": 5,
+            "y": 5,
+            "visible": false
+        }
+    ],
+    "info": {
+        "userAgent": "sb3tosb2 imfh",
+        "flashVersion": "",
+        "scriptCount": 0,
+        "videoOn": false,
+        "spriteCount": 3,
+        "swfVersion": ""
+    }
+}
