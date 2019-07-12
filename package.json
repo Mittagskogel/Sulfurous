@@ -1,0 +1,31 @@
+{
+  "name": "sulfurous",
+  "version": "0.96.0",
+  "description": "Sulfurous, just like Phosphorus, runs your Scratch projects really fast by compiling them to JavaScript.",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mittagskogel/Sulfurous.git"
+  },
+  "keywords": [
+    "scratch",
+    "javascript",
+    "node.js"
+  ],
+  "author": "Alexander Pichler",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Mittagskogel/Sulfurous/issues"
+  },
+  "homepage": "https://github.com/Mittagskogel/Sulfurous#readme",
+  "dependencies": {
+    "adm-zip": "^0.4.13",
+    "express": "^4.17.1",
+    "node-fetch": "^2.6.0",
+    "socket.io": "^2.2.0"
+  }
+}

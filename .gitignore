@@ -1,0 +1,5 @@
+node_modules/
+*.sb2
+*.sb3
+package-lock.json
+.vscode/
