@@ -1,1 +1,469 @@
+<!doctype html>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width, initial-scale=1.0">
+<title>Sulfurous</title>
+<link rel=icon href="img/favicon.ico">
+<link rel=stylesheet href=css/player.css> <link rel=stylesheet href=css/index.css> <script type="text/javascript"
+  src="js/qrcode.min.js">
+  </script>
+<script src="js/socket.io.js"></script>
 
+<div class=area id=title-area>
+  <h1 class=title>sulfurous<span class=version>WebGL v 0.94</span></h1>
+  <p>Sulfurous, just like Phosphorus, runs your Scratch projects really fast by compiling them to JavaScript. Try it out
+    by pasting a URL or project ID into the field below or <a class=dropdown>choosing an example<select id=examples>
+        <option value>
+        <option value=11397100>3D Remix by DadOfMrLog
+        <option value=15945630>O by DCPU-16
+        <option value=10128407>Paper Minecraft by griffpatch
+        <option value=16207935>Alone in the depths by sticku
+        <option value=16205373>3D Framework by DadOfMrLog
+        <option value=31903442>gb.sb2 [Dr. Mario] by DCPU-16
+        <option value=34791164>gb.sb2 [Mario Land 2] by DCPU-16
+        <option value=21554369>Epic Ninja by griffpatch
+        <option value=15832807>Pretty by blob8108
+
+      </select></a>. You can also drag a local .sb2 project onto this page.</p>
+</div>
+
+<div class=area id=player-area>
+  <div class=controls>
+    <span class=stop></span>
+    <span class=pause></span>
+    <span class=flag title="Shift+click to enable turbo mode."></span>
+    <div class=turbo>Turbo Mode</div>
+    <span class=full-screen></span>
+  </div>
+  <div class=player></div>
+  <div class=internal-error>
+    An internal error occurred. <a id=error-bug-link target=_blank
+      href=https://github.com/mittagskogel/sulfurous/issues/new>Click here</a> to file a bug report. </div> <div
+      class=webgl-error>
+      It looks like your device doesn't support WebGL. You can try viewing this project in the legacy player <a
+        id=legacy-link target=_blank href=https://sulfurous.aau.at/legacy>here </a>. </div> </div> <div class=title>
+        <div class=progress-bar></div>
+        <input class=url value=https://scratch.mit.edu/projects/> <a target=_blank class=project-link
+          title="View project on Scratch">
+      </a>
+  </div>
+
+  <div class=area id=project-area>
+    <section class=package>
+      <h1>Package this project</h1>
+      <p>Get a link to a web page that automatically runs your project.</p>
+      <p>
+        <a href=# target=_blank id=package-link>Package</a>
+        <input type=checkbox id=package-turbo>
+        <label for=package-turbo>Turbo mode</label>
+        <br />
+        <input type=radio id=package-full-screen name=custom-resolution>
+        <label for=package-full-screen>Full screen</label>
+        <input type=checkbox id=package-full-screen-aspect-ratio>
+        <label for=package-full-screen-aspect-ratio>Custom full screen aspect:</label>
+        <input type=number id=package-aspect-ratio-x min=1, max=100 class=xyinput>
+        <label for=full-screen-aspect-ratio>:</label>
+        <input type=number id=package-aspect-ratio-y min=1, max=100 class=xyinput>
+        <br />
+        <input type=radio id=package-standard-resolution checked name=custom-resolution>
+        <label for=package-standard-resolution>480x360</label>
+        <input type=radio id=package-double-resolution name=custom-resolution>
+        <label for=package-double-resolution>960x720</label>
+        <input type=radio id=package-custom-resolution name=custom-resolution>
+        <label for=package-custom-resolution>Custom width:</label>
+        <input type=number id=package-custom-resolution-x-value min=1 max=16000 class=xyinput>
+        <label for=package-custom-resolution>x</label>
+        <input type=number id=package-custom-resolution-y-value min=1 max=16000 class=xyinput>
+      </p>
+    </section>
+
+    <section class=package>
+      <h1>Embed this project</h1>
+      <p>Include the sulfurous player in your web site.</p>
+      <p>
+        <input readonly id=embed-code>
+        <input type=checkbox id=embed-auto-start checked>
+        <label for=embed-auto-start>Start automatically</label>
+        <input type=checkbox id=embed-light-content>
+        <label for=embed-light-content>Light controls</label>
+        <input type=checkbox id=embed-hide-controls>
+        <label for=embed-hide-controls>Hide UI</label>
+        <input type=radio id=embed-standard-resolution checked name=e-custom-resolution>
+        <label for=embed-standard-resolution>480x360</label>
+        <input type=radio id=embed-double-resolution name=e-custom-resolution>
+        <label for=embed-double-resolution>960x720</label>
+        <input type=radio id=embed-custom-resolution name=e-custom-resolution>
+        <label for=embed-custom-resolution>Custom width:</label>
+        <input type=number id=embed-custom-resolution-x-value min=1 max=16000 class=xyinput>
+        <label for=package-custom-resolution>x</label>
+        <input type=number id=embed-custom-resolution-y-value min=1 max=16000 class=xyinput>
+      </p>
+    </section>
+
+    <section>
+      <h1>Report a problem</h1>
+      <p>Sulfurous is still in development. <a id=bug-link target=_blank
+          href=https://github.com/mittagskogel/sulfurous/issues/new>Click here</a> to report a problem with this
+          project. If you are the creator of this Project please publish your project on scratch that we can see the
+          code and debug it. </p> </section> </div> <section>
+          <h1>Credits</h1>
+          <p>Sulfurous was created by <a href=https://github.com/mittagskogel>Mittagskogel </a> and further developed by
+              <a href=https://github.com/FRALEXGAMING>FRALEX </a> as part of their work at the <a
+              href="https:\\www.aau.at">Alpen-Adria-University Klagenfurt</a>. Sulfurous is based off Phosphorus, which
+            was created by <a href=https://github.com/nathan>Nathan Dinsmore</a>. Its CPS-style compilation and overall
+              design was inspired by <a href=https://github.com/RHY3756547>Rhys Simpson</a>'s <a
+              href=https://code.google.com/p/sb2-js/>sb2.js </a>. It would have more bugs if not for <a
+              href=https://github.com/trumank>Truman Kilen</a>. It uses the <a href=https://stuk.github.io/jszip/>JSZip
+              </a> library, created by <a href=https://github.com/stuk>Stuart Knightley</a>, <a
+              href=https://github.com/dduponchel>David Duponchel</a>, Franz Buchinger, and <a
+              href=https://github.com/aadsm>António Afonso</a>, to read <code>.sb2</code> files and compressed projects,
+              and the <a href=https://code.google.com/p/canvg/>canvg </a> library, created by <a
+                href=https://code.google.com/u/gabelerner@gmail.com/>Gabe Lerner</a>, to render SVGs in
+                <code>&lt;canvas&gt;</code> elements.
+                <h1>Code</h1>
+                <p>Sulfurous is released under the MIT license, the source code for Sulfurous is available <a
+                    href=https://github.com/mittagskogel/sulfurous>on GitHub</a>. See <a
+                    href=https://github.com/nathan/phosphorus>Phosphorus </a> for the original version.</p> <h1>QR-Code
+                    with Link to your Project</h1>
+                    <br />
+                    <div id="qrcode"></div>
+    </section>
+    <img class="featured-image" alt="Sulfurous screenshot" src="img/featured_image.png">
+
+    <script src=js/fonts.js> </script> <script src=https://cdnjs.cloudflare.com/ajax/libs/jszip/2.4.0/jszip.js>
+    </script> <script src=js/gl-matrix-min.js> </script> <script src=js/phosphorus.js> </script> <script
+      src=js/player.js> </script> <script src=js/shaders.js> </script> <script src=fonts/fonts.js> </script> <script
+      src=js/socket.io.js> </script> <script>
+
+        (function () {
+          'use strict';
+
+          var qrcode = new QRCode("qrcode");
+
+          var prefix = 'https://scratch.mit.edu/projects/';
+
+          var initialId = 11111111;
+          if (initialId === 'zip') initialId = '';
+
+          var titleArea = document.querySelector('#title-area');
+          var playerArea = document.querySelector('#player-area');
+          var projectArea = document.querySelector('#project-area');
+
+          playerArea.style.height = projectArea.style.height = 'auto';
+          var titleAreaHeight = titleArea.offsetHeight;
+          var playerAreaHeight = playerArea.offsetHeight;
+          var projectAreaHeight = projectArea.offsetHeight;
+          playerArea.style.height = projectArea.style.height = 0;
+
+          var examples = document.querySelector('#examples');
+          var urlInput = document.querySelector('.url');
+          urlInput.value = prefix + initialId;
+
+          var progressBar = document.querySelector('.progress-bar');
+          var player = document.querySelector('.player');
+          var projectLink = document.querySelector('.project-link');
+          var bugLink = document.querySelector('#bug-link');
+
+          /**********   Package   **********/
+          var packageLink = document.querySelector('#package-link');
+          var packageTurbo = document.querySelector('#package-turbo');
+
+          var packageFullScreen = document.querySelector('#package-full-screen');
+          var packageFullScreenAspectRatio = document.querySelector('#package-full-screen-aspect-ratio');
+          var packageAspectRatioX = document.querySelector('#package-aspect-ratio-x');
+          var packageAspectRatioY = document.querySelector('#package-aspect-ratio-y');
+
+          var packageStandardResolution = document.querySelector('#package-standard-resolution');
+          var packageDoubleResolution = document.querySelector('#package-double-resolution');
+          var packageCustomResolution = document.querySelector('#package-custom-resolution');
+          var packageCustomResolutionXValue = document.querySelector('#package-custom-resolution-x-value');
+          var packageCustomResolutionYValue = document.querySelector('#package-custom-resolution-y-value');
+
+          /**********    Embed    **********/
+          var embedCode = document.querySelector('#embed-code');
+          var embedAutoStart = document.querySelector('#embed-auto-start');
+          var embedLightContent = document.querySelector('#embed-light-content');
+          var embedHideControls = document.querySelector('#embed-hide-controls');
+          var embedStandardResolution = document.querySelector('#embed-standard-resolution');
+          var embedDoubleResolution = document.querySelector('#embed-double-resolution');
+          var embedCustomResolution = document.querySelector('#embed-custom-resolution');
+          var embedCustomResolutionXValue = document.querySelector('#embed-custom-resolution-x-value');
+          var embedCustomResolutionYValue = document.querySelector('#embed-custom-resolution-y-value');
+
+          var timeout;
+          urlInput.addEventListener('input', function () {
+            var ss = urlInput.selectionStart;
+            var se = urlInput.selectionEnd;
+            var url = urlInput.value;
+            var id = url.match(/\d+/g) || [''];
+            while (id.length > 1 && id.indexOf(P.player.projectId) > -1) {
+              id.splice(id.indexOf(P.player.projectId), 1);
+            }
+            id = id[0];
+            urlInput.value = url = prefix + id;
+            urlInput.selectionStart = urlInput.selectionEnd = Math.max(prefix.length, ss);
+            clearTimeout(timeout);
+            if (P.player.projectId !== id) {
+              timeout = setTimeout(function () {
+                location.hash = '#' + id;
+
+              }, 300);
+            }
+          });
+          urlInput.addEventListener('focus', function () {
+            setTimeout(function () {
+              if (/\d/.test(urlInput.value)) {
+                urlInput.select();
+              }
+            });
+          });
+
+          examples.addEventListener('change', function () {
+            if (examples.value) {
+              location.hash = '#' + examples.value;
+              examples.selectedIndex = 0;
+            }
+          });
+
+          window.addEventListener('hashchange', function () {
+
+            var id = location.hash.substr(1);
+            if (id !== 'zip') {
+              if (+id !== +id) id = '';
+              urlInput.value = prefix + id;
+            }
+
+            load(id);
+          });
+
+          function show(id) {
+            titleArea.style.height = id ? 0 : titleAreaHeight + 'px';
+            playerArea.style.height = id ? playerAreaHeight + 'px' : 0
+            projectArea.style.height = id ? projectAreaHeight + 'px' : 0;
+            if (!id) urlInput.focus();
+          }
+
+          function load(id) {
+
+            if (id !== 'zip') {
+              show(id);
+            } else {
+              id = '';
+            }
+
+            document.title = 'sulfurous';
+
+            //loadProject(id);
+
+
+            projectLink.href = P.player.projectURL;
+            updateBugLink();
+            updatePackageLink();
+            updateEmbedCode();
+          }
+
+          function updateBugLink() {
+            bugLink.href = P.player.projectId ? 'https://github.com/mittagskogel/sulfurous/issues/new?title=' + encodeURIComponent(P.player.projectTitle || P.player.projectURL) + '&body=' + encodeURIComponent('\n\n\n' + P.player.projectURL + '\nhttps://sulfurous.aau.at/#' + P.player.projectId + '\n' + navigator.userAgent) : 'https://github.com/mittagskogel/sulfurous/issues/new?body=' + encodeURIComponent('\n\n\n' + navigator.userAgent);
+          }
+
+          function updatePackageLink() {
+            if (packageFullScreen.checked) {
+              packageCustomResolutionXValue.value = null;
+              packageCustomResolutionYValue.value = null;
+
+              if (!packageFullScreenAspectRatio.checked) {
+                packageAspectRatioX.value = 4;
+                packageAspectRatioY.value = 3;
+              }
+            }
+            else {
+              packageAspectRatioX.value = null;
+              packageAspectRatioY.value = null;
+            }
+            if (packageStandardResolution.checked) {
+              packageCustomResolutionXValue.value = 480;
+              packageCustomResolutionYValue.value = 360;
+            }
+            if (packageDoubleResolution.checked) {
+              packageCustomResolutionXValue.value = 960;
+              packageCustomResolutionYValue.value = 720;
+            }
+            // remember to change link before uploading!
+            packageLink.href = P.player.projectId ? 'https://sulfurous.aau.at/html/app.html?id=' + P.player.projectId +
+              '&turbo=' + packageTurbo.checked +
+              '&full-screen=' + packageFullScreen.checked +
+              '&aspect-x=' + packageAspectRatioX.value +
+              '&aspect-y=' + packageAspectRatioY.value +
+              '&resolution-x=' + packageCustomResolutionXValue.value +
+              '&resolution-y=' + packageCustomResolutionYValue.value :
+              'about:blank';
+            packageCustomResolutionXValue.disabled = !packageCustomResolution.checked;
+            packageCustomResolutionYValue.disabled = !packageCustomResolution.checked;
+
+            packageFullScreenAspectRatio.disabled = !packageFullScreen.checked;
+            packageAspectRatioX.disabled = !(packageFullScreenAspectRatio.checked && packageFullScreen.checked);
+            packageAspectRatioY.disabled = !(packageFullScreenAspectRatio.checked && packageFullScreen.checked);
+
+            qrcode.makeCode(packageLink.href);
+
+          }
+
+          packageTurbo.addEventListener('change', updatePackageLink);
+          packageFullScreen.addEventListener('change', updatePackageLink);
+          packageFullScreenAspectRatio.addEventListener('change', updatePackageLink);
+          packageAspectRatioX.addEventListener('change', updatePackageLink);
+          packageAspectRatioY.addEventListener('change', updatePackageLink);
+          packageStandardResolution.addEventListener('change', updatePackageLink);
+          packageDoubleResolution.addEventListener('change', updatePackageLink);
+          packageCustomResolution.addEventListener('change', updatePackageLink);
+          packageCustomResolutionXValue.addEventListener('change', updatePackageLink);
+          packageCustomResolutionYValue.addEventListener('change', updatePackageLink);
+
+          function updateEmbedCode(e) {
+            if (embedStandardResolution.checked) {
+              embedCustomResolutionXValue.value = 480;
+              embedCustomResolutionYValue.value = 360;
+            }
+            if (embedDoubleResolution.checked) {
+              embedCustomResolutionXValue.value = 960;
+              embedCustomResolutionYValue.value = 480;
+            }
+            // remember to change link before uploading!
+            embedCode.value = P.player.projectId ? '<script src=\'https://sulfurous.aau.at/js/embed.js?id=' + P.player.projectId +
+              '&resolution-x=' + embedCustomResolutionXValue.value +
+              '&resolution-y=' + embedCustomResolutionYValue.value +
+              (embedHideControls.checked ? '&ui=false' :
+                '&auto-start=' + embedAutoStart.checked +
+                '&light-content=' + embedLightContent.checked) +
+              '\'></' + 'script>' : '';
+            embedCustomResolutionXValue.disabled = !embedCustomResolution.checked;
+            embedCustomResolutionYValue.disabled = !embedCustomResolution.checked;
+            embedAutoStart.disabled =
+              embedLightContent.disabled = embedHideControls.checked;
+            if (embedHideControls.checked) embedAutoStart.checked = true;
+            if (e) embedCode.focus();
+          }
+
+          function selectEmbedCode() {
+            setTimeout(function () {
+              embedCode.select();
+            });
+          }
+
+          embedCode.addEventListener('focus', selectEmbedCode);
+          embedCode.addEventListener('click', selectEmbedCode);
+          embedHideControls.addEventListener('change', updateEmbedCode);
+          embedAutoStart.addEventListener('change', updateEmbedCode);
+          embedLightContent.addEventListener('change', updateEmbedCode);
+          embedStandardResolution.addEventListener('change', updateEmbedCode);
+          embedDoubleResolution.addEventListener('change', updateEmbedCode);
+          embedCustomResolution.addEventListener('change', updateEmbedCode);
+          embedCustomResolutionXValue.addEventListener('change', updateEmbedCode);
+          embedCustomResolutionYValue.addEventListener('change', updateEmbedCode);
+
+          load(initialId);
+
+          setTimeout(function () {
+            function setTransition(el) {
+              el.style.WebkitTransition =
+                el.style.MozTransition =
+                el.style.OTransition =
+                el.style.transition = 'height 0.2s';
+            }
+            setTransition(titleArea);
+            setTransition(playerArea);
+            setTransition(projectArea);
+          });
+
+          function cancel(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+          }
+          document.body.addEventListener('dragover', cancel);
+          document.body.addEventListener('dragenter', cancel);
+
+          document.body.onload = async function () {
+            console.log("loaded")
+            fetch("project.sb2").then(function (response) {
+              response.blob().then(function (blob) {
+               // console.log(blob);
+                var request = P.IO.loadSB2File(blob);
+              //  console.log(request)
+                if (request) {
+                  P.player.showProgress(request, function (stage) {
+                    stage.triggerGreenFlag();
+                    
+                  });
+                }
+              })
+            })
+          }
+
+
+          document.body.addEventListener('drop', async function (e) {
+            e.preventDefault();
+
+            var f = e.dataTransfer.files[0];
+
+
+
+            if (f) {
+              location.hash = '#zip';
+              show('zip');
+              var ext = f.name.split('.').pop();
+              if (ext === 'sb2' || ext === 'zip') {
+                var request = P.IO.loadSB2File(f);
+              } else if (ext === 'json') {
+                request = P.IO.loadJSONFile(f);
+              } else if (ext === 'sb3') {
+                console.log("SB3 Converter WIP Experimental Pre Alpha Child Pusher");
+                console.log(f)
+
+                socket.emit("sendSB3file", f);
+
+              }
+              if (request) {
+                P.player.showProgress(request, function (stage) {
+                  stage.triggerGreenFlag();
+                });
+              }
+            }
+          });
+
+        }());
+
+
+        var socket = io.connect("https://sulfurous.aau.at" + ':8082');
+
+
+        socket.on("sendSB2file", function (data) {
+          console.log(data);
+          var b = data
+
+
+          var blob = new Blob([data], { type: 'application/octet-stream' });
+          console.log(blob)
+          P.IO.loadSB2File(blob);
+        });
+
+        function loadProject(id) {
+           console.log("loadProjectID")
+          fetch('./project/' + id + '/project.json')
+            .then(function (response) {
+              console.log(response.status)
+              if (response.status == 200) {
+                P.player.load(id, function (stage) {
+
+                  stage.triggerGreenFlag();
+                  
+                }, function (title) {
+                  document.title = title ? title + ' \xb7 sulfurous' : 'sulfurous';
+                  updateBugLink();
+                });
+              } else if (response.status == 404) {
+                socket.emit("sendSB3ID", id);
+              }
+            })
+        }
+
+
+      </script>

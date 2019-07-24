@@ -8,7 +8,7 @@ var fs = require('fs');
 
 var cloudSave = require("./cloud.js")
 var sb3converter = require("./sb3converter.js")
-
+var packager = require("./package.js")
 
 var app2 = express();
 app2.listen(3000, () => console.log('listening at 3000'));
@@ -25,18 +25,31 @@ var io = require('socket.io').listen(server);
 
 io.on('connection', function (socket) {
     socket.on('sendSB3file', function (data) {
-        var file = sb3converter.convertFromFile(data)
-        socket.emit("sendSB2file", file);
+        var file = sb3converter.convertFromFile(data).then(function(file){
+            socket.emit("sendSB2file", file);
+        });
     });
     socket.on('sendSB3ID', function (data) {
-        sb3converter.convertFromID(data).then(function(file){
-            fs.writeFile("test.sb2",file,function(){})
+        sb3converter.convertFromID(data).then(function (file) {
+            fs.writeFile("test.sb2", file, function () { })
             socket.emit("sendSB2file", file);
         })
     });
     socket.on('getReq', function (data) {
         cloudSave.getReq(data);
+        console.log(cloudSave.CLOUDSAVE[data.projectID].vars)
         socket.emit('getRes', cloudSave.CLOUDSAVE[data.projectID].vars);
+    });
+    socket.on('getPackage', function (data) {
+        console.log("packager")
+        //console.log(data)
+        var b64string = data;
+        var buf = Buffer.from(b64string, 'base64'); // Ta-da
+        packager.generatePackage(buf, function (output) {
+            console.log("done Converting")
+            socket.emit('sendPackage',output);
+        });
+
     });
 });
 

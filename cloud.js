@@ -23,6 +23,11 @@ var loadJSON = function (projectID) {
 }
 
 var getReq = function (data) {
+
+    data.sulfCloudVarsChanged = data.sulfCloudVars;
+
+    delete data.sulfCloudVars
+
     if (data.sulfCloudVarsChanged == undefined) {
         return
     }
