@@ -3,7 +3,7 @@ const parser = require("./sb3converter/parser.js");
 const downloader = require("./sb3converter/downloader.js")
 
 var convertFromFile = function (file) {
-    console.log("[CONVERTER] started converting " + projectID + " from FILE")
+   //console.log("[CONVERTER] started converting " + projectID + " from FILE")
     var zip = new AdmZip(file);
     var zipEntries = zip.getEntries();
     var newZip = new AdmZip();
@@ -31,7 +31,7 @@ var convertFromFile = function (file) {
             newZip.addFile(newFileName, zipEntry.getData());
         }
     });
-    console.log("[CONVERTER] finished converting " + projectID + " from FILE")
+   // console.log("[CONVERTER] finished converting " + projectID + " from FILE")
     return new Promise((resolve, reject) => {
         //newZip.writeZip("./test.sb2")
         resolve(newZip.toBuffer());

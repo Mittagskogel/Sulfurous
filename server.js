@@ -30,7 +30,7 @@ io.on('connection', function (socket) {
         });
     });
     socket.on('sendSB3ID', function (data) {
-        sb3converter.convertFromID(data).then(function (file) {
+        var file = sb3converter.convertFromID(data).then(function (file) {
             fs.writeFile("test.sb2", file, function () { })
             socket.emit("sendSB2file", file);
         })
