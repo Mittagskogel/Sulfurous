@@ -14,6 +14,7 @@ var specMap = {
     "motion_sety": ["ypos:", [["input", "Y"]]],
     "motion_ifonedgebounce": ["bounceOffEdge", []],
     "motion_setrotationstyle": ["setRotationStyle", [["field", "STYLE"]]],
+    "motion_glideto": ["motion_glideto"],
     "motion_xposition": ["xpos", []],
     "motion_yposition": ["ypos", []],
     "motion_direction": ["heading", []],
@@ -121,7 +122,7 @@ var specMap = {
     "sensing_current": ["timeAndDate", [["field", "CURRENTMENU"]]],
     "sensing_dayssince2000": ["timestamp", []],
     "sensing_username": ["getUserName", []],
-    "sensing_userid": ["getUserId", []],
+    "sensing_userid": ["getUserId", []],    
 
     "videoSensing_videoToggle": ["setVideoState", [["input", "VIDEO_STATE"]]],
     "videoSensing_setVideoTransparency": ["setVideoTransparency", [["input", "TRANSPARENCY"]]],

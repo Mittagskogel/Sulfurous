@@ -25,13 +25,12 @@ var io = require('socket.io').listen(server);
 
 io.on('connection', function (socket) {
     socket.on('sendSB3file', function (data) {
-        var file = sb3converter.convertFromFile(data).then(function(file){
+        var file = sb3converter.convertFromFile(data).then(function (file) {
             socket.emit("sendSB2file", file);
         });
     });
     socket.on('sendSB3ID', function (data) {
         var file = sb3converter.convertFromID(data).then(function (file) {
-            fs.writeFile("test.sb2", file, function () { })
             socket.emit("sendSB2file", file);
         })
     });
@@ -44,10 +43,10 @@ io.on('connection', function (socket) {
         console.log("packager")
         //console.log(data)
         var b64string = data;
-        var buf = Buffer.from(b64string, 'base64'); // Ta-da
+        var buf = Buffer.from(b64string, 'base64'); 
         packager.generatePackage(buf, function (output) {
             console.log("done Converting")
-            socket.emit('sendPackage',output);
+            socket.emit('sendPackage', output);
         });
 
     });

@@ -1,7 +1,7 @@
 /*
     Philip Picej , Alexander Pichler aka FRALEX
     2019 
-    hours wasted: 60 (collaboratively)
+    hours wasted: 80 (collaboratively)
 */
 
 // imports
@@ -348,38 +348,7 @@ function please_work(blockID, blockList) {
     return out;
 }
 
-// structure for issue list: 
-// code in sb2 (py version): issue in sb2 (own version)
-
-// __fixed (presumably)__
-// goBackByLayers: opcode, val (int); no third element
-// playDrum: third val zero (should be 0.25)
-// rest:elapsed:from: second val zero (should be 0.25)
-// noteOn:duration:elapsed:from: third val zero (should be 0.5)
-// penColor: wrong color code format (HEX -> DEC)
-// deleteClone: should be in brackets
-// wait:elapsed:from: second element needs to be int
-// scriptComments are empty
-// lists need to be at bottom as well
-
-// __may (not) be working__
-// deleteLine:ofList:
-// insert:at:ofList:
-// setLine:ofList:to:
-// stringLength: may need "r" as third element
-// letter:of: may need "r" as third element
-// say:duration:elapsed:from: may need "r" as third element
-
-// __not fixed__
-// procDef is wrong
-// append:toList: parameter may be in wrong order
-// deleteLine:ofList: parameter may be in wrong order
-// insert:at:ofList: parameter may be in wrong order
-// setLine:ofList:to: parameter may be in wrong order
-// 
-
-var edgeCases1 = ["xpos", "ypos", "comeToFront"];
-//var edgeCases2 = ["changeSizeBy:", "gotoX:y:", "changeGraphicEffect:By:", "changeVar:By:", "changeYposBy:", "doIf", "createCloneOf"];
+var edgeCases1 = ["xpos", "ypos", "comeToFront", "mousePressed"];
 
 function solveBlock(block, blockList) {
     var out = [];
@@ -427,15 +396,7 @@ function solveBlock(block, blockList) {
     if (Object.keys(block.inputs) != 0) {
         Object.keys(block.inputs).forEach(input => {
             var inputValue = solve_all(block.inputs[input], true);
-
-            // console.log("InputValue: " + inputValue);
-
-            // doesn't make a difference but I'm too scared to delete it
-            //if (input == "CONDITION")
-            //out.push();
-
             out.push(inputValue);
-
 
             if (inputValue in blockList) {
                 blocks.push(inputValue);
@@ -450,39 +411,15 @@ function solveBlock(block, blockList) {
             }
 
             if (block.opcode == "data_replaceitemoflist" && out.length > 3) {
-                //console.log(out);
-                //console.log("_ _ _ _ _ _ _ _");
                 [out[1], out[2]] = [out[2], out[1]];
-                //console.log(out);
-                //console.log("_______________");
             }
-
         });
     }
 
     if (out.length == 1 && out != "deleteClone") {
         out = out[0];
     }
-
-    /*
-        if (specMap[block.opcode] != null && specMap[block.opcode][0] != "") {
-            if (edgeCases2.includes(specMap[block.opcode][0])) {
-                //console.log(block);
-                if (specMap[block.opcode][0] == "gotoX:y:" && block.inputs.X.length > 2 && block.inputs.Y.length > 2) {
-                    return [[out], blocks];
-                } else {
-                    return [out, blocks];
-                }
-            } else {
-                return [out, blocks];
-            }
-        } else {
-            return [out, blocks];
-        }
-    */
-
     return [out, blocks];
-
 }
 
 function solveScript(blockID, solvedBlocks, blockList) {
@@ -515,39 +452,6 @@ function solveScript(blockID, solvedBlocks, blockList) {
                     }
 
                     solvedBlocks[block][index] = stack;
-
-                    /*
-                    if (edgeCases2.includes(solvedBlocks[block][0])) {
-
-                        var temp = solvedBlocks[block];
-                        if (temp[0] == "gotoX:y:") {
-
-                            
-                            if (block != blockList[blockList[block].parent].next) {
-                                solvedBlocks[block] = [solvedBlocks[block]];
-                            }
-                            
-                            if (Array.isArray(temp[1]) && Array.isArray(temp[2])) {
-                                tempArr.forEach(block2 => {
-                                    if (block == blockList[block2].parent) {
-                                        solvedBlocks[block] = [solvedBlocks[block]];
-                                        tempArr.pop(blockList[block2].parent);
-                                        tempArr.pop(block2);
-                                        tempArr.pop(block);
-                                    }
-                                });
-                            }
-
-                            //console.log(block != blockList[blockList[block].parent].next);
-                        } else if (temp[0] == "changeSizeBy:") {
-                            solvedBlocks[block] = [[solvedBlocks[block]]];
-
-                        } else {
-                            solvedBlocks[block] = [solvedBlocks[block]];
-                        }
-                    }
-                    */
-
                 }
             }
         }
@@ -558,7 +462,6 @@ function solveScript(blockID, solvedBlocks, blockList) {
         var edgeCaseOps1 = ["doUntil", "doForever", "doRepeat", "doIf"];
         var edgeCaseOps2 = ["gotoX:y:", "changeSizeBy:", "changeGraphicEffect:by:", "changeVar:by:", "changeYposBy:", "changeXposBy:", "createCloneOf", "lookLike:"];
 
-        //console.log(solvedBlocks[blockID]);
         if (!Array.isArray(solvedBlocks[blockID])) {
             out.push([solvedBlocks[blockID]]);
         } else {
@@ -572,20 +475,15 @@ function solveScript(blockID, solvedBlocks, blockList) {
             var sb2code = specMap[sb3code][0];
 
             if (edgeCaseOps1.includes(sb2code)) {
-                //console.log(JSON.stringify(out[out.length - 1], null, 2));
-                //console.log("\n");
-
                 for (var i = 0; i < out[out.length - 1].length; i++) {
                     var temp = out[out.length - 1][i];
 
-                    console.log(temp);
                     if (edgeCaseOps1.includes(temp[0])) {
                         out[out.length - 1][i] = [out[out.length - 1][i]];
                     }
 
                     temp = out[out.length - 1][i];
 
-                    // special case for changeVar:by:
                     for (var j = 0; j < temp.length; j++) {
                         if (Array.isArray(temp[j])) {
                             for (var k = 0; k < temp[j].length; k++) {
@@ -597,101 +495,18 @@ function solveScript(blockID, solvedBlocks, blockList) {
                             }
                         }
                     }
-
                     if (edgeCaseOps2.includes(out[out.length - 1][i][0])) {
                         out[out.length - 1][i] = [out[out.length - 1][i]];
                     }
                 }
             }
         }
-
-
-        //console.log(sb2code);
-
-        /*
-        if (sb2code == "doUntil") {
-            console.log("doUntil");
-            for (var i = 0; i < out[out.length - 1].length; i++) {
-                if (out[out.length - 1][i][0] == "gotoX:y:") {
-                    out[out.length - 1][i] = [out[out.length - 1][i]];
-                }
-
-                if (out[out.length - 1][i][0] == "changeVar:by:") {
-                    console.log("changeVar");
-
-                    out[out.length - 1][i] = [out[out.length - 1][i]];
-                }
-            }
-        } if (sb2code == "doForever") {
-            for (var i = 0; i < out[out.length - 1].length; i++) {
-                if (out[out.length - 1][i][0] == "changeSizeBy:") {
-                    out[out.length - 1][i] = [out[out.length - 1][i]];
-                }
-            }
-        } if (sb2code == "doRepeat") {
-            for (var i = 0; i < out[out.length - 1].length; i++) {
-                if (out[out.length - 1][i][0] == "changeGraphicEffect:by:") {
-                    out[out.length - 1][i] = [out[out.length - 1][i]];
-                }
-            }
-        } if (sb2code == "doUntil") {
-            for (var i = 0; i < out[out.length - 1].length; i++) {
-                if (out[out.length - 1][i][0] == "changeVar:by:") {
-                    out[out.length - 1][i] = [out[out.length - 1][i]];
-                }
-            }
-        }
-        */
-
-        /*
-        if (edgeCases2.includes(sb2code)) {
-            var temp = solvedBlocks[blockID];
-            console.log(temp);
-            if (temp[0] == "gotoX:y:") {
-
-                console.log(blockList[blockID]);
-
-                if (blockID != blockList[blockList[blockID].parent].next) {
-                    out[out.length - 1] = [out[out.length - 1]];
-                } else if (blockList[blockList[blockID].parent].opcode == "control_repeat_until") {
-                    out[out.length - 1][2] = [out[out.length - 1][2]];
-                }
-
-            } else if (temp[0] == "changeSizeBy:") {
-                solvedBlocks[blockID] = [[solvedBlocks[blockID]]];
-
-            } else {
-                solvedBlocks[blockID] = [solvedBlocks[blockID]];
-            }
-        }
-        */
-
-        //console.log(blockList[blockID].parent);
-
-        /*
-        if (edgeCases2.includes(solvedBlocks[blockID][0])) {
-            var temp = solvedBlocks[blockID];
-
-            if (temp[0] == "gotoX:y:") {
-                console.log("____2____");
-                console.log(temp);
-
-                if (blockID != blockList[blockList[blockID].parent].next) {
-                    out[out.length - 1] = [out[out.length - 1]];
-
-                }
-            }
-        }
-        */
-
         if (blockList[blockID].next != null) {
             blockID = blockList[blockID].next;
         } else {
             break;
         }
     }
-
     out = [parseFloat((blockList[topID].x / 1.5).toFixed(6)), parseFloat((blockList[topID].y / 1.8).toFixed(6)), out];
-
     return out;
 }
