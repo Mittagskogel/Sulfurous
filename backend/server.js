@@ -11,7 +11,7 @@ var sb3converter = require("./sb3converter.js")
 var packager = require("./package.js")
 
 
-if (__dirname == '/home/sulfurous/public_html') {
+if (process.env.ISSULFSERVER == true) {
     var server = https.createServer({ key: fs.readFileSync('/etc/apache2/ssl/sulfurous_aau_at.key'), cert: fs.readFileSync('/etc/apache2/ssl/sulfurous_aau_at.crt') }, app).listen(8082);
 
 } else {
