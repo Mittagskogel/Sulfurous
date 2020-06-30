@@ -1,0 +1,26 @@
+{
+  "name": "sulfurous-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "start": "npm i && node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mittagskogel/Sulfurous.git"
+  },
+  "author": "Alexander Pichler",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Mittagskogel/Sulfurous/issues"
+  },
+  "homepage": "https://github.com/Mittagskogel/Sulfurous#readme",
+  "dependencies": {
+    "adm-zip": "^0.4.16",
+    "express": "^4.17.1",
+    "jszip": "^3.5.0",
+    "node-fetch": "^2.6.0",
+    "socket.io": "^2.3.0"
+  }
+}

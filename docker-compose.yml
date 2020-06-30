@@ -1,0 +1,37 @@
+version: '3'
+services:
+  sulfurous-sb3tosb2:
+    build: ./sb3tosb2
+    volumes:
+      - ./sb3tosb2/src:/work/src
+      - ./sb3tosb2/sb2:/work/sb2
+      - ./sb3tosb2/sb3:/work/sb3
+    container_name: sulfurous-sb3tosb2
+  sulfurous-frontend:
+    image: "node:10-alpine"
+    user: "root"
+    working_dir: /home/node/app
+    environment:
+      - NODE_ENV=production
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/home/node/app
+    command: "npm start"
+    container_name: sulfurous-frontend
+    restart: unless-stopped
+  sulfurous-backend:
+    image: "node:10-alpine"
+    user: "root"
+    working_dir: /home/node/app
+    environment:
+      - NODE_ENV=production
+    ports:
+      - "8082:8082"
+    volumes:
+      - ./backend:/home/node/app
+      - ./sb3tosb2/sb3:/home/node/app/sb3
+      - ./sb3tosb2/sb2:/home/node/app/sb2
+    command: "npm start"
+    container_name: sulfurous-backend
+    restart: unless-stopped

@@ -1,0 +1,22 @@
+{
+  "name": "sulfurous-frontend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "npm i && node main"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mittagskogel/Sulfurous.git"
+  },
+  "author": "Alexander Pichler",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Mittagskogel/Sulfurous/issues"
+  },
+  "homepage": "https://github.com/Mittagskogel/Sulfurous#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
