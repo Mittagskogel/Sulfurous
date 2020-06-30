@@ -20,6 +20,7 @@ services:
       - ./backend:/home/node/app
       - ./sb3tosb2/sb3:/home/node/app/sb3
       - ./sb3tosb2/sb2:/home/node/app/sb2
+      - ./backend/ssl:/home/node/app/ssl
     command: "npm start"
     container_name: sulfurous-backend
     restart: unless-stopped

@@ -26,7 +26,6 @@ services:
     working_dir: /home/node/app
     environment:
       - NODE_ENV=production
-      - ISSULFSERVER=false
     ports:
       - "8082:8082"
     volumes:
