@@ -48,6 +48,11 @@
   </div>
 
   <div class=area id=project-area>
+
+   
+      <h1 id=sb3loading></h1>
+   
+
     <section class=package>
       <h1>Package this project</h1>
       <p>Get a link to a web page that automatically runs your project.</p>
@@ -396,7 +401,7 @@
               } else if (ext === 'json') {
                 request = P.IO.loadJSONFile(f);
               } else if (ext === 'sb3') {
-                console.log("SB3 Converter WIP Experimental Pre Alpha Child Pusher");
+                console.log("SB3 Converter WIP Experimental Alpha");
                 console.log(f)
 
                 socket.emit("sendSB3file", f);
@@ -426,6 +431,7 @@
           if(request){
             P.player.showProgress(request,function(stage){
               stage.triggerGreenFlag();
+              document.getElementById("sb3loading").innerHTML = ""
             })
           }
 
@@ -446,6 +452,7 @@
                 });
               } else if (response.status == 404) {
                 socket.emit("sendSB3ID", id);
+                document.getElementById("sb3loading").innerHTML = "loading...."
               }
             })
         }

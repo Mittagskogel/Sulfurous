@@ -44,10 +44,10 @@ var convertFromID = function (projectID) {
         console.log("[CONVERTER] started converting " + projectID + " from ID")
 
         var files = fs.readdirSync('./sb2/');
-        console.log(files)
+       // console.log(files)
         files.forEach(element => {
             if (element == projectID + ".sb2") {
-                console.log(projectID + ".sb2")
+              //  console.log(projectID + ".sb2")
                 fs.readFile('./sb2/'+projectID + ".sb2", function (err, data) {
                     if (err) throw err;
                     console.log("[CONVERTER] found converted project " + projectID)
@@ -78,10 +78,10 @@ var convertFromID = function (projectID) {
                         newZip.writeZip("./sb3/" + projectID + ".sb3");
                         let findsb2 = setInterval(() => {
                             var files = fs.readdirSync('./sb2/');
-                            console.log(files)
+                           // console.log(files)
                             files.forEach(element => {
                                 if (element == projectID + ".sb2") {
-                                    console.log(projectID + ".sb2")
+                                   // console.log(projectID + ".sb2")
                                     fs.readFile('./sb2/'+projectID + ".sb2", function (err, data) {
                                         if (err) throw err;
                                         console.log(data.buffer);

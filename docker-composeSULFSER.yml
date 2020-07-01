@@ -1,4 +1,4 @@
-version: '3'
+version: '2'
 services:
   sulfurous-sb3tosb2:
     build: ./sb3tosb2

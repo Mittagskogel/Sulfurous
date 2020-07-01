@@ -11,8 +11,14 @@ var sb3converter = require("./sb3converter.js")
 var packager = require("./package.js")
 
 
+
 if (process.env.ISSULFSERVER == "true") {
-    var server = https.createServer({ key: fs.readFileSync('/ssl/sulfurous_aau_at.key'), cert: fs.readFileSync('/ssl/sulfurous_aau_at.crt') }, app).listen(8082);
+var files = fs.readdirSync('./ssl/');
+        console.log(files)
+
+    var server = https.createServer({ key: fs.readFileSync('./ssl/privkey.pem'), cert: fs.readFileSync('./ssl/cert.pem') ,
+    requestCert: false,
+    rejectUnauthorized: false}, app).listen(8082);
     console.log("RUNNING ON SULF SERVER")
 } else {
     var server = http.createServer(app).listen(8082);
