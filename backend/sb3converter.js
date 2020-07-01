@@ -1,7 +1,25 @@
 const AdmZip = require('adm-zip');
 const fs = require("fs");
-const parser = require("./sb3converter/parser.js");
-const downloader = require("./sb3converter/downloader.js")
+const fetch = require('node-fetch');
+
+const projectJSONBaseURL = "https://projects.scratch.mit.edu/"
+const assetsBaseURL = "https://cdn.assets.scratch.mit.edu/internalapi/asset/"
+
+var getProjectJSON = async function (projectID) {
+    //console.log(projectJSONBaseURL + projectID)
+    const req = await fetch(projectJSONBaseURL + projectID);
+    return req.json()
+}
+
+var getAssets = async function(sb3Name){
+
+    //console.log(assetsBaseURL + sb3Name+"/get/")
+    const req = await fetch(assetsBaseURL + sb3Name+"/get/");
+    return req.buffer()
+
+}
+
+
 
 var convertFromFile = function (file) {
     //console.log("[CONVERTER] started converting " + projectID + " from FILE")
@@ -16,7 +34,8 @@ var convertFromFile = function (file) {
         if (fileName == "project.json") {
             var fileContent = zip.readAsText(fileName)
 
-            out = parser.convert(JSON.parse(fileContent), filemap);
+           // out = parser.convert(JSON.parse(fileContent), filemap);
+           out = undefined;
             return;
         }
     });
@@ -59,7 +78,7 @@ var convertFromID = function (projectID) {
 
         var newZip = new AdmZip();
         
-        downloader.getProjectJSON(projectID).then(res => {
+        getProjectJSON(projectID).then(res => {
 
             var filemap = parseMap(res.targets);
             //console.log(JSON.stringify(res,null,2));
@@ -70,7 +89,7 @@ var convertFromID = function (projectID) {
                // var sb2Name = filemap[element];
                 
 
-                downloader.getAssets(sb3Name).then(asset => {
+                getAssets(sb3Name).then(asset => {
                     var temp = newZip.getEntries().length;
                     newZip.addFile(sb3Name, Buffer.alloc(Buffer.from(asset).length, asset));
                 }).then(function () {
