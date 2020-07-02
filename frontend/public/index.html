@@ -432,7 +432,7 @@
             P.player.showProgress(request,function(stage){
               stage.triggerGreenFlag();
               document.getElementById("sb3loading").innerHTML = ""
-              projectLink.href = P.player.projectURL;
+              document.getElementsByClassName("project-link")[0].href = "https://scratch.mit.edu/projects/"+document.location.href.split("/")[3].substring(1);
             })
           }
 
