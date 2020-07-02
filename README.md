@@ -34,7 +34,7 @@ The requirements to host Sulfurous on your own are:
 
 ## How to run
 
-In the "**start**" directory are 3 start files for windows and 3 for linux
+In the "**start**" directory are 3 start files for windows and 3 for linux.
 Just run the file that suites your needs refere to the table above
 
 * startSulurousSB2 (.sh/.bat)  
