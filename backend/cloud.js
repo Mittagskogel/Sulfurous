@@ -10,7 +10,7 @@ var loadJSON = function (projectID) {
     console.log("[CLOUD] loading JSON for " + projectID);
 
     try {
-        var content = fs.readFileSync('cloudSave/' + projectID + '.json');
+        var content = fs.readFileSync('./cloudSave/' + projectID + '.json');
         CLOUDSAVE[projectID] = JSON.parse(content);
         console.log("[CLOUD] DONE loading JSON for " + projectID);
     } catch (err) {
@@ -77,7 +77,7 @@ setInterval(function () {
 function saveProjectJSON(projectID, delFlag) {
     var tempTTL = CLOUDSAVE[projectID].ttl;
     delete CLOUDSAVE[projectID].ttl;
-    fs.writeFile('cloudSave/' + projectID + '.json', JSON.stringify(CLOUDSAVE[projectID]), function (err) {
+    fs.writeFile('./cloudSave/' + projectID + '.json', JSON.stringify(CLOUDSAVE[projectID]), function (err) {
         if (err) {
             return console.log(err);
         }
@@ -93,7 +93,7 @@ function saveProjectJSON(projectID, delFlag) {
 
 function createProjectJSON(projectID, data) {
 
-    fs.writeFile('cloudSave/' + projectID + '.json', JSON.stringify(data), function (err) {
+    fs.writeFile('./cloudSave/' + projectID + '.json', JSON.stringify(data), function (err) {
         if (err) {
             return console.log(err);
         }

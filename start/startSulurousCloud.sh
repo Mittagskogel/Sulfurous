@@ -1,0 +1,1 @@
+sudo docker-compose -f ../docker-composeSULFSER.yml start frontend backend

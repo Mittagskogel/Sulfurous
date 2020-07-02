@@ -1,0 +1,1 @@
+docker-compose -f ../docker-composeSULFSER.yml start frontend backend sb2tosb2
