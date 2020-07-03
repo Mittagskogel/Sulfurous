@@ -288,17 +288,18 @@ function loadProject(id) {
                 console.log(response.status)
                 if (response.status == 200) {
                     P.player.load(id, function (stage) {
-                        
+
                         stage.triggerGreenFlag();
                     }, function (title) {
                         document.title = title ? title + ' \xb7 sulfurous' : 'sulfurous';
                         updateBugLink();
-                        
+
                     });
                     resolve();
                 } else if (response.status == 404) {
                     socket.emit("sendSB3ID", id);
                     document.getElementById("sb3loading").innerHTML = "loading...."
+                    resolve();
                 }
             })
     })
@@ -306,18 +307,25 @@ function loadProject(id) {
 
 }
 
-const convertBase64ToFile = function (data) {
-    const byteString = data
-    const ab = new ArrayBuffer(byteString.length);
-    const ia = new Uint8Array(ab);
-    for (let i = 0; i < byteString.length; i += 1) {
-        ia[i] = byteString.charCodeAt(i);
+
+function loadSP2FileFromSocket(data) {
+
+    console.log(data)
+
+    var blob = new Blob([data]);
+
+    var request = P.IO.loadSB2File(blob);
+
+    if (request) {
+        P.player.showProgress(request, function (stage) {
+            stage.triggerGreenFlag();
+            document.getElementById("sb3loading").innerHTML = ""
+            document.getElementsByClassName("project-link")[0].href = 'https://scratch.mit.edu/projects/' + P.player.projectId
+        })
     }
-    const newBlob = new Blob([ab], {
-        type: 'octet/stream',
-    });
-    return newBlob;
-};
+}
+
+
 
 var saveData = (function () {
     var a = document.createElement("a");
