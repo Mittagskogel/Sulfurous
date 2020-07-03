@@ -3,8 +3,6 @@
 
     setupWebsocket()
 
-
-
     var qrcode = new QRCode("qrcode");
 
     var prefix = 'https://scratch.mit.edu/projects/';
@@ -59,119 +57,120 @@
 
     var timeout;
     urlInput.addEventListener('input', function () {
-      var ss = urlInput.selectionStart;
-      var se = urlInput.selectionEnd;
-      var url = urlInput.value;
-      var id = url.match(/\d+/g) || [''];
-      while (id.length > 1 && id.indexOf(P.player.projectId) > -1) {
-        id.splice(id.indexOf(P.player.projectId), 1);
-      }
-      id = id[0];
-      urlInput.value = url = prefix + id;
-      urlInput.selectionStart = urlInput.selectionEnd = Math.max(prefix.length, ss);
-      clearTimeout(timeout);
-      if (P.player.projectId !== id) {
-        timeout = setTimeout(function () {
-          location.hash = '#' + id;
+        var ss = urlInput.selectionStart;
+        var se = urlInput.selectionEnd;
+        var url = urlInput.value;
+        var id = url.match(/\d+/g) || [''];
+        while (id.length > 1 && id.indexOf(P.player.projectId) > -1) {
+            id.splice(id.indexOf(P.player.projectId), 1);
+        }
+        id = id[0];
+        urlInput.value = url = prefix + id;
+        urlInput.selectionStart = urlInput.selectionEnd = Math.max(prefix.length, ss);
+        clearTimeout(timeout);
+        if (P.player.projectId !== id) {
+            timeout = setTimeout(function () {
+                location.hash = '#' + id;
 
-        }, 300);
-      }
+            }, 300);
+        }
     });
     urlInput.addEventListener('focus', function () {
-      setTimeout(function () {
-        if (/\d/.test(urlInput.value)) {
-          urlInput.select();
-        }
-      });
+        setTimeout(function () {
+            if (/\d/.test(urlInput.value)) {
+                urlInput.select();
+            }
+        });
     });
 
     examples.addEventListener('change', function () {
-      if (examples.value) {
-        location.hash = '#' + examples.value;
-        examples.selectedIndex = 0;
-      }
+        if (examples.value) {
+            location.hash = '#' + examples.value;
+            examples.selectedIndex = 0;
+        }
     });
 
     window.addEventListener('hashchange', function () {
 
-      var id = location.hash.substr(1);
-      if (id !== 'zip') {
-        if (+id !== +id) id = '';
-        urlInput.value = prefix + id;
-      }
+        var id = location.hash.substr(1);
+        if (id !== 'zip') {
+            if (+id !== +id) id = '';
+            urlInput.value = prefix + id;
+        }
 
-      load(id);
+        load(id);
     });
 
     function show(id) {
-      titleArea.style.height = id ? 0 : titleAreaHeight + 'px';
-      playerArea.style.height = id ? playerAreaHeight + 'px' : 0
-      projectArea.style.height = id ? projectAreaHeight + 'px' : 0;
-      if (!id) urlInput.focus();
+        titleArea.style.height = id ? 0 : titleAreaHeight + 'px';
+        playerArea.style.height = id ? playerAreaHeight + 'px' : 0
+        projectArea.style.height = id ? projectAreaHeight + 'px' : 0;
+        if (!id) urlInput.focus();
     }
 
-    function load(id) {
+    async function load(id) {
 
-      if (id !== 'zip') {
-        show(id);
-      } else {
-        id = '';
-      }
+        if (id !== 'zip') {
+            show(id);
+        } else {
+            id = '';
+        }
 
-      document.title = 'sulfurous';
+        document.title = 'sulfurous';
 
-      loadProject(id);
+        await loadProject(id);
 
-
-      projectLink.href = P.player.projectURL;
-      updateBugLink();
-      updatePackageLink();
-      updateEmbedCode();
+        console.log("load after")
+        P.player.projectId = id;
+        projectLink.href = P.player.projectURL;
+        updateBugLink();
+        updatePackageLink();
+        updateEmbedCode();
     }
 
     function updateBugLink() {
-      bugLink.href = P.player.projectId ? 'https://github.com/mittagskogel/sulfurous/issues/new?title=' + encodeURIComponent(P.player.projectTitle || P.player.projectURL) + '&body=' + encodeURIComponent('\n\n\n' + P.player.projectURL + '\nhttps://sulfurous.aau.at/#' + P.player.projectId + '\n' + navigator.userAgent) : 'https://github.com/mittagskogel/sulfurous/issues/new?body=' + encodeURIComponent('\n\n\n' + navigator.userAgent);
+        bugLink.href = P.player.projectId ? 'https://github.com/mittagskogel/sulfurous/issues/new?title=' + encodeURIComponent(P.player.projectTitle || P.player.projectURL) + '&body=' + encodeURIComponent('\n\n\n' + P.player.projectURL + '\nhttps://sulfurous.aau.at/#' + P.player.projectId + '\n' + navigator.userAgent) : 'https://github.com/mittagskogel/sulfurous/issues/new?body=' + encodeURIComponent('\n\n\n' + navigator.userAgent);
     }
 
     function updatePackageLink() {
-      if (packageFullScreen.checked) {
-        packageCustomResolutionXValue.value = null;
-        packageCustomResolutionYValue.value = null;
+        if (packageFullScreen.checked) {
+            packageCustomResolutionXValue.value = null;
+            packageCustomResolutionYValue.value = null;
 
-        if (!packageFullScreenAspectRatio.checked) {
-          packageAspectRatioX.value = 4;
-          packageAspectRatioY.value = 3;
+            if (!packageFullScreenAspectRatio.checked) {
+                packageAspectRatioX.value = 4;
+                packageAspectRatioY.value = 3;
+            }
         }
-      }
-      else {
-        packageAspectRatioX.value = null;
-        packageAspectRatioY.value = null;
-      }
-      if (packageStandardResolution.checked) {
-        packageCustomResolutionXValue.value = 480;
-        packageCustomResolutionYValue.value = 360;
-      }
-      if (packageDoubleResolution.checked) {
-        packageCustomResolutionXValue.value = 960;
-        packageCustomResolutionYValue.value = 720;
-      }
-      // remember to change link before uploading!
-      packageLink.href = P.player.projectId ? 'https://sulfurous.aau.at/html/app.html?id=' + P.player.projectId +
-        '&turbo=' + packageTurbo.checked +
-        '&full-screen=' + packageFullScreen.checked +
-        '&aspect-x=' + packageAspectRatioX.value +
-        '&aspect-y=' + packageAspectRatioY.value +
-        '&resolution-x=' + packageCustomResolutionXValue.value +
-        '&resolution-y=' + packageCustomResolutionYValue.value :
-        'about:blank';
-      packageCustomResolutionXValue.disabled = !packageCustomResolution.checked;
-      packageCustomResolutionYValue.disabled = !packageCustomResolution.checked;
+        else {
+            packageAspectRatioX.value = null;
+            packageAspectRatioY.value = null;
+        }
+        if (packageStandardResolution.checked) {
+            packageCustomResolutionXValue.value = 480;
+            packageCustomResolutionYValue.value = 360;
+        }
+        if (packageDoubleResolution.checked) {
+            packageCustomResolutionXValue.value = 960;
+            packageCustomResolutionYValue.value = 720;
+        }
+        // remember to change link before uploading!
+        packageLink.href = P.player.projectId ? 'https://sulfurous.aau.at/html/app.html?id=' + P.player.projectId +
+            '&turbo=' + packageTurbo.checked +
+            '&full-screen=' + packageFullScreen.checked +
+            '&aspect-x=' + packageAspectRatioX.value +
+            '&aspect-y=' + packageAspectRatioY.value +
+            '&resolution-x=' + packageCustomResolutionXValue.value +
+            '&resolution-y=' + packageCustomResolutionYValue.value :
+            'about:blank';
+        packageCustomResolutionXValue.disabled = !packageCustomResolution.checked;
+        packageCustomResolutionYValue.disabled = !packageCustomResolution.checked;
 
-      packageFullScreenAspectRatio.disabled = !packageFullScreen.checked;
-      packageAspectRatioX.disabled = !(packageFullScreenAspectRatio.checked && packageFullScreen.checked);
-      packageAspectRatioY.disabled = !(packageFullScreenAspectRatio.checked && packageFullScreen.checked);
+        packageFullScreenAspectRatio.disabled = !packageFullScreen.checked;
+        packageAspectRatioX.disabled = !(packageFullScreenAspectRatio.checked && packageFullScreen.checked);
+        packageAspectRatioY.disabled = !(packageFullScreenAspectRatio.checked && packageFullScreen.checked);
 
-      qrcode.makeCode(packageLink.href);
+        qrcode.makeCode(packageLink.href);
 
     }
 
@@ -187,34 +186,34 @@
     packageCustomResolutionYValue.addEventListener('change', updatePackageLink);
 
     function updateEmbedCode(e) {
-      if (embedStandardResolution.checked) {
-        embedCustomResolutionXValue.value = 480;
-        embedCustomResolutionYValue.value = 360;
-      }
-      if (embedDoubleResolution.checked) {
-        embedCustomResolutionXValue.value = 960;
-        embedCustomResolutionYValue.value = 480;
-      }
-      // remember to change link before uploading!
-      embedCode.value = P.player.projectId ? '<script src=\'https://sulfurous.aau.at/js/embed.js?id=' + P.player.projectId +
-        '&resolution-x=' + embedCustomResolutionXValue.value +
-        '&resolution-y=' + embedCustomResolutionYValue.value +
-        (embedHideControls.checked ? '&ui=false' :
-          '&auto-start=' + embedAutoStart.checked +
-          '&light-content=' + embedLightContent.checked) +
-        '\'></' + 'script>' : '';
-      embedCustomResolutionXValue.disabled = !embedCustomResolution.checked;
-      embedCustomResolutionYValue.disabled = !embedCustomResolution.checked;
-      embedAutoStart.disabled =
-        embedLightContent.disabled = embedHideControls.checked;
-      if (embedHideControls.checked) embedAutoStart.checked = true;
-      if (e) embedCode.focus();
+        if (embedStandardResolution.checked) {
+            embedCustomResolutionXValue.value = 480;
+            embedCustomResolutionYValue.value = 360;
+        }
+        if (embedDoubleResolution.checked) {
+            embedCustomResolutionXValue.value = 960;
+            embedCustomResolutionYValue.value = 480;
+        }
+        // remember to change link before uploading!
+        embedCode.value = P.player.projectId ? '<script src=\'https://sulfurous.aau.at/js/embed.js?id=' + P.player.projectId +
+            '&resolution-x=' + embedCustomResolutionXValue.value +
+            '&resolution-y=' + embedCustomResolutionYValue.value +
+            (embedHideControls.checked ? '&ui=false' :
+                '&auto-start=' + embedAutoStart.checked +
+                '&light-content=' + embedLightContent.checked) +
+            '\'></' + 'script>' : '';
+        embedCustomResolutionXValue.disabled = !embedCustomResolution.checked;
+        embedCustomResolutionYValue.disabled = !embedCustomResolution.checked;
+        embedAutoStart.disabled =
+            embedLightContent.disabled = embedHideControls.checked;
+        if (embedHideControls.checked) embedAutoStart.checked = true;
+        if (e) embedCode.focus();
     }
 
     function selectEmbedCode() {
-      setTimeout(function () {
-        embedCode.select();
-      });
+        setTimeout(function () {
+            embedCode.select();
+        });
     }
 
     embedCode.addEventListener('focus', selectEmbedCode);
@@ -231,100 +230,106 @@
     load(initialId);
 
     setTimeout(function () {
-      function setTransition(el) {
-        el.style.WebkitTransition =
-          el.style.MozTransition =
-          el.style.OTransition =
-          el.style.transition = 'height 0.2s';
-      }
-      setTransition(titleArea);
-      setTransition(playerArea);
-      setTransition(projectArea);
+        function setTransition(el) {
+            el.style.WebkitTransition =
+                el.style.MozTransition =
+                el.style.OTransition =
+                el.style.transition = 'height 0.2s';
+        }
+        setTransition(titleArea);
+        setTransition(playerArea);
+        setTransition(projectArea);
     });
 
     function cancel(e) {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'copy';
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
     }
     document.body.addEventListener('dragover', cancel);
     document.body.addEventListener('dragenter', cancel);
 
     document.body.addEventListener('drop', async function (e) {
-      e.preventDefault();
+        e.preventDefault();
 
-      var f = e.dataTransfer.files[0];
+        var f = e.dataTransfer.files[0];
 
 
 
-      if (f) {
-        location.hash = '#zip';
-        show('zip');
-        var ext = f.name.split('.').pop();
-        if (ext === 'sb2' || ext === 'zip') {
-          var request = P.IO.loadSB2File(f);
-        } else if (ext === 'json') {
-          request = P.IO.loadJSONFile(f);
-        } else if (ext === 'sb3') {
-          console.log("SB3 Converter WIP Experimental Alpha");
-          console.log(f)
+        if (f) {
+            location.hash = '#zip';
+            show('zip');
+            var ext = f.name.split('.').pop();
+            if (ext === 'sb2' || ext === 'zip') {
+                var request = P.IO.loadSB2File(f);
+            } else if (ext === 'json') {
+                request = P.IO.loadJSONFile(f);
+            } else if (ext === 'sb3') {
+                console.log("SB3 Converter WIP Experimental Alpha");
+                console.log(f)
 
-          socket.emit("sendSB3file", f);
+                socket.emit("sendSB3file", f);
 
+            }
+            if (request) {
+                P.player.showProgress(request, function (stage) {
+                    stage.triggerGreenFlag();
+                });
+            }
         }
-        if (request) {
-          P.player.showProgress(request, function (stage) {
-            stage.triggerGreenFlag();
-          });
-        }
-      }
     });
 
-  }());
+}());
 
-  function loadProject(id) {
+function loadProject(id) {
 
-    fetch('https://projects.scratch.mit.edu/internalapi/project/' + id + '/get')
-      .then(function (response) {
-        console.log(response.status)
-        if (response.status == 200) {
-          P.player.load(id, function (stage) {
+    return new Promise(function (resolve, reject) {
+        fetch('https://projects.scratch.mit.edu/internalapi/project/' + id + '/get')
+            .then(function (response) {
+                console.log(response.status)
+                if (response.status == 200) {
+                    P.player.load(id, function (stage) {
+                        
+                        stage.triggerGreenFlag();
+                    }, function (title) {
+                        document.title = title ? title + ' \xb7 sulfurous' : 'sulfurous';
+                        updateBugLink();
+                        
+                    });
+                    resolve();
+                } else if (response.status == 404) {
+                    socket.emit("sendSB3ID", id);
+                    document.getElementById("sb3loading").innerHTML = "loading...."
+                }
+            })
+    })
 
-            stage.triggerGreenFlag();
-          }, function (title) {
-            document.title = title ? title + ' \xb7 sulfurous' : 'sulfurous';
-            updateBugLink();
-          });
-        } else if (response.status == 404) {
-          socket.emit("sendSB3ID", id);
-          document.getElementById("sb3loading").innerHTML = "loading...."
-        }
-      })
-  }
 
-  const convertBase64ToFile = function (data) {
+}
+
+const convertBase64ToFile = function (data) {
     const byteString = data
     const ab = new ArrayBuffer(byteString.length);
     const ia = new Uint8Array(ab);
     for (let i = 0; i < byteString.length; i += 1) {
-      ia[i] = byteString.charCodeAt(i);
+        ia[i] = byteString.charCodeAt(i);
     }
     const newBlob = new Blob([ab], {
-      type: 'octet/stream',
+        type: 'octet/stream',
     });
     return newBlob;
-  };
+};
 
-  var saveData = (function () {
+var saveData = (function () {
     var a = document.createElement("a");
     document.body.appendChild(a);
     a.style = "display: none";
     return function (data, fileName) {
 
-      blob = new Blob([data], { type: "octet/stream" }),
-        url = window.URL.createObjectURL(blob);
-      a.href = url;
-      a.download = fileName;
-      a.click();
-      window.URL.revokeObjectURL(url);
+        blob = new Blob([data], { type: "octet/stream" }),
+            url = window.URL.createObjectURL(blob);
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        window.URL.revokeObjectURL(url);
     };
-  }());
+}());

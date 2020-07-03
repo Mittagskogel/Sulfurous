@@ -629,7 +629,7 @@ var P = (function () {
 
   IO.loadSB2File = function (f, callback, self) {
 
-   
+
     var cr = new CompositeRequest;
     cr.defer = true;
     var request = new Request;
@@ -829,7 +829,7 @@ var P = (function () {
     data.variables = data.variables || [];
     data.lists = data.lists || [];
 
-    console.log(data.lists);
+    //  console.log(data.lists);
     //pf temp (dirty) hack for ASCII hack lists...		
     if (data && data.lists && data.lists.length) {
       for (var ha = data.lists.length; ha--;) {
@@ -1252,7 +1252,7 @@ var P = (function () {
 
 
 
-    console.log(sulfCloudVars)
+    //console.log(sulfCloudVars)
 
     this.addLists(data.lists);
     this.addVariables(data.variables);
@@ -1329,7 +1329,7 @@ var P = (function () {
 
   Base.prototype.addLists = function (lists) {
 
-    console.log(sulfCloudVars)
+    // console.log(sulfCloudVars)
 
     for (var i = 0; i < lists.length; i++) {
       if (lists[i].isPeristent) {
@@ -4419,7 +4419,7 @@ var firstRunSulfCloudVars = true;
 
 var cloudManager = function (vars, lists) {
 
-  console.log(sulfCloudVars)
+  //console.log(sulfCloudVars)
 
   if (firstRunSulfCloudVars) {
 
@@ -4485,10 +4485,10 @@ var outputZip
 
 document.getElementById("package-zip").onclick = function packageZIP() {
   console.log(outputZip)
-  
-      socket.emit("getPackage", outputZip.generate());
-  
- 
+
+  socket.emit("getPackage", outputZip.generate());
+
+
 }
 
 

@@ -4,7 +4,6 @@ var socket = io.connect(window.location.hostname + ':8082');
 function setupWebsocket() {
 
     socket.on("sendSB2file", function (data) {
-        console.log("testttt")
         console.log(data)
 
         var blob = new Blob([data]);
