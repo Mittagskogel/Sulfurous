@@ -29,6 +29,7 @@
 <script src=../js/fonts.js></script>
 <script src=//cdnjs.cloudflare.com/ajax/libs/jszip/2.4.0/jszip.js></script>
 <script src=../js/gl-matrix-min.js></script>
+<script src=../js/socket.io.js></script>
 <script src=../js/phosphorus.js></script>
 <script src=../js/shaders.js></script>
 <script src=../fonts/fonts.js></script>
@@ -96,7 +97,7 @@
   var legacyLink = document.querySelector('#legacy-link');
   var player = document.querySelector('.player');
 
-  var stage;
+  
 
   function layout() {
     if (!stage) return;
@@ -189,13 +190,13 @@
     stage = s;
     layout();
 
-    s.isTurbo = turbo;
-    s.start();
-    s.triggerGreenFlag();
+    stage.isTurbo = turbo;
+    stage.start();
+    stage.triggerGreenFlag();
 
-    player.appendChild(s.root);
-    s.focus();
-    s.handleError = showError;
+    player.appendChild(stage.root);
+    stage.focus();
+    stage.handleError = showError;
   };
   request.onerror = showError;
   request.onprogress = function (e) {

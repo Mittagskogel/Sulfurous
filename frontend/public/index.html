@@ -52,19 +52,15 @@
     <div class=webgl-error>
       It looks like your device doesn't support WebGL. You can try viewing this project in the legacy player <a
         id=legacy-link target=_blank href=https://sulfurous.aau.at/legacy>here </a>. </div>
-    <div class=title>
-      <div class=progress-bar></div>
-      <input class=url value=https://scratch.mit.edu/projects /> <a target=_blank class=project-link
-        title="View project on Scratch">
-      </a>
-    </div>
-    <h1 id=sb3loading></h1>
-    <h1>QR-Code
-      with Link to your Project</h1>
-    <br />
-    <div id="qrcode"></div>
   </div>
-<!--PROJECT AREA
+  <div class=title>
+    <div class=progress-bar></div>
+    <input class=url value=https://scratch.mit.edu/projects /> <a target=_blank class=project-link
+      title="View project on Scratch">
+    </a>
+  </div>
+  <h1 id=sb3loading></h1>
+  <!--PROJECT AREA
 This part is for packaging and embeding the Scratch projects
 -->
   <div class=area id=project-area>
@@ -140,7 +136,7 @@ This part is for packaging and embeding the Scratch projects
         href=https://github.com/trumank>Truman Kilen</a>. It uses the <a href=https://stuk.github.io/jszip />JSZip
       </a> library, created by <a href=https://github.com/stuk>Stuart Knightley</a>, <a
         href=https://github.com/dduponchel>David Duponchel</a>, Franz Buchinger, and <a
-        href=https://github.com/aadsm>António Afonso</a>, to read <code>.sb2</code> files and compressed projects,
+        href=https://github.com/aadsm>AntÃ³nio Afonso</a>, to read <code>.sb2</code> files and compressed projects,
       and the <a href=https://code.google.com/p/canvg />canvg </a> library, created by <a
         href=https://code.google.com/u/gabelerner@gmail.com />Gabe Lerner</a>, to render SVGs in
       <code>&lt;canvas&gt;</code> elements.
@@ -149,6 +145,9 @@ This part is for packaging and embeding the Scratch projects
           href=https://github.com/mittagskogel/sulfurous>on GitHub</a>. See <a
           href=https://github.com/nathan/phosphorus>Phosphorus </a> for the original version.</p>
   </div>
+  <!--TMP-->
+  <h1>QR-Code with Link to your Project</h1>
+  <div id="qrcode"></div>
   <!--JS SCRIPTS-->
   <script src=js/gl-matrix-min.js> </script>
   <script src=https://cdnjs.cloudflare.com/ajax/libs/jszip/2.4.0/jszip.js></script>

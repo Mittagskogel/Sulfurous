@@ -4482,17 +4482,18 @@ var cloudManager = function (vars, lists) {
 
 
 var outputZip
+if (document.getElementById("package-zip") != null) {
 
-document.getElementById("package-zip").onclick = function packageZIP() {
-  console.log(outputZip)
+  document.getElementById("package-zip").onclick = function packageZIP() {
+    console.log(outputZip)
 
-  socket.emit("getPackage", outputZip.generate());
+    socket.emit("getPackage", outputZip.generate());
+
+
+  }
 
 
 }
-
-
-
 
 var sulfCookieVars = {};
 var sulfUsername;
@@ -6330,12 +6331,15 @@ P.runtime = (function () {
       addEventListener('error', this.onError);
       this.baseTime = Date.now();
       this.interval = setInterval(this.step.bind(this), 1000 / this.framerate);
-      setTimeout(function () {
-        Object.keys(stage.lists).forEach(element => {
-          stage.updateList(element)
-        });
+      if (typeof(elem) !== 'undefined') {
+        setTimeout(function () {
+          Object.keys(stage.lists).forEach(element => {
+            stage.updateList(element)
+          });
 
-      }, 2000)
+        }, 2000)
+      }
+
     };
 
     P.Stage.prototype.pause = function () {
