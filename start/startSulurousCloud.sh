@@ -1,1 +1,1 @@
-sudo docker-compose -f ../docker-composeSULFSER.yml start frontend backend
+sudo docker-compose -f ../docker-compose.yml start sulfurous-frontend sulfurous-backend

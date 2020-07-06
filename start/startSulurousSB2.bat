@@ -1,1 +1,1 @@
-docker-compose -f ../docker-composeSULFSER.yml start frontend
+docker-compose -f ../docker-compose.yml start sulfurous-frontend
