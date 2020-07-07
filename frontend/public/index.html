@@ -17,7 +17,7 @@
   This is only loaded if no ID or zip file is loaded.
   -->
   <div class=area id=title-area>
-    <h1 class=title>sulfurous<span class=version>WebGL v 0.94</span></h1>
+    <h1 class=title>sulfurous<span class=version>WebGL v 0.98</span></h1>
     <p>Sulfurous, just like Phosphorus, runs your Scratch projects really fast by compiling them to JavaScript. Try it
       out
       by pasting a URL or project ID into the field below or <a class=dropdown>choosing an example<select id=examples>
@@ -52,19 +52,24 @@
     <div class=webgl-error>
       It looks like your device doesn't support WebGL. You can try viewing this project in the legacy player <a
         id=legacy-link target=_blank href=https://sulfurous.aau.at/legacy>here </a>. </div>
-    <div class=title>
-      <div class=progress-bar></div>
-      <input class=url value=https://scratch.mit.edu/projects /> <a target=_blank class=project-link
-        title="View project on Scratch">
-      </a>
-    </div>
-    <h1 id=sb3loading></h1>
+  </div>
+
+  <div class=title>
+    <div class=progress-bar></div>
+    <input class=url value=https://scratch.mit.edu/projects /> <a target=_blank class=project-link
+      title="View project on Scratch">
+    </a>
+  </div>
+  <h1 id=sb3loading></h1>
+  <div id="qrdiv" style="display: none;">
     <h1>QR-Code
       with Link to your Project</h1>
     <br />
     <div id="qrcode"></div>
   </div>
-<!--PROJECT AREA
+
+
+  <!--PROJECT AREA
 This part is for packaging and embeding the Scratch projects
 -->
   <div class=area id=project-area>
@@ -160,7 +165,8 @@ This part is for packaging and embeding the Scratch projects
   <script src="js/qrcode.min.js"></script>
   <script src=js/phosphorus.js> </script>
   <script src=js/player.js> </script>
-  <script src="js/index.js"></script>
+
+  <script src="js/index/index.js"></script>
 </body>
 
 </html>

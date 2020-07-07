@@ -4,10 +4,10 @@ var socket = io.connect(window.location.hostname + ':8082');
 function setupWebsocket() {
 
     socket.on("sendSB2file", function (data) {
+        console.log("trrrrrest")
 
         loadSP2FileFromSocket(data);
-
-
+      
     });
 
     socket.on("sendPackage", function (data) {
