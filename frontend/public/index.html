@@ -17,11 +17,13 @@
   This is only loaded if no ID or zip file is loaded.
   -->
   <div class=area id=title-area>
-    <h1 class=title>sulfurous<span class=version>WebGL v 0.98</span></h1>
+    <div class="logocontainer">
+      <img src="./img/sulfurouslogo.png" alt="sulfurous">
+      <p class=version>WebGL v 0.98</p>
+    </div>
     <p>Sulfurous, just like Phosphorus, runs your Scratch projects really fast by compiling them to JavaScript. Try it
       out
       by pasting a URL or project ID into the field below or <a class=dropdown>choosing an example<select id=examples>
-          <option value>
           <option value=11397100>3D Remix by DadOfMrLog
           <option value=15945630>O by DCPU-16
           <option value=10128407>Paper Minecraft by griffpatch
@@ -31,49 +33,47 @@
           <option value=34791164>gb.sb2 [Mario Land 2] by DCPU-16
           <option value=21554369>Epic Ninja by griffpatch
           <option value=15832807>Pretty by blob8108
-
-        </select></a>. You can also drag a local .sb2 project onto this page.</p>
+        </select></a>. You can also drag a local .sb2 or .sb3 project onto this page.</p>
   </div>
   <!--PLAYER AREA
   The Scratch projects are displayed in this area.
   -->
   <div class=area id=player-area>
-    <div class=controls>
-      <span class=stop></span>
-      <span class=pause></span>
-      <span class=flag title="Shift+click to enable turbo mode."></span>
-      <div class=turbo>Turbo Mode</div>
-      <span class=full-screen></span>
+    <div id="playercontainer">
+      <div class=controls>
+        <span class=stop></span>
+        <span class=pause></span>
+        <span class=flag title="Shift+click to enable turbo mode."></span>
+        <div class=turbo>Turbo Mode</div>
+        <span class=full-screen></span>
+      </div>
+      <div class=player></div>
+      <div class=internal-error>
+        An internal error occurred. <a id=error-bug-link target=_blank
+          href=https://github.com/mittagskogel/sulfurous/issues/new>Click here</a> to file a bug report. </div>
+      <div class=webgl-error>
+        It looks like your device doesn't support WebGL. You can try viewing this project in the legacy player <a
+          id=legacy-link target=_blank href=https://sulfurous.aau.at/legacy>here </a>. </div>
     </div>
-    <div class=player></div>
-    <div class=internal-error>
-      An internal error occurred. <a id=error-bug-link target=_blank
-        href=https://github.com/mittagskogel/sulfurous/issues/new>Click here</a> to file a bug report. </div>
-    <div class=webgl-error>
-      It looks like your device doesn't support WebGL. You can try viewing this project in the legacy player <a
-        id=legacy-link target=_blank href=https://sulfurous.aau.at/legacy>here </a>. </div>
+    <h1 id=sb3loading></h1>
+    <div id="qrdiv" style="display: none;">
+      <h1>QR-Code
+        with Link to your Project</h1>
+      <br />
+      <div id="qrcode"></div>
+    </div>
   </div>
-
-  <div class=title>
+  <div class=area id=title>
     <div class=progress-bar></div>
     <input class=url value=https://scratch.mit.edu/projects /> <a target=_blank class=project-link
       title="View project on Scratch">
     </a>
   </div>
-  <h1 id=sb3loading></h1>
-  <div id="qrdiv" style="display: none;">
-    <h1>QR-Code
-      with Link to your Project</h1>
-    <br />
-    <div id="qrcode"></div>
-  </div>
-
-
   <!--PROJECT AREA
 This part is for packaging and embeding the Scratch projects
 -->
   <div class=area id=project-area>
-    <section class=package>
+    <div class=package>
       <h1>Package this project</h1>
       <p>Get a link to a web page that automatically runs your project.</p>
       <p>
@@ -100,8 +100,8 @@ This part is for packaging and embeding the Scratch projects
         <label for=package-custom-resolution>x</label>
         <input type=number id=package-custom-resolution-y-value min=1 max=16000 class=xyinput>
       </p>
-    </section>
-    <section class=package>
+    </div>
+    <div class=embed>
       <h1>Embed this project</h1>
       <p>Include the sulfurous player in your web site.</p>
       <p>
@@ -110,26 +110,21 @@ This part is for packaging and embeding the Scratch projects
         <label for=embed-auto-start>Start automatically</label>
         <input type=checkbox id=embed-light-content>
         <label for=embed-light-content>Light controls</label>
+        <br>
         <input type=checkbox id=embed-hide-controls>
         <label for=embed-hide-controls>Hide UI</label>
         <input type=radio id=embed-standard-resolution checked name=e-custom-resolution>
         <label for=embed-standard-resolution>480x360</label>
         <input type=radio id=embed-double-resolution name=e-custom-resolution>
         <label for=embed-double-resolution>960x720</label>
+        <br>
         <input type=radio id=embed-custom-resolution name=e-custom-resolution>
         <label for=embed-custom-resolution>Custom width:</label>
         <input type=number id=embed-custom-resolution-x-value min=1 max=16000 class=xyinput>
         <label for=package-custom-resolution>x</label>
         <input type=number id=embed-custom-resolution-y-value min=1 max=16000 class=xyinput>
       </p>
-    </section>
-    <section>
-      <h1>Report a problem</h1>
-      <p>Sulfurous is still in development. <a id=bug-link target=_blank
-          href=https://github.com/mittagskogel/sulfurous/issues/new>Click here</a> to report a problem with this
-        project. If you are the creator of this Project please publish your project on scratch that we can see the
-        code and debug it. </p>
-    </section>
+    </div>
   </div>
   <!--CREDITS AREA
   This part displays the credits
@@ -153,20 +148,27 @@ This part is for packaging and embeding the Scratch projects
       <p>Sulfurous is released under the MIT license, the source code for Sulfurous is available <a
           href=https://github.com/mittagskogel/sulfurous>on GitHub</a>. See <a
           href=https://github.com/nathan/phosphorus>Phosphorus </a> for the original version.</p>
+      <h1>Report a problem</h1>
+      <p>Sulfurous is still in development. <a id=bug-link target=_blank
+          href=https://github.com/mittagskogel/sulfurous/issues/new>Click here</a> to report a problem with this
+        project. If you are the creator of this Project please publish your project on scratch that we can see the
+        code and debug it. </p>
+      <div class="privlink">
+        <a href="https://nes.aau.at/?page_id=6329">Disclaimer</a>
+        &nbsp;
+        <a href="https://nes.aau.at/?page_id=7357">Privacy Policy</a>
+      </div>
   </div>
+
   <!--JS SCRIPTS-->
   <script src=js/gl-matrix-min.js> </script>
-  <script src=https://cdnjs.cloudflare.com/ajax/libs/jszip/2.4.0/jszip.js></script>
-  <script src=js/fonts.js> </script>
-  <script src=fonts/fonts.js> </script>
   <script src=js/shaders.js> </script>
   <script src="js/socket.io.js"></script>
   <script src="js/websocket.js"></script>
   <script src="js/qrcode.min.js"></script>
   <script src=js/phosphorus.js> </script>
   <script src=js/player.js> </script>
-
-  <script src="js/index/index.js"></script>
+  <script src="js/index.js"></script>
 </body>
 
 </html>

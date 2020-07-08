@@ -3,9 +3,15 @@
 
     setupWebsocket()
 
-    var qrcode = new QRCode("qrcode");
+    var qrcode = new QRCode("qrcode", {
+        text: "SULFUROUS",
+        width: 256,
+        height: 256,
+        colorDark : "#000000",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
+    });
 
-   
 
     var prefix = 'https://scratch.mit.edu/projects/';
 
@@ -16,16 +22,11 @@
     var playerArea = document.querySelector('#player-area');
     var projectArea = document.querySelector('#project-area');
 
-    playerArea.style.height = projectArea.style.height = 'auto';
-    var titleAreaHeight = titleArea.offsetHeight;
-    var playerAreaHeight = playerArea.offsetHeight;
-    var projectAreaHeight = projectArea.offsetHeight;
-    playerArea.style.height = projectArea.style.height = 0;
-
     var examples = document.querySelector('#examples');
     var urlInput = document.querySelector('.url');
     urlInput.value = prefix + initialId;
 
+    var title = document.querySelector('#title')
     var progressBar = document.querySelector('.progress-bar');
     var player = document.querySelector('.player');
     var projectLink = document.querySelector('.project-link');
@@ -103,21 +104,70 @@
         load(id);
     });
 
+    window.onload = function () {
+        console.log('Dokument geladen');
+        changeDisplay()
+    }
+
+
+    window.addEventListener("resize", changeDisplay);
+
+
+    function changeDisplay() {
+
+        if (window.innerWidth <= 1420) {
+            console.log("TO SMALL")
+            for (let index = 0; index < document.getElementsByClassName("area").length; index++) {
+                const element = document.getElementsByClassName("area")[index];
+                element.style.width = "480px"
+            }
+            document.querySelector(".embed").style.float = "none"
+            document.querySelector("#qrdiv").style.float = "none"
+            document.querySelector("#playercontainer").style.float = "none"
+
+        } else {
+            for (let index = 0; index < document.getElementsByClassName("area").length; index++) {
+                const element = document.getElementsByClassName("area")[index];
+                element.style.width = "60%"
+            }
+            document.querySelector(".embed").style.float = "right"
+            document.querySelector("#qrdiv").style.float = "right"
+            document.querySelector("#playercontainer").style.float = "left"
+        }
+    }
+
     function show(id) {
-        titleArea.style.height = id ? 0 : titleAreaHeight + 'px';
-        playerArea.style.height = id ? playerAreaHeight + 'px' : 0
-        projectArea.style.height = id ? projectAreaHeight + 'px' : 0;
+        console.log("show")
+        console.log(id)
+
+        if (id) {
+            console.log("trueeee")
+
+            playerArea.style.display = "block"
+            projectArea.style.display = "block"
+            playerArea.style.marginBottom = "0px"
+            title.style.marginBottom = "0px"
+            title.style.borderRadius = "0px 0px 25px 25px";
+            playerArea.style.borderRadius = "25px 25px 0px 0px";
+
+        } else {
+            title.style.borderRadius = "25px";
+            playerArea.style.display = "none"
+            projectArea.style.display = "none"
+
+        }
         if (!id) urlInput.focus();
+
     }
 
     async function load(id) {
 
-       
-        
-        if(id != ""){
+
+
+        if (id != "") {
             document.getElementById("qrdiv").style.display = "block";
         }
-       
+
 
         if (id !== 'zip') {
             show(id);
@@ -171,7 +221,7 @@
             packageCustomResolutionYValue.value = 720;
         }
         // remember to change link before uploading!
-        packageLink.href = P.player.projectId ? location.origin+'/html/app.html?id=' + P.player.projectId +
+        packageLink.href = P.player.projectId ? location.origin + '/html/app.html?id=' + P.player.projectId +
             '&turbo=' + packageTurbo.checked +
             '&full-screen=' + packageFullScreen.checked +
             '&aspect-x=' + packageAspectRatioX.value +
@@ -303,7 +353,7 @@ function loadProject(id) {
             .then(function (response) {
                 console.log(response.status)
                 if (response.status == 200) {
-                    
+
                     resolve();
                 } else if (response.status == 404) {
                     socket.emit("sendSB3ID", id);
