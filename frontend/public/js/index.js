@@ -7,9 +7,9 @@
         text: "SULFUROUS",
         width: 256,
         height: 256,
-        colorDark : "#000000",
-        colorLight : "#ffffff",
-        correctLevel : QRCode.CorrectLevel.H
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
     });
 
 
@@ -162,7 +162,7 @@
 
     async function load(id) {
 
-
+        socket.emit("logRequest", { "id": id })
 
         if (id != "") {
             document.getElementById("qrdiv").style.display = "block";

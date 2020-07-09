@@ -1,0 +1,9 @@
+{
+    "requests": {
+        "lastHour": 0,
+        "last24Hours": 0,
+        "last30Days": 0,
+        "all": []
+    },
+    "currentConnections": 0
+}

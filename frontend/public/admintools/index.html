@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sulfurous-Admintools</title>
+</head>
+<style>
+    @font-face {
+        font-family: "DSEG7Classic";
+        src: url("../fonts/DSEG7Classic-Light.ttf");
+    }
+
+    body {
+        height: 100vh;
+        width: 100vw;
+        margin: 0px;
+    }
+
+    h1 {
+        margin: 0px;
+        text-align: center;
+
+    }
+
+    #currentConnections {
+        background-color: aqua;
+        height: 20vh;
+        width: 40vw;
+        float: left;
+    }
+
+    #currentConnectionsCounter {
+        font-family: DSEG7Classic;
+        position: relative;
+        margin: 0;
+        font-size: 9vw;
+        left: 5%;
+        top: 5%;
+    }
+
+    #overallRequests {
+        background-color: darkgreen;
+        float: right;
+        width: 60%;
+        height: 100%;
+    }
+
+    #overallRequestsTable {
+        width: 100%;
+        height: 100%;
+        text-align: center;
+        font-size: 3vw;
+
+    }
+
+    #requestTableLastHour,
+    #requestTable24Hour,
+    #requestTable30Days {
+        font-family: DSEG7Classic;
+    }
+
+    #connectionsRequests {
+        height: 20vh;
+    }
+
+    #sb2IDLog {
+        background-color: blueviolet;
+        float: left;
+        width: 50%;
+        height: 100%;
+    }
+
+    #sb3IDLog {
+        background-color: crimson;
+        float: right;
+        width: 50%;
+        height: 100%;
+    }
+
+    #IDLogs {
+        background-color: darkgoldenrod;
+        height: 40vh;
+    }
+
+    #failedSB3Converts {
+        background-color: darkmagenta;
+    }
+</style>
+
+<body>
+    <div id="connectionsRequests">
+        <div id="currentConnections">
+            <h1>Current Connections</h1>
+            <p id="currentConnectionsCounter">00000</p>
+        </div>
+
+        <div id="overallRequests">
+            <table id="overallRequestsTable">
+                <tr>
+                    <th>Last Hour</th>
+                    <th>Last 24h</th>
+                    <th>Last 30Days</th>
+                </tr>
+                <tr>
+                    <td id="requestTableLastHour">000000</td>
+                    <td id="requestTable24Hour">000000</td>
+                    <td id="requestTable30Days">000000</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <div id="IDLogs">
+        <div id="sb2IDLog">
+            <h1>SB2 IDs Log</h1>
+            <p>16207935</p>
+            <p>16207935</p>
+            <p>16207935</p>
+            <p>16207935</p>
+        </div>
+        <div id="sb3IDLog">
+            <h1>SB3 IDs Log</h1>
+            <p>16207935</p>
+            <p>16207935</p>
+            <p>16207935</p>
+            <p>16207935</p>
+        </div>
+        <div id="failedSB3Converts">
+            This is a test where am I
+        </div>
+    </div>
+
+</body>
+<script src="../js/socket.io.js"></script>
+<script>
+    var socket = io.connect(window.location.hostname + ':8082/admintools');
+
+    socket.on("logs", function (data) {
+        console.log(data)
+
+        document.getElementById("requestTableLastHour").innerHTML = fillWith0(data.lastHour,6);
+        document.getElementById("requestTable24Hour").innerHTML = fillWith0(data.last24Hours,6);
+        document.getElementById("requestTable30Days").innerHTML = fillWith0(data.last30Days,6);
+        document.getElementById("currentConnectionsCounter").innerHTML = fillWith0(data.currentConnections,5);
+    })
+
+    function fillWith0(data,i) {
+        let newc = ""
+        for (let index = 0; index < i - String(data).length; index++) {
+            newc += "0"
+        }
+
+        newc += String(data)
+
+        return newc
+    }
+
+    setInterval(() => {
+        socket.emit("getLogs")
+    }, 1000);
+
+
+    
+
+</script>
+
+</html>
