@@ -211,15 +211,17 @@ P.player = (function () {
     pause.className = 'pause';
     progressBar.style.display = 'none';
 
-
+      
 
 
     if (await isSB2(id)) {
+      socket.emit("logRequest", { "id": id, "version": "2" })
       showProgress(P.IO.loadScratchr2Project(id), cb);
       P.IO.loadScratchr2ProjectTitle(id, function (title) {
         if (titleCallback) titleCallback(P.player.projectTitle = title);
       });
     } else {
+      socket.emit("logRequest", { "id": id, "version": "3" })
       socket.emit("sendSB3ID", id);
       document.getElementById("sb3loading").innerHTML = "loading...."
       if (titleCallback) setTimeout(function () {

@@ -162,10 +162,12 @@
 
     async function load(id) {
 
-        socket.emit("logRequest", { "id": id })
+       
 
         if (id != "") {
             document.getElementById("qrdiv").style.display = "block";
+        }else{
+            socket.emit("logRequest", { "id": "none", "version": "-1" })
         }
 
 
@@ -372,17 +374,18 @@ function loadSP2FileFromSocket(data) {
     console.log(data)
 
     var blob = new Blob([data]);
-
+  
     var request = P.IO.loadSB2File(blob);
-
+   
     if (request) {
-        P.player.showProgress(request, function (stage) {
-            stage.triggerGreenFlag();
-            document.getElementById("sb3loading").innerHTML = ""
-            document.getElementsByClassName("project-link")[0].href = 'https://scratch.mit.edu/projects/' + P.player.projectId
-        })
+      console.log("loading")
+      P.player.showProgress(request, function (stage) {
+        stage.triggerGreenFlag();
+        document.getElementById("sb3loading").innerHTML = ""
+        document.getElementsByClassName("project-link")[0].href = 'https://scratch.mit.edu/projects/' + P.player.projectId
+      })
     }
-}
+  }
 
 
 

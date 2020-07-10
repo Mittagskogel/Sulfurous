@@ -35,9 +35,9 @@
         font-family: DSEG7Classic;
         position: relative;
         margin: 0;
-        font-size: 400%;
-        left: 5%;
-        top: 5%;
+        font-size: 10vmin;
+
+        text-align: center;
     }
 
     #overallRequests {
@@ -59,6 +59,7 @@
     #requestTable24Hour,
     #requestTable30Days {
         font-family: DSEG7Classic;
+
     }
 
     #connectionsRequests {
@@ -87,6 +88,11 @@
     #failedSB3Converts {
         background-color: #ff9900;
     }
+
+    .projectIDLog{
+        background-color: blue;
+    }
+
 </style>
 
 <body>
@@ -114,17 +120,15 @@
     <div id="IDLogs">
         <div id="sb2IDLog">
             <h1>SB2 IDs Log</h1>
-            <p>16207935</p>
-            <p>16207935</p>
-            <p>16207935</p>
-            <p>16207935</p>
+            <div id="sb2IDLogData">
+
+            </div>
         </div>
         <div id="sb3IDLog">
             <h1>SB3 IDs Log</h1>
-            <p>16207935</p>
-            <p>16207935</p>
-            <p>16207935</p>
-            <p>16207935</p>
+            <div id="sb3IDLogData">
+
+            </div>
         </div>
         <div id="failedSB3Converts">
             This is a test where am I
@@ -139,13 +143,22 @@
     socket.on("logs", function (data) {
         console.log(data)
 
-        document.getElementById("requestTableLastHour").innerHTML = fillWith0(data.lastHour,6);
-        document.getElementById("requestTable24Hour").innerHTML = fillWith0(data.last24Hours,6);
-        document.getElementById("requestTable30Days").innerHTML = fillWith0(data.last30Days,6);
-        document.getElementById("currentConnectionsCounter").innerHTML = fillWith0(data.currentConnections,5);
+        document.getElementById("requestTableLastHour").innerHTML = fillWith0(data.lastHour, 6);
+        document.getElementById("requestTable24Hour").innerHTML = fillWith0(data.last24Hours, 6);
+        document.getElementById("requestTable30Days").innerHTML = fillWith0(data.last30Days, 6);
+        document.getElementById("currentConnectionsCounter").innerHTML = fillWith0(data.currentConnections, 5);
+        document.getElementById("sb2IDLogData").innerHTML = ""
+        Object.keys(data.SB2IDs).forEach(element => {
+            document.getElementById("sb2IDLogData").innerHTML += ('<div class="projectIDLog">'+element + " " + data.SB2IDs[element] + "</div>")
+        });
+        document.getElementById("sb3IDLogData").innerHTML = ""
+        Object.keys(data.SB3IDs).forEach(element => {
+            document.getElementById("sb3IDLogData").innerHTML += ('<div class="projectIDLog">'+element + " " + data.SB3IDs[element] + "</div>")
+        });
+
     })
 
-    function fillWith0(data,i) {
+    function fillWith0(data, i) {
         let newc = ""
         for (let index = 0; index < i - String(data).length; index++) {
             newc += "0"
@@ -161,7 +174,7 @@
     }, 1000);
 
 
-    
+
 
 </script>
 
