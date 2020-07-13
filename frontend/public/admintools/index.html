@@ -21,7 +21,7 @@
     h1 {
         margin: 0px;
         text-align: center;
-
+        font-size: 3.5vmin;
     }
 
     #currentConnections {
@@ -89,10 +89,31 @@
         background-color: #ff9900;
     }
 
-    .projectIDLog{
-        background-color: blue;
+    #sb2IDLogData,
+    #sb3IDLogData {
+        height: 90%;
+        overflow: scroll;
     }
 
+    #sb3IDLogData::-webkit-scrollbar {
+        display: none;
+    }
+
+    #sb2IDLogData::-webkit-scrollbar {
+        display: none;
+    }
+
+    .projectIDLog {
+        height: 10%;
+        
+    }
+    .projectIDLog > p{
+        position: relative;
+        margin: 0;
+        height: 60%;
+        top: 20%;
+        font-size: 2vmin;
+    }
 </style>
 
 <body>
@@ -119,13 +140,13 @@
     </div>
     <div id="IDLogs">
         <div id="sb2IDLog">
-            <h1>SB2 IDs Log</h1>
+            <h1 style=" height: 10%;">SB2 IDs Log</h1>
             <div id="sb2IDLogData">
 
             </div>
         </div>
         <div id="sb3IDLog">
-            <h1>SB3 IDs Log</h1>
+            <h1 style=" height: 10%;">SB3 IDs Log</h1>
             <div id="sb3IDLogData">
 
             </div>
@@ -148,12 +169,19 @@
         document.getElementById("requestTable30Days").innerHTML = fillWith0(data.last30Days, 6);
         document.getElementById("currentConnectionsCounter").innerHTML = fillWith0(data.currentConnections, 5);
         document.getElementById("sb2IDLogData").innerHTML = ""
+        let colors = ["#e9e9e9", "#424242"]
+        let i = 1;
         Object.keys(data.SB2IDs).forEach(element => {
-            document.getElementById("sb2IDLogData").innerHTML += ('<div class="projectIDLog">'+element + " " + data.SB2IDs[element] + "</div>")
+            color = colors[i % 2]
+            i++;
+            document.getElementById("sb2IDLogData").innerHTML += ('<div class="projectIDLog" style="background-color:' + color + '"><p>' + element + "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + data.SB2IDs[element] + "</p></div>")
         });
+        i = 0
         document.getElementById("sb3IDLogData").innerHTML = ""
         Object.keys(data.SB3IDs).forEach(element => {
-            document.getElementById("sb3IDLogData").innerHTML += ('<div class="projectIDLog">'+element + " " + data.SB3IDs[element] + "</div>")
+            color = colors[i % 2]
+            i++;
+            document.getElementById("sb3IDLogData").innerHTML += ('<div class="projectIDLog" style="background-color:' + color + '"><p>' + element + "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + data.SB3IDs[element] + "</p></div>")
         });
 
     })
@@ -171,10 +199,10 @@
 
     setInterval(() => {
         socket.emit("getLogs")
-    }, 1000);
+    }, 10000);
 
 
-
+    socket.emit("getLogs")
 
 </script>
 

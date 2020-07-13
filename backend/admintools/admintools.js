@@ -65,24 +65,31 @@ function calculateLogs() {
             logs.requests.last30Days++;
         }
 
-        if (element.data.version == 2) {
 
-            if (logs.lastSB2IDs[element.data.id] == undefined) {
-                logs.lastSB2IDs[element.data.id] = 1
-            } else {
-                logs.lastSB2IDs[element.data.id]++;
-            }
-            logs.SB2Load++;
-        } else if (element.data.version == 3) {
 
-            if (logs.lastSB3IDs[element.data.id] == undefined) {
-                logs.lastSB3IDs[element.data.id] = 1
-            } else {
-                logs.lastSB3IDs[element.data.id]++;
-            }
-            logs.SB3Load++;
+        if (element.data.id != "none" && element.data.id.length < 8 || element.data.id.length > 9) {
+            console.log("WRONG ID WRONG")
+            console.log(element.data.id)
         } else {
-            logs.landingPageLoad++;
+            if (element.data.version == 2) {
+
+                if (logs.lastSB2IDs[element.data.id] == undefined) {
+                    logs.lastSB2IDs[element.data.id] = 1
+                } else {
+                    logs.lastSB2IDs[element.data.id]++;
+                }
+                logs.SB2Load++;
+            } else if (element.data.version == 3) {
+
+                if (logs.lastSB3IDs[element.data.id] == undefined) {
+                    logs.lastSB3IDs[element.data.id] = 1
+                } else {
+                    logs.lastSB3IDs[element.data.id]++;
+                }
+                logs.SB3Load++;
+            } else {
+                logs.landingPageLoad++;
+            }
         }
 
     });
