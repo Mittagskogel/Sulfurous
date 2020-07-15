@@ -18,7 +18,7 @@
  
  We got help from: https://github.com/htmlgames
 */
-var sulfVersion = "0.95"
+var sulfVersion = "0.98"
 var ASCII = false;
 var projectID;
 var firstRunSulfVars = true;
@@ -414,7 +414,13 @@ var P = (function () {
   IO.ASSET_URL = 'https://cdn.assets.scratch.mit.edu/internalapi/asset/';
 
 
-  IO.SOUNDBANK_URL =  './soundbank/';
+
+  if(location.pathname.split("/")[1]== "html"){
+    IO.SOUNDBANK_URL =  '../soundbank/';
+  }else{
+    IO.SOUNDBANK_URL =  './soundbank/';
+  }
+  
 
   IO.FONTS = {
     '': 'Helvetica',
@@ -1874,6 +1880,7 @@ var P = (function () {
             this.trigger('whenKeyPressed', 128);
             //this.trigger('whenKeyPressed', key);
           } else {
+           
             this.trigger('whenKeyPressed', key);
           }
         }
@@ -1888,6 +1895,7 @@ var P = (function () {
         e.stopPropagation();
         if (e.target === this.canvas) {
           e.preventDefault();
+          
           this.trigger('whenKeyPressed', e.keyCode);
         }
       }

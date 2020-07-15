@@ -5,12 +5,17 @@ function setupWebsocket(type) {
 
     if (type == "extern") {
         socket = io.connect("https://sulfurous.aau.at" + ':8082');
-    } else if (type == "intern") {
+    } else if (type == "intern" || type == "app") {
         socket = io.connect(window.location.hostname + ':8082');
     }
 
     socket.on("sendSB2file", function (data) {
-        loadSP2FileFromSocket(data);
+
+        if (type != "app") {
+            loadSP2FileFromSocket(data);
+        } else {
+            loadFromSocket(data);
+        }
     });
 
     socket.on("sendPackage", function (data) {
