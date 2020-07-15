@@ -75,11 +75,11 @@ var convertFromID = function (projectID) {
                     var filemap = parseMap(res.targets);
                     //console.log(JSON.stringify(res,null,2));
 
-                    let outJSON =  JSON.stringify(res).replace("â˜","\u2601")
+                    let outJSON = JSON.stringify(res).replace("â˜", "\u2601")
 
 
-                    fs.writeFileSync("./sb2/"+projectID+"project.json",outJSON)
-                    newZip.addFile("project.json", Buffer.alloc(outJSON.length,outJSON));
+                    fs.writeFileSync("./sb2/" + projectID + "project.json", outJSON)
+                    newZip.addFile("project.json", Buffer.alloc(outJSON.length, outJSON));
 
                     Object.keys(filemap).forEach(sb3Name => {
                         // var sb2Name = filemap[element];
@@ -147,4 +147,4 @@ function parseMap(targets) {
     return out;
 }
 
-module.exports = { convertFromFile, convertFromID };
+module.exports = { convertFromFile, convertFromID, getProjectJSON, getAssets, parseMap };

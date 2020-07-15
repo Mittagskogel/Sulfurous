@@ -1,13 +1,16 @@
-var socket = io.connect(window.location.hostname + ':8082');
+var socket;
 
 
-function setupWebsocket() {
+function setupWebsocket(type) {
+
+    if (type == "extern") {
+        socket = io.connect("https://sulfurous.aau.at" + ':8082');
+    } else if (type == "intern") {
+        socket = io.connect(window.location.hostname + ':8082');
+    }
 
     socket.on("sendSB2file", function (data) {
-        console.log("trrrrrest")
-
         loadSP2FileFromSocket(data);
-      
     });
 
     socket.on("sendPackage", function (data) {

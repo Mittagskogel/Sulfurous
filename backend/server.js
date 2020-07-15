@@ -55,12 +55,22 @@ io.on('connection', function (socket) {
     socket.on('getPackage', function (data) {
         console.log("packager")
         //console.log(data)
-        var b64string = data;
-        var buf = Buffer.from(b64string, 'base64');
-        packager.generatePackage(buf, function (output) {
-            console.log("done Converting")
-            socket.emit('sendPackage', output);
-        });
+        if(data.zip != undefined){
+            console.log("package from file")
+            var b64string = data.zip;
+            var buf = Buffer.from(b64string, 'base64');
+            packager.generatePackageFromZip(buf, function (output) {
+                console.log("done Converting")
+                socket.emit('sendPackage', output);
+            });
+        }
+        if(data.id != undefined){
+            console.log("package from id")
+            packager.generatePackageFromID(data.id, function (output) {
+                console.log("done Converting")
+                socket.emit('sendPackage', output);
+            });
+        }
     });
     socket.on('logRequest', function (data) {
         admintools.logRequest(data);

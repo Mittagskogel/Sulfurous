@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    setupWebsocket()
+   
 
     var qrcode = new QRCode("qrcode", {
         text: "SULFUROUS",
@@ -113,6 +113,21 @@
     window.addEventListener("resize", changeDisplay);
 
 
+    if (document.getElementById("package-zip") != null) {
+
+        document.getElementById("package-zip").onclick = function packageZIP() {
+            console.log(location.hash.substr(1))
+            console.log(outputZip)
+            if (outputZip == undefined) {
+                socket.emit("getPackage", { id: location.hash.substr(1) });
+            } else {
+                socket.emit("getPackage", { zip: outputZip.generate() });
+            }
+
+        }
+    }
+
+
     function changeDisplay() {
 
         if (window.innerWidth <= 1420) {
@@ -162,11 +177,11 @@
 
     async function load(id) {
 
-       
+
 
         if (id != "") {
             document.getElementById("qrdiv").style.display = "block";
-        }else{
+        } else {
             socket.emit("logRequest", { "id": "none", "version": "-1" })
         }
 
@@ -295,7 +310,32 @@
     embedCustomResolutionXValue.addEventListener('change', updateEmbedCode);
     embedCustomResolutionYValue.addEventListener('change', updateEmbedCode);
 
-    load(initialId);
+
+ 
+
+
+    fetch("./project.sb2").then(async (res) => {
+        if (res.status == "404") {
+            setupWebsocket("intern")
+            load(initialId);
+            return
+        }
+        setupWebsocket("extern")
+        console.log(res)
+        let b = await res.blob()
+        console.log(b)
+        var request = P.IO.loadSB2File(b);
+        show('zip');
+        if (request) {
+            P.player.showProgress(request, function (stage) {
+                stage.triggerGreenFlag();
+            });
+        }
+
+    })
+
+
+
 
     setTimeout(function () {
         function setTransition(el) {
@@ -321,7 +361,7 @@
 
         var f = e.dataTransfer.files[0];
 
-
+        console.log(f)
 
         if (f) {
             location.hash = '#zip';
@@ -344,9 +384,13 @@
                 });
             }
         }
+
     });
 
 }());
+
+
+
 
 function loadProject(id) {
 
@@ -374,18 +418,18 @@ function loadSP2FileFromSocket(data) {
     console.log(data)
 
     var blob = new Blob([data]);
-  
+
     var request = P.IO.loadSB2File(blob);
-   
+
     if (request) {
-      console.log("loading")
-      P.player.showProgress(request, function (stage) {
-        stage.triggerGreenFlag();
-        document.getElementById("sb3loading").innerHTML = ""
-        document.getElementsByClassName("project-link")[0].href = 'https://scratch.mit.edu/projects/' + P.player.projectId
-      })
+        console.log("loading")
+        P.player.showProgress(request, function (stage) {
+            stage.triggerGreenFlag();
+            document.getElementById("sb3loading").innerHTML = ""
+            document.getElementsByClassName("project-link")[0].href = 'https://scratch.mit.edu/projects/' + P.player.projectId
+        })
     }
-  }
+}
 
 
 
