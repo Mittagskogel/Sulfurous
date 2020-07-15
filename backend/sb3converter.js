@@ -1,6 +1,8 @@
 const AdmZip = require('adm-zip');
 const fs = require("fs");
 const fetch = require('node-fetch');
+var JSZip = require("jszip");
+
 
 const projectJSONBaseURL = "https://projects.scratch.mit.edu/"
 const assetsBaseURL = "https://cdn.assets.scratch.mit.edu/internalapi/asset/"
@@ -68,7 +70,7 @@ var convertFromID = function (projectID) {
         fs.readFile('./sb2/' + projectID + ".sb2", function (err, data) {
             if (err) {
                 // throw err;
-                var newZip = new AdmZip();
+                var newZip = new JSZip();
 
                 getProjectJSON(projectID).then(res => {
 
@@ -77,19 +79,33 @@ var convertFromID = function (projectID) {
 
                     let outJSON = JSON.stringify(res).replace("â˜", "\u2601")
 
-
+                    console.log(outJSON)
                     fs.writeFileSync("./sb2/" + projectID + "project.json", outJSON)
-                    newZip.addFile("project.json", Buffer.alloc(outJSON.length, outJSON));
+
+
+
+                    newZip.file("project.json", outJSON);
+
+                    console.log(Object.keys(newZip.files))
+
+
 
                     Object.keys(filemap).forEach(sb3Name => {
                         // var sb2Name = filemap[element];
 
 
                         getAssets(sb3Name).then(asset => {
-                            newZip.addFile(sb3Name, Buffer.alloc(Buffer.from(asset).length, asset));
+                            newZip.file(sb3Name, Buffer.alloc(Buffer.from(asset).length, asset));
                         }).then(function () {
-                            if (Object.keys(filemap).length == newZip.getEntries().length - 1) {
-                                newZip.writeZip("./sb3/" + projectID + ".sb3");
+                            if (Object.keys(filemap).length == Object.keys(newZip.files).length - 1) {
+                                newZip.generateNodeStream({ type: 'nodebuffer', streamFiles: true })
+                                    .pipe(fs.createWriteStream("./sb3/" + projectID + ".sb3"))
+                                    .on('finish', function () {
+                                        // JSZip generates a readable stream with a "end" event,
+                                        // but is piped here in a writable stream which emits a "finish" event.
+                                        console.log("out.zip written.");
+                                    });
+
                                 let findsb2 = setInterval(() => {
                                     var files = fs.readdirSync('./sb2/');
                                     // console.log(files)
