@@ -79,14 +79,14 @@ var convertFromID = function (projectID) {
 
                     let outJSON = JSON.stringify(res).replace("â˜", "\u2601")
 
-                    console.log(outJSON)
+                  //  console.log(outJSON)
                     fs.writeFileSync("./sb2/" + projectID + "project.json", outJSON)
 
 
 
                     newZip.file("project.json", outJSON);
 
-                    console.log(Object.keys(newZip.files))
+                   // console.log(Object.keys(newZip.files))
 
 
 
@@ -114,7 +114,7 @@ var convertFromID = function (projectID) {
                                             // console.log(projectID + ".sb2")
                                             fs.readFile('./sb2/' + projectID + ".sb2", function (err, data) {
                                                 if (err) throw err;
-                                                console.log(data.buffer);
+                                             //   console.log(data.buffer);
                                                 resolve(data.buffer);
                                             });
                                             clearInterval(findsb2);
