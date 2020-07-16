@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-   
+
 
     var qrcode = new QRCode("qrcode", {
         text: "SULFUROUS",
@@ -105,28 +105,36 @@
     });
 
     window.onload = function () {
-        console.log('Dokument geladen');
         changeDisplay()
     }
 
-
     window.addEventListener("resize", changeDisplay);
 
-
     if (document.getElementById("package-zip") != null) {
-
         document.getElementById("package-zip").onclick = function packageZIP() {
             console.log(location.hash.substr(1))
             console.log(outputZip)
+            var params = getUrlVars(packageLink.href);
             if (outputZip == undefined) {
-                socket.emit("getPackage", { id: location.hash.substr(1) });
+                socket.emit("getPackage", { settings: params, id: location.hash.substr(1) });
             } else {
-                socket.emit("getPackage", { zip: outputZip.generate() });
+                socket.emit("getPackage", { settings: params, zip: outputZip.generate() });
             }
-
         }
     }
 
+    function getUrlVars(url) {
+        var hash;
+        var myJson = {};
+        var hashes = url.slice(url.indexOf('?') + 1).split('&');
+        for (var i = 0; i < hashes.length; i++) {
+            hash = hashes[i].split('=');
+            myJson[hash[0]] = hash[1];
+            // If you want to get in native datatypes
+            // myJson[hash[0]] = JSON.parse(hash[1]); 
+        }
+        return myJson;
+    }
 
     function changeDisplay() {
 
@@ -156,8 +164,6 @@
         console.log(id)
 
         if (id) {
-            console.log("trueeee")
-
             playerArea.style.display = "block"
             projectArea.style.display = "block"
             playerArea.style.marginBottom = "0px"
@@ -169,10 +175,8 @@
             title.style.borderRadius = "25px";
             playerArea.style.display = "none"
             projectArea.style.display = "none"
-
         }
         if (!id) urlInput.focus();
-
     }
 
     async function load(id) {
@@ -311,7 +315,7 @@
     embedCustomResolutionYValue.addEventListener('change', updateEmbedCode);
 
 
- 
+
 
 
     fetch("./project.sb2").then(async (res) => {
@@ -320,17 +324,20 @@
             load(initialId);
             return
         }
-        setupWebsocket("extern")
-        console.log(res)
-        let b = await res.blob()
-        console.log(b)
-        var request = P.IO.loadSB2File(b);
-        show('zip');
-        if (request) {
-            P.player.showProgress(request, function (stage) {
-                stage.triggerGreenFlag();
-            });
-        }
+        fetch("./settings.json").then(async set => {
+           set = await set.json()
+            console.log(set)
+            set.id = "zip"
+            let url = Object.keys(set).map(function (k) {
+                return encodeURIComponent(k) + '=' + encodeURIComponent(set[k])
+            }).join('&')
+
+            console.log("./html/app.html?"+url) 
+
+            window.location = "./html/app.html?"+url
+            
+        })
+
 
     })
 

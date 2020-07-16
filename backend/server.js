@@ -59,14 +59,14 @@ io.on('connection', function (socket) {
             console.log("package from file")
             var b64string = data.zip;
             var buf = Buffer.from(b64string, 'base64');
-            packager.generatePackageFromZip(buf, function (output) {
+            packager.generatePackageFromZip(buf,data.settings, function (output) {
                 console.log("done Converting")
                 socket.emit('sendPackage', output);
             });
         }
         if(data.id != undefined){
             console.log("package from id")
-            packager.generatePackageFromID(data.id, function (output) {
+            packager.generatePackageFromID(data.id,data.settings, function (output) {
                 console.log("done Converting")
                 socket.emit('sendPackage', output);
             });

@@ -1,6 +1,6 @@
 const fs = require("fs");
 var JSZip = require("jszip");
-var generatePackageFromZip = function (project, callback) {
+var generatePackageFromZip = function (project,settings, callback) {
     var zip = new JSZip();
     fs.readFile("./SulfurousOffline.zip", function (err, data) {
         zip.loadAsync(data)
@@ -8,7 +8,7 @@ var generatePackageFromZip = function (project, callback) {
                 //console.log(zip)
                 // you now have every files contained in the loaded zip
 
-
+                zip.file("settings.json",JSON.stringify(settings))
                 zip.file("project.sb2", project); // a promise of "Hello World\n"
 
                 zip.generateAsync({ type: "arraybuffer" }).then(function (base64) {
@@ -33,7 +33,7 @@ var getAsset = async function (md5) {
     return req
 }
 
-var generatePackageFromID = function (id, callback) {
+var generatePackageFromID = function (id,settings, callback) {
     var zip = new JSZip();
     var project = new JSZip();
     fs.readFile("./SulfurousOffline.zip", function (err, data) {
@@ -127,7 +127,7 @@ var generatePackageFromID = function (id, callback) {
                     //console.log("-------------------------------------------")
                     //console.log(base64)
 
-
+                    zip.file("settings.json",JSON.stringify(settings))
 
                     zip.file("project.sb2", base64); // a promise of "Hello World\n"
                     // console.log(project)

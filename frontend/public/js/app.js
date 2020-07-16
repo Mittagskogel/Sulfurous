@@ -16,7 +16,7 @@ var aspectX = 4;
 var aspectY = 3;
 var resolutionX = 480;
 var resolutionY = 360;
-
+let isPackage = false;
 
 (function () {
     'use strict';
@@ -35,7 +35,7 @@ var resolutionY = 360;
     }
     */
 
-   
+
 
     var params = location.search.substr(1).split('&');
     params.forEach(function (p) {
@@ -43,6 +43,9 @@ var resolutionY = 360;
         if (parts.length > 1) {
             switch (parts[0]) {
                 case 'id':
+                    if (parts[1] == "zip") {
+                        isPackage = true;
+                    }
                     projectId = Number(parts[1]);
                     break;
                 case 'turbo':
@@ -71,9 +74,9 @@ var resolutionY = 360;
 
     P.resolution = resolutionX;
 
-   
 
-    
+
+
 
     function mobileFullScreen(e) {
         if (e) e.preventDefault();
@@ -188,7 +191,38 @@ function isSB2(id) {
 
 async function load(id) {
 
-    if (await isSB2(id)) {
+    if (isPackage) {
+
+        fetch("../project.sb2").then(async (res) => {
+
+            var request = P.IO.loadSB2File(await res.blob());
+
+            request.onload = function (s) {
+                splash.style.display = 'none';
+
+                stage = s;
+                layout();
+
+                stage.isTurbo = turbo;
+                stage.start();
+                stage.triggerGreenFlag();
+
+                player.appendChild(stage.root);
+                stage.focus();
+                stage.handleError = showError;
+            };
+            request.onerror = showError;
+            request.onprogress = function (e) {
+                progressBar.style.width = (10 + e.loaded / e.total * 90) + '%';
+            };
+
+
+
+
+        })
+
+
+    } else if (await isSB2(id)) {
         console.log("SB2")
         var request = P.IO.loadScratchr2Project(id);
 
