@@ -1,6 +1,6 @@
 # USAGE
 
-* You can use Sulfurous via the link: [Sulfurous](https://sulfurous.aau.at)
+* You can use Sulfurous online via this link: [Sulfurous](https://sulfurous.aau.at)
 * If you want to host Sulfurous on your own server you can do that see tutorial below
 
 # HowTo Host
