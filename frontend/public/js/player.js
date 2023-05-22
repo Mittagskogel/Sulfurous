@@ -197,37 +197,48 @@ P.player = (function () {
   });
 
   async function load(id, cb, titleCallback) {
-    P.player.projectId = id;
-    P.player.projectURL = id ? 'https://scratch.mit.edu/projects/' + id + '/' : '';
-
-    if (stage) {
-      stage.stopAll();
-      stage.pause();
-    }
-    while (player.firstChild) player.removeChild(player.lastChild);
-    turbo.style.display = 'none';
-    error.style.display = 'none';
-    webGLError.style.display = 'none';
-    pause.className = 'pause';
-    progressBar.style.display = 'none';
-
-      
 
 
-    if (await isSB2(id)) {
-      socket.emit("logRequest", { "id": id, "version": "2" })
-      showProgress(P.IO.loadScratchr2Project(id), cb);
-      P.IO.loadScratchr2ProjectTitle(id, function (title) {
-        if (titleCallback) titleCallback(P.player.projectTitle = title);
-      });
-    } else {
-      socket.emit("logRequest", { "id": id, "version": "3" })
-      socket.emit("sendSB3ID", id);
-      document.getElementById("sb3loading").innerHTML = "loading...."
-      if (titleCallback) setTimeout(function () {
-        titleCallback('');
-      });
-    }
+     socket.emit('getProjectData', id,async function (projectData) {
+     
+
+
+      console.log(projectData)
+
+     
+      P.player.projectId = id;
+      P.player.projectURL = id ? 'https://scratch.mit.edu/projects/' + id + '?token=' + projectData.project_token : '';
+
+      if (stage) {
+        stage.stopAll();
+        stage.pause();
+      }
+      while (player.firstChild) player.removeChild(player.lastChild);
+      turbo.style.display = 'none';
+      error.style.display = 'none';
+      webGLError.style.display = 'none';
+      pause.className = 'pause';
+      progressBar.style.display = 'none';
+
+
+
+
+      if (await isSB2(id)) {
+        socket.emit("logRequest", { "id": id, "version": "2" })
+
+        showProgress(P.IO.loadScratchr2Project(id, projectData.project_token), cb);
+        P.IO.loadScratchr2ProjectTitle(id, function (title) {
+          if (titleCallback) titleCallback(P.player.projectTitle = title);
+        });
+      } else {
+        socket.emit("logRequest", { "id": id, "version": "3" })
+        socket.emit("sendSB3ID", id);
+        document.getElementById("sb3loading").innerHTML = "loading...."
+        if (titleCallback) setTimeout(function () {
+          titleCallback('');
+        });
+      }
+    });
   }
 
   function showError(e) {
@@ -299,12 +310,23 @@ P.player = (function () {
   };
 
 
-  function isSB2(id) {
+  async function isSB2(id) {
+
+
+
+
+
+    return true
 
     return new Promise(function (resolve, reject) {
-      fetch('https://projects.scratch.mit.edu/internalapi/project/' + id + '/get')
+      fetch('https://api.scratch.mit.edu/projects/' + id, {
+        mode: 'no-cors', method: "get",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
         .then(function (response) {
-          console.log(response.status)
+          console.log(response)
           if (response.status == 200) {
 
             resolve(true);

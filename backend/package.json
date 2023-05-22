@@ -18,6 +18,7 @@
   "homepage": "https://github.com/Mittagskogel/Sulfurous#readme",
   "dependencies": {
     "adm-zip": "^0.4.16",
+    "axios": "^1.4.0",
     "express": "^4.17.1",
     "jszip": "^3.5.0",
     "node-fetch": "^2.6.0",

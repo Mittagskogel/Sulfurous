@@ -3,6 +3,7 @@ var app = express();
 var https = require('https');
 var http = require('http');
 var fs = require('fs');
+const axios = require('axios');
 
 var cloudSave = require("./cloud.js")
 var sb3converter = require("./sb3converter.js")
@@ -34,7 +35,7 @@ if (process.env.ISSULFSERVER == "true") {
 var io = require('socket.io').listen(server);
 
 io.on('connection', function (socket) {
-  
+
 
     admintools.setCurrentConnections(Object.keys(io.sockets.sockets).length)
     socket.on('sendSB3file', function (data) {
@@ -55,23 +56,39 @@ io.on('connection', function (socket) {
     socket.on('getPackage', function (data) {
         console.log("packager")
         //console.log(data)
-        if(data.zip != undefined){
+        if (data.zip != undefined) {
             console.log("package from file")
             var b64string = data.zip;
             var buf = Buffer.from(b64string, 'base64');
-            packager.generatePackageFromZip(buf,data.settings, function (output) {
+            packager.generatePackageFromZip(buf, data.settings, function (output) {
                 console.log("done Converting")
                 socket.emit('sendPackage', output);
             });
         }
-        if(data.id != undefined){
+        if (data.id != undefined) {
             console.log("package from id")
-            packager.generatePackageFromID(data.id,data.settings, function (output) {
+            packager.generatePackageFromID(data.id, data.settings, function (output) {
                 console.log("done Converting")
                 socket.emit('sendPackage', output);
             });
         }
     });
+    socket.on('getProjectData', async function (data,cb) {
+        let resp = await axios.get('https://api.scratch.mit.edu/projects/' + data)
+            .then(function (response) {
+                // handle success
+               // console.log(response);
+                socket.emit('getProjectDataReturn', response.data);
+                cb(response.data)
+            })
+            .catch(function (error) {
+                // handle error
+                console.log(error);
+            })
+            .finally(function () {
+                // always executed
+            });
+    })
     socket.on('logRequest', function (data) {
         admintools.logRequest(data);
     })

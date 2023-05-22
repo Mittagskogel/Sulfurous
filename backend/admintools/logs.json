@@ -1,9 +1,1 @@
-{
-    "requests": {
-        "lastHour": 0,
-        "last24Hours": 0,
-        "last30Days": 0,
-        "all": []
-    },
-    "currentConnections": 0
-}
+{"requests":{"lastHour":10,"last24Hours":10,"last30Days":10,"all":[{"data":{"id":"none","version":"-1"},"timestamp":"2022-10-23T09:38:43.619Z"},{"data":{"id":"none","version":"-1"},"timestamp":"2022-10-26T21:27:25.277Z"},{"data":{"id":"none","version":"-1"},"timestamp":"2022-11-26T09:47:59.716Z"},{"data":{"id":"16207935","version":"2"},"timestamp":"2023-05-22T18:02:58.494Z"},{"data":{"id":"16207935","version":"2"},"timestamp":"2023-05-22T18:05:18.439Z"},{"data":{"id":"16207935","version":"2"},"timestamp":"2023-05-22T18:11:59.477Z"},{"data":{"id":"16207935","version":"2"},"timestamp":"2023-05-22T18:19:15.394Z"},{"data":{"id":"16207935","version":"2"},"timestamp":"2023-05-22T18:19:36.393Z"},{"data":{"id":"16207935","version":"2"},"timestamp":"2023-05-22T18:20:28.725Z"},{"data":{"id":"16207935","version":"2"},"timestamp":"2023-05-22T18:22:12.665Z"},{"data":{"id":"16207935","version":"2"},"timestamp":"2023-05-22T18:31:37.044Z"},{"data":{"id":"none","version":"-1"},"timestamp":"2023-05-22T18:32:01.307Z"},{"data":{"id":"34791164","version":"2"},"timestamp":"2023-05-22T18:32:30.719Z"}]},"currentConnections":1,"lastSB2IDs":{"16207935":8,"34791164":1},"lastSB3IDs":{},"landingPageLoad":4,"SB2Load":9,"SB3Load":0}

@@ -1,5 +1,6 @@
 var socket;
 
+var projectData = undefined
 
 function setupWebsocket(type) {
 
@@ -8,6 +9,11 @@ function setupWebsocket(type) {
     } else if (type == "intern" || type == "app") {
         socket = io.connect(window.location.hostname + ':8082');
     }
+
+    socket.on("getProjectDataReturn", function (data) {
+        projectData = data.project_token
+        console.log(data)
+    });
 
     socket.on("sendSB2file", function (data) {
 
