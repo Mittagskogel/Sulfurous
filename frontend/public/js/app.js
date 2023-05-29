@@ -172,6 +172,8 @@ function showWebGLError(e) {
 
 function isSB2(id) {
 
+    return true
+
     return new Promise(function (resolve, reject) {
         fetch('https://api.scratch.mit.edu/projects/' + id)
             .then(function (response) {
@@ -224,26 +226,30 @@ async function load(id) {
 
     } else if (await isSB2(id)) {
         console.log("SB2")
-        var request = P.IO.loadScratchr2Project(id,"1684772801_cf64050c1a5873f0d68cb963441f00573cbe50614c0fb42a6825c05d08a7722e8621b47d770595f5da55c90c3267942f136b2ea2a6a227a4f5ab97b9a1f6affc");
 
-        request.onload = function (s) {
-            splash.style.display = 'none';
+        socket.emit('getProjectData', id, async function (projectData) {
 
-            stage = s;
-            layout();
+            var request = P.IO.loadScratchr2Project(id, projectData.project_token);
 
-            stage.isTurbo = turbo;
-            stage.start();
-            stage.triggerGreenFlag();
+            request.onload = function (s) {
+                splash.style.display = 'none';
 
-            player.appendChild(stage.root);
-            stage.focus();
-            stage.handleError = showError;
-        };
-        request.onerror = showError;
-        request.onprogress = function (e) {
-            progressBar.style.width = (10 + e.loaded / e.total * 90) + '%';
-        };
+                stage = s;
+                layout();
+
+                stage.isTurbo = turbo;
+                stage.start();
+                stage.triggerGreenFlag();
+
+                player.appendChild(stage.root);
+                stage.focus();
+                stage.handleError = showError;
+            };
+            request.onerror = showError;
+            request.onprogress = function (e) {
+                progressBar.style.width = (10 + e.loaded / e.total * 90) + '%';
+            };
+        })
     } else {
         console.log("SB3")
         socket.emit("sendSB3ID", id);

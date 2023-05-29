@@ -626,7 +626,7 @@ var P = (function () {
       console.log(IO.zip)
       outputZip = IO.zip
       var json = IO.parseJSONish(IO.zip.file('project.json').asText());
-     
+    
       IO.loadProject(json);
       if (callback) request.onLoad(callback.bind(self));
       if (request.isDone) {
@@ -638,6 +638,7 @@ var P = (function () {
         };
       }
     } catch (e) {
+      console.log(e)
       request.error(e);
     }
 
@@ -646,7 +647,7 @@ var P = (function () {
 
   IO.loadSB2File = function (f, callback, self) {
 
-
+     
 
     var cr = new CompositeRequest;
     cr.defer = true;
@@ -673,9 +674,11 @@ var P = (function () {
   };
 
   IO.loadProject = function (data) {
+    
     IO.loadWavs();
     IO.loadArray(data.children, IO.loadObject);
     IO.loadBase(data);
+   
   };
 
   IO.wavBuffers = Object.create(null);
@@ -847,7 +850,7 @@ var P = (function () {
     data.variables = data.variables || [];
     data.lists = data.lists || [];
 
-    //console.log(data);
+   
     //pf temp (dirty) hack for ASCII hack lists...		
     if (data && data.lists && data.lists.length) {
       for (var ha = data.lists.length; ha--;) {
@@ -1086,7 +1089,8 @@ var P = (function () {
   IO.loadMD5 = function (md5, id, callback, isAudio) {
     if (IO.zip) {
       var f = isAudio ? IO.zip.file(id + '.wav') : IO.zip.file(id + '.gif') || IO.zip.file(id + '.png') || IO.zip.file(id + '.jpg') || IO.zip.file(id + '.svg');
-      md5 = f.name;
+     
+      md5 = f != null ? f.name : "";
     }
     //get file extension
     var ext = md5.split('.').pop();
@@ -1206,6 +1210,7 @@ var P = (function () {
           if (callback) callback(image);
           request.load();
         };
+        if(f==null) return
         image.src = 'data:image/' + (ext === 'jpg' ? 'jpeg' : ext) + ';base64,' + btoa(f.asBinary());
         IO.projectRequest.add(request);
       } else {

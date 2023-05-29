@@ -1,6 +1,6 @@
 const fs = require("fs");
 var JSZip = require("jszip");
-var generatePackageFromZip = function (project,settings, callback) {
+var generatePackageFromZip = function (project, settings, callback) {
     var zip = new JSZip();
     fs.readFile("./SulfurousOffline.zip", function (err, data) {
         zip.loadAsync(data)
@@ -8,7 +8,7 @@ var generatePackageFromZip = function (project,settings, callback) {
                 //console.log(zip)
                 // you now have every files contained in the loaded zip
 
-                zip.file("settings.json",JSON.stringify(settings))
+                zip.file("settings.json", JSON.stringify(settings))
                 zip.file("project.sb2", project); // a promise of "Hello World\n"
 
                 zip.generateAsync({ type: "arraybuffer" }).then(function (base64) {
@@ -21,9 +21,16 @@ var generatePackageFromZip = function (project,settings, callback) {
 
 const fetch = require('node-fetch');
 
-var getProjectJSON = async function (projectID) {
+
+var getProjectDATA = async function (projectID) {
     //console.log(projectJSONBaseURL + projectID)
-    const req = await fetch("https://projects.scratch.mit.edu/internalapi/project/" + projectID + "/get");
+    const req = await fetch('https://api.scratch.mit.edu/projects/' + projectID);
+    return req.json()
+}
+
+var getProjectJSON = async function (projectID,token) {
+    //console.log(projectJSONBaseURL + projectID)
+    const req = await fetch("https://projects.scratch.mit.edu/" + projectID + "?token="+token);
     return req.json()
 }
 
@@ -33,7 +40,7 @@ var getAsset = async function (md5) {
     return req
 }
 
-var generatePackageFromID = function (id,settings, callback) {
+var generatePackageFromID = function (id, settings, callback) {
     var zip = new JSZip();
     var project = new JSZip();
     fs.readFile("./SulfurousOffline.zip", function (err, data) {
@@ -41,9 +48,12 @@ var generatePackageFromID = function (id,settings, callback) {
         zip.loadAsync(data).then(async function (zip) {
             //console.log(zip)
             // you now have every files contained in the loaded zip
+            
+            let projectDATA = await getProjectDATA(id)
+            console.log(projectDATA)
 
 
-            getProjectJSON(id).then(async res => {
+            getProjectJSON(id,projectDATA.project_token).then(async res => {
 
                 // var filemap = parseMap(res.targets);
                 console.log(id);
@@ -127,7 +137,7 @@ var generatePackageFromID = function (id,settings, callback) {
                     //console.log("-------------------------------------------")
                     //console.log(base64)
 
-                    zip.file("settings.json",JSON.stringify(settings))
+                    zip.file("settings.json", JSON.stringify(settings))
 
                     zip.file("project.sb2", base64); // a promise of "Hello World\n"
                     // console.log(project)

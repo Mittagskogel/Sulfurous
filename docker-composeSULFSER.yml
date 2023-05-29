@@ -8,7 +8,7 @@ services:
       - ./sb3tosb2/sb3:/work/sb3
     container_name: sulfurous-sb3tosb2
   sulfurous-backend:
-    image: "node:10-alpine"
+    image: "node:14-alpine"
     user: "root"
     working_dir: /home/node/app
     environment:
