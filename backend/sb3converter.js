@@ -1,15 +1,17 @@
-const AdmZip = require('adm-zip');
+
 const fs = require("fs");
 const fetch = require('node-fetch');
 var JSZip = require("jszip");
-
+const axios = require("axios")
 
 const projectJSONBaseURL = "https://projects.scratch.mit.edu/"
 const assetsBaseURL = "https://cdn.assets.scratch.mit.edu/internalapi/asset/"
 
 var getProjectJSON = async function (projectID) {
     //console.log(projectJSONBaseURL + projectID)
-    const req = await fetch(projectJSONBaseURL + projectID);
+    let resp = await axios.get('https://api.scratch.mit.edu/projects/' + projectID)
+    console.log(resp.data.project_token)
+    const req = await fetch(projectJSONBaseURL + projectID+"?token="+resp.data.project_token);
     return req.json()
 }
 

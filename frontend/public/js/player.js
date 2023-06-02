@@ -199,13 +199,13 @@ P.player = (function () {
   async function load(id, cb, titleCallback) {
 
 
-     socket.emit('getProjectData', id,async function (projectData) {
-     
+    socket.emit('getProjectData', id, async function (projectData) {
+
 
 
       console.log(projectData)
 
-     
+
       P.player.projectId = id;
       P.player.projectURL = id ? 'https://scratch.mit.edu/projects/' + id + '?token=' + projectData.project_token : '';
 
@@ -223,7 +223,7 @@ P.player = (function () {
 
 
 
-      if (await isSB2(id)) {
+      if (await isSB2(projectData)) {
         socket.emit("logRequest", { "id": id, "version": "2" })
 
         showProgress(P.IO.loadScratchr2Project(id, projectData.project_token), cb);
@@ -310,31 +310,27 @@ P.player = (function () {
   };
 
 
-  async function isSB2(id) {
+  async function isSB2(projectData) {
 
 
 
 
 
-    return true
 
-    return new Promise(function (resolve, reject) {
-      fetch('https://api.scratch.mit.edu/projects/' + id, {
-        mode: 'no-cors', method: "get",
-        headers: {
-          "Content-Type": "application/json"
-        }
-      })
-        .then(function (response) {
-          console.log(response)
-          if (response.status == 200) {
 
-            resolve(true);
-          } else if (response.status == 404) {
+    return new Promise(async function (resolve, reject) {
+      console.log(projectData)
 
-            resolve(false);
-          }
-        })
+
+      const response = await fetch("https://projects.scratch.mit.edu/" + projectData.id + "?token=" + projectData.project_token);
+      const jsonData = await response.json();
+     
+      if(jsonData.targets == undefined){
+        resolve(true)
+      }else{
+        resolve(false)
+      }
+     
     })
 
 
