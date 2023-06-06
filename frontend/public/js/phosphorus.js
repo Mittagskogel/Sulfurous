@@ -415,12 +415,12 @@ var P = (function () {
 
 
 
-  if(location.pathname.split("/")[1]== "html"){
-    IO.SOUNDBANK_URL =  '../soundbank/';
-  }else{
-    IO.SOUNDBANK_URL =  './soundbank/';
+  if (location.pathname.split("/")[1] == "html") {
+    IO.SOUNDBANK_URL = '../soundbank/';
+  } else {
+    IO.SOUNDBANK_URL = './soundbank/';
   }
-  
+
 
   IO.FONTS = {
     '': 'Helvetica',
@@ -512,17 +512,17 @@ var P = (function () {
     return (bForcedBlank) ? request : request;
   };
 
- 
 
 
-  IO.loadScratchr2Project = function (id,token, callback, self) {
+
+  IO.loadScratchr2Project = function (id, token, callback, self) {
     var request = new CompositeRequest;
     IO.init(request);
 
     projectID = id;
 
     request.defer = true;
-    var url = IO.PROJECT_URL + id + '?token='+token;
+    var url = IO.PROJECT_URL + id + '?token=' + token;
 
     console.log(url);
 
@@ -619,14 +619,14 @@ var P = (function () {
       console.log("ZIPPPPPPPPPPPPPPPPPPPPPPPP")
       console.log(ab)
       console.log(ab.files != undefined)
-     
-        IO.zip = new JSZip(ab);
-      
+
+      IO.zip = new JSZip(ab);
+
 
       console.log(IO.zip)
       outputZip = IO.zip
       var json = IO.parseJSONish(IO.zip.file('project.json').asText());
-    
+
       IO.loadProject(json);
       if (callback) request.onLoad(callback.bind(self));
       if (request.isDone) {
@@ -647,7 +647,7 @@ var P = (function () {
 
   IO.loadSB2File = function (f, callback, self) {
 
-     
+
 
     var cr = new CompositeRequest;
     cr.defer = true;
@@ -674,11 +674,11 @@ var P = (function () {
   };
 
   IO.loadProject = function (data) {
-    
+
     IO.loadWavs();
     IO.loadArray(data.children, IO.loadObject);
     IO.loadBase(data);
-   
+
   };
 
   IO.wavBuffers = Object.create(null);
@@ -850,7 +850,7 @@ var P = (function () {
     data.variables = data.variables || [];
     data.lists = data.lists || [];
 
-   
+
     //pf temp (dirty) hack for ASCII hack lists...		
     if (data && data.lists && data.lists.length) {
       for (var ha = data.lists.length; ha--;) {
@@ -879,9 +879,9 @@ var P = (function () {
   };
 
   IO.loadCostume = function (data) {
-    
+
     IO.loadMD5(data.baseLayerMD5, data.baseLayerID, function (asset) {
-     
+
       data.$image = asset;
     }, false);
     if (data.textLayerMD5) {
@@ -1089,7 +1089,7 @@ var P = (function () {
   IO.loadMD5 = function (md5, id, callback, isAudio) {
     if (IO.zip) {
       var f = isAudio ? IO.zip.file(id + '.wav') : IO.zip.file(id + '.gif') || IO.zip.file(id + '.png') || IO.zip.file(id + '.jpg') || IO.zip.file(id + '.svg');
-     
+
       md5 = f != null ? f.name : "";
     }
     //get file extension
@@ -1210,7 +1210,7 @@ var P = (function () {
           if (callback) callback(image);
           request.load();
         };
-        if(f==null) return
+        if (f == null) return
         image.src = 'data:image/' + (ext === 'jpg' ? 'jpeg' : ext) + ';base64,' + btoa(f.asBinary());
         IO.projectRequest.add(request);
       } else {
@@ -1888,7 +1888,7 @@ var P = (function () {
             this.trigger('whenKeyPressed', 128);
             //this.trigger('whenKeyPressed', key);
           } else {
-           
+
             this.trigger('whenKeyPressed', key);
           }
         }
@@ -1903,7 +1903,7 @@ var P = (function () {
         e.stopPropagation();
         if (e.target === this.canvas) {
           e.preventDefault();
-          
+
           this.trigger('whenKeyPressed', e.keyCode);
         }
       }
@@ -2139,7 +2139,7 @@ var P = (function () {
               continue;
             }
             if (obj[prop].toString() == "t") {
-              console.log("List: " + key + " = true");
+        //      console.log("List: " + key + " = true");
               if (key == name) {
                 this.showList(key);
                 break;
@@ -2154,13 +2154,13 @@ var P = (function () {
   // pf new way - works with scaling via em's (was px)
   Stage.prototype.showList = function (name) {
 
-    console.log("Show List:" + name + " isTurbo:" + this.isTurbo); // if turbo mode then only draw list every 4 ticks?
+  //  console.log("Show List:" + name + " isTurbo:" + this.isTurbo); // if turbo mode then only draw list every 4 ticks?
 
     var o_div_test = document.getElementById(name);
     if (this.isTurbo && o_div_test && (Date.now() % 1024) <= 1000) return; //console.log("### RENDER ###");
 
     if (o_div_test) {
-      console.log("List already rendered. DOM");
+   //   console.log("List already rendered. DOM");
       this.stage.root.removeChild(o_div_test);
     }
 
@@ -2176,7 +2176,7 @@ var P = (function () {
       /* for (var ol = 0; ol < o_list.length; ol++) {
         * console.log((ol+1) + " : " + o_list[ol]+"\n");
        }*/
-      console.log(o_listInfo + "\n");
+    //  console.log(o_listInfo + "\n");
 
     } else {
       for (var oc = 0; oc < this.children.length; oc++) {
@@ -2188,9 +2188,9 @@ var P = (function () {
       }
       if (o_list) {
         for (var ol = 0; ol < o_list.length; ol++) {
-          console.log((ol + 1) + " :: " + o_list[ol] + "\n");
+    //      console.log((ol + 1) + " :: " + o_list[ol] + "\n");
         }
-        console.log(o_listInfo + "\n");
+    //    console.log(o_listInfo + "\n");
       }
     }
 
@@ -2249,7 +2249,7 @@ var P = (function () {
       } else {
         var hem = info[3] > 270 ? 93 : 89; // help! (more magic tomfoolery)
         var pem = ((info[3] / 100) * hem) + 0; // qtest 
-        console.log("HEIGHT=" + info[3] + " pem=" + pem);
+      //  console.log("HEIGHT=" + info[3] + " pem=" + pem);
         if (parseInt(info[1], 10) + parseInt(info[3], 10) < 360) { // !offscreen
           divItem = document.createElement('div');
           divItem.style.height = pem + 'px';
@@ -2552,7 +2552,7 @@ var P = (function () {
 
     /*
     context.save();
-	  var s = Math.max(this.maxZoomX, this.maxZoomY);
+    var s = Math.max(this.maxZoomX, this.maxZoomY);
     context.scale(1 / s, 1 / s);
     context.drawImage(this.penCanvas, 0, 0);
     context.restore();
@@ -3713,7 +3713,7 @@ var P = (function () {
     if(height <= 0){
       height=1;
     }
-	  */
+    */
 
     //var data = collisionContext.getImageData(0, 0, width, height).data;
 
@@ -4439,14 +4439,14 @@ var P = (function () {
 //var socket = io.connect(window.location.hostname + ':8082');
 
 
-var sulfCloudVars = [];
+var sulfCloudVars = {};
 var sulfCloudVarsChanged = {};
 var sulfVarsload;
 var firstRunSulfCloudVars = true;
 
 var cloudManager = function (vars, lists) {
 
-  //console.log(sulfCloudVars)
+
 
   if (firstRunSulfCloudVars) {
 
@@ -4489,23 +4489,28 @@ var cloudManager = function (vars, lists) {
   if (Object.keys(sulfCloudVars).length != 0) {
     console.log("cloud Project")
 
-    setInterval(function () {
-      console.log({ "projectID": projectID, sulfCloudVars })
-      socket.emit('getReq', { "projectID": projectID, sulfCloudVars });
-      sulfCloudVarsChanged = {};
 
+
+    socket.emit('getReq', { "projectID": P.player.projectId });
+
+    socket.on('getRes', (function (data) {
+      console.log("loadCloud data")
+      console.log(data)
+      sulfCloudVars = data;
+     
+    }));
+
+    setInterval(function () {
+      console.log({ "projectID": P.player.projectId, sulfCloudVars })
+      socket.emit('getReq', { "projectID": P.player.projectId, sulfCloudVars });
+      sulfCloudVarsChanged = {};
+  
     }, 1000);
+    
+
 
   }
-
-  socket.on('getRes', (function (data) {
-    console.log("loadCloud data")
-    console.log(data)
-    sulfCloudVars = data;
-  }));
-
 }
-
 
 
 var outputZip
@@ -5453,7 +5458,14 @@ P.compile = (function () {
           console.log('**********   Found embedded JavaScript:   **********');
           console.log(String(block[2].replace(';', ';\n')));
           console.log('**********    End embedded JavaScript.    **********');
+
+          if (block[2].substring(block[2].length - 1) != ";") {
+            console.log(block[2].substring(block[2].length - 1))
+            block[2] += ";"
+          }
           source += block[2];
+          console.log(block)
+          console.log(source)
         } else {
           source += 'call(' + val(block[1]) + ', ' + nextLabel() + ', [';
           for (var i = 2; i < block.length; i++) {

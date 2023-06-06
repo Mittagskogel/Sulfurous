@@ -49,8 +49,9 @@ io.on('connection', function (socket) {
         })
     });
     socket.on('getReq', function (data) {
+     //   console.log("DATA FROM PLAYER: ",data)
         cloudSave.getReq(data);
-        console.log(cloudSave.CLOUDSAVE[data.projectID].vars)
+        console.log(cloudSave.CLOUDSAVE[data.projectID])
         socket.emit('getRes', cloudSave.CLOUDSAVE[data.projectID].vars);
     });
     socket.on('getPackage', function (data) {

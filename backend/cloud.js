@@ -28,14 +28,15 @@ var getReq = function (data) {
 
     delete data.sulfCloudVars
 
-    if (data.sulfCloudVarsChanged == undefined) {
-        return
-    }
 
     if (typeof CLOUDSAVE[data.projectID] == 'undefined') {
 
         loadJSON(data.projectID);
 
+    }
+
+    if (data.sulfCloudVarsChanged == undefined) {
+        return
     }
 
     if (typeof Object.keys(data.sulfCloudVarsChanged)[0] != 'undefined') {

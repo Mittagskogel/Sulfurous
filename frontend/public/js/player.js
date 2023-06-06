@@ -203,7 +203,7 @@ P.player = (function () {
 
 
 
-      console.log(projectData)
+     // console.log(projectData)
 
 
       P.player.projectId = id;
@@ -319,7 +319,7 @@ P.player = (function () {
 
 
     return new Promise(async function (resolve, reject) {
-      console.log(projectData)
+    //  console.log(projectData)
 
 
       const response = await fetch("https://projects.scratch.mit.edu/" + projectData.id + "?token=" + projectData.project_token);

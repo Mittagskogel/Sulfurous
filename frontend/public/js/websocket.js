@@ -12,7 +12,7 @@ function setupWebsocket(type) {
 
     socket.on("getProjectDataReturn", function (data) {
         projectData = data.project_token
-        console.log(data)
+     //   console.log(data)
     });
 
     socket.on("sendSB2file", function (data) {
